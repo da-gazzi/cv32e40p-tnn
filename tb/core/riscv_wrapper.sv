@@ -57,6 +57,7 @@ module riscv_wrapper
 
     assign debug_req_i = 1'b0;
 
+
     // instantiate the core
     riscv_core
         #(.INSTR_RDATA_WIDTH (INSTR_RDATA_WIDTH),
@@ -120,6 +121,7 @@ module riscv_wrapper
     mm_ram
         #(.RAM_ADDR_WIDTH (RAM_ADDR_WIDTH),
           .INSTR_RDATA_WIDTH (INSTR_RDATA_WIDTH))
+
     ram_i
         (.clk_i          ( clk_i                          ),
          .rst_ni         ( rst_ni                         ),

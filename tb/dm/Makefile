@@ -61,6 +61,7 @@ RTLSRC_TB_TOP		:= tb_top.sv
 RTLSRC_TB		:= $(filter-out riscv_tb_pkg.sv tb_top_verilator.sv,\
 				$(wildcard *.sv))
 RTLSRC_VERI_TB          := $(filter-out tb_top.sv riscv_tb_pkg.sv, $(wildcard *.sv))
+
 RTLSRC_INCDIR           := $(RTLSRC_HOME)/rtl/include
 
 RTLSRC_PKG              := fpnew/src/fpnew_pkg.sv
@@ -103,6 +104,7 @@ RISCV_EXE_PREFIX         = $(RISCV)/bin/riscv32-unknown-elf-
 .DEFAULT_GOAL := veri-run
 
 all: veri-run
+
 
 # vsim testbench compilation and optimization
 vlib: .lib-rtl
@@ -164,6 +166,7 @@ testbench_verilator: $(RTLSRC_VERI_TB) $(RTLSRC_PKG) $(RTLSRC) \
 		-Wl,--enable-new-dtags -Wl,-rpath,remote_bitbang -lrbs_veri" \
 		tb_top_verilator.cpp
 	cd $(VERI_DIR) && $(MAKE) -f Vtb_top_verilator.mk
+
 	cp $(VERI_DIR)/Vtb_top_verilator testbench_verilator
 
 verilate-clean:

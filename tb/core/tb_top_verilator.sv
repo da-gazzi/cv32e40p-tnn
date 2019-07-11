@@ -64,7 +64,6 @@ module tb_top_verilator
             end
         end
     end
-
     // check if we succeded
     always_ff @(posedge clk_i, negedge rst_ni) begin
         if (tests_passed_o) begin

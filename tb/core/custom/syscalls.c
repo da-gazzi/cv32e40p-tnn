@@ -24,6 +24,7 @@
 #undef errno
 extern int errno;
 
+
 /* write to this reg for outputting strings */
 #define STDOUT_REG 0x10000000
 /* write test result of program to this reg */
@@ -45,7 +46,6 @@ extern int errno;
 #    define _fstat fstat
 #    define _isatty isatty
 #endif
-
 void unimplemented_syscall()
 {
     const char *p = "Unimplemented system call called!\n";
@@ -85,6 +85,7 @@ int _chown(const char *path, uid_t owner, gid_t group)
 
 int _close(int file)
 {
+
     return -1;
 }
 
@@ -106,9 +107,11 @@ int _faccessat(int dirfd, const char *file, int mode, int flags)
     return -1;
 }
 
+
 int _fork(void)
 {
     errno = EAGAIN;
+
     return -1;
 }
 
@@ -118,6 +121,7 @@ int _fstat(int file, struct stat *st)
     return 0;
     // errno = -ENOSYS;
     // return -1;
+
 }
 
 int _fstatat(int dirfd, const char *file, struct stat *st, int flags)
@@ -157,18 +161,21 @@ int _isatty(int file)
 int _kill(int pid, int sig)
 {
     errno = EINVAL;
+
     return -1;
 }
 
 int _link(const char *old_name, const char *new_name)
 {
     errno = EMLINK;
+
     return -1;
 }
 
 off_t _lseek(int file, off_t ptr, int dir)
 {
     return 0;
+
 }
 
 int _lstat(const char *file, struct stat *st)
@@ -199,6 +206,7 @@ int _stat(const char *file, struct stat *st)
     return 0;
     // errno = ENOSYS;
     // return -1;
+
 }
 
 long _sysconf(int name)
@@ -215,6 +223,7 @@ clock_t _times(struct tms *buf)
 int _unlink(const char *name)
 {
     errno = ENOENT;
+
     return -1;
 }
 
@@ -227,6 +236,7 @@ int _utime(const char *path, const struct utimbuf *times)
 int _wait(int *status)
 {
     errno = ECHILD;
+
     return -1;
 }
 

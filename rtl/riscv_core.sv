@@ -41,7 +41,8 @@ module riscv_core
   parameter INSTR_RDATA_WIDTH   = 32,
   parameter PULP_SECURE         =  0,
   parameter N_PMP_ENTRIES       = 16,
-  parameter USE_PMP             =  1, //if PULP_SECURE is 1, you can still not use the PMP
+  parameter USE_PMP             =  0, //if PULP_SECURE is 1, you can still not use the PMP
+  parameter USE_QNT             =  1,
   parameter PULP_CLUSTER        =  1,
   parameter FPU                 =  0,
   parameter Zfinx               =  0,
@@ -178,12 +179,12 @@ module riscv_core
   logic [ 4:0] bmask_a_ex;
   logic [ 4:0] bmask_b_ex;
   logic [ 1:0] imm_vec_ext_ex;
-  logic [ 1:0] alu_vec_mode_ex;
+  logic [ 2:0] alu_vec_mode_ex;
   logic        alu_is_clpx_ex, alu_is_subrot_ex;
   logic [ 1:0] alu_clpx_shift_ex;
 
   // Multiplier Control
-  logic [ 2:0] mult_operator_ex;
+  logic [ 3:0] mult_operator_ex;
   logic [31:0] mult_operand_a_ex;
   logic [31:0] mult_operand_b_ex;
   logic [31:0] mult_operand_c_ex;
@@ -191,13 +192,27 @@ module riscv_core
   logic        mult_sel_subword_ex;
   logic [ 1:0] mult_signed_mode_ex;
   logic [ 4:0] mult_imm_ex;
-  logic [31:0] mult_dot_op_a_ex;
-  logic [31:0] mult_dot_op_b_ex;
+  logic [31:0] mult_dot_op_h_a_ex;
+  logic [31:0] mult_dot_op_h_b_ex;
+  logic [31:0] mult_dot_op_b_a_ex;
+  logic [31:0] mult_dot_op_b_b_ex;
+  logic [31:0] mult_dot_op_n_a_ex;
+  logic [31:0] mult_dot_op_n_b_ex;
+  logic [31:0] mult_dot_op_c_a_ex;
+  logic [31:0] mult_dot_op_c_b_ex;
   logic [31:0] mult_dot_op_c_ex;
   logic [ 1:0] mult_dot_signed_ex;
   logic        mult_is_clpx_ex_o;
   logic [ 1:0] mult_clpx_shift_ex;
   logic        mult_clpx_img_ex;
+
+  // quantization unit control
+  logic        qnt_en_ex;
+  logic [2:0] qnt_vecmode_ex;
+  logic [31:0] qnt_op_a_ex;
+  logic [31:0] qnt_op_b_ex;
+  logic      threshold_request_ex;
+  logic [31:0] threshold_address_ex;
 
   // FPU
   logic [C_PC-1:0]            fprec_csr;
@@ -265,6 +280,17 @@ module riscv_core
   logic        data_misaligned_ex;
 
   logic [31:0] lsu_rdata;
+  logic        data_rvalid_ex;
+
+ // Multiplexed signals (to LSU)
+   logic [31:0] data_addr_lsu_a;
+   logic [1:0]  data_type_lsu_ex;
+   logic [1:0]  data_sign_ext_lsu_ex;
+
+
+
+
+  logic       data_req_qnt_ex;  // multiplexed signal to lsu
 
   // stall control
   logic        halt_if;
@@ -637,14 +663,24 @@ module riscv_core
     .mult_operand_b_ex_o          ( mult_operand_b_ex    ), // from ID to EX stage
     .mult_operand_c_ex_o          ( mult_operand_c_ex    ), // from ID to EX stage
     .mult_imm_ex_o                ( mult_imm_ex          ), // from ID to EX stage
-
-    .mult_dot_op_a_ex_o           ( mult_dot_op_a_ex     ), // from ID to EX stage
-    .mult_dot_op_b_ex_o           ( mult_dot_op_b_ex     ), // from ID to EX stage
+    .mult_dot_op_h_a_ex_o           ( mult_dot_op_h_a_ex     ), // from ID to EX stage
+    .mult_dot_op_h_b_ex_o           ( mult_dot_op_h_b_ex     ), // from ID to EX stage
+    .mult_dot_op_b_a_ex_o           ( mult_dot_op_b_a_ex     ), // from ID to EX stage
+    .mult_dot_op_b_b_ex_o           ( mult_dot_op_b_b_ex     ), // from ID to EX stage
+    .mult_dot_op_n_a_ex_o           ( mult_dot_op_n_a_ex     ), // from ID to EX stage
+    .mult_dot_op_n_b_ex_o           ( mult_dot_op_n_b_ex     ), // from ID to EX stage
+    .mult_dot_op_c_a_ex_o           ( mult_dot_op_c_a_ex     ), // from ID to EX stage
+    .mult_dot_op_c_b_ex_o           ( mult_dot_op_c_b_ex     ), // from ID to EX stage
     .mult_dot_op_c_ex_o           ( mult_dot_op_c_ex     ), // from ID to EX stage
     .mult_dot_signed_ex_o         ( mult_dot_signed_ex   ), // from ID to EX stage
     .mult_is_clpx_ex_o            ( mult_is_clpx_ex      ), // from ID to EX stage
     .mult_clpx_shift_ex_o         ( mult_clpx_shift_ex   ), // from ID to EX stage
     .mult_clpx_img_ex_o           ( mult_clpx_img_ex     ), // from ID to EX stage
+
+    .qnt_en_ex_o                  ( qnt_en_ex            ),
+    .qnt_vecmode_ex_o             ( qnt_vecmode_ex       ),
+    .qnt_op_a_ex_o                ( qnt_op_a_ex          ),
+    .qnt_op_b_ex_o                ( qnt_op_b_ex          ),
 
     // FPU
     .frm_i                        ( frm_csr                 ),
@@ -694,7 +730,7 @@ module riscv_core
     .csr_hwlp_data_i              ( csr_hwlp_data        ),
 
     // LSU
-    .data_req_ex_o                ( data_req_ex          ), // to load store unit
+    .data_req_ex_o                ( data_req_ex          ), // to load store unit (now multiplexed)
     .data_we_ex_o                 ( data_we_ex           ), // to load store unit
     .data_type_ex_o               ( data_type_ex         ), // to load store unit
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
@@ -755,6 +791,7 @@ module riscv_core
   /////////////////////////////////////////////////////
   riscv_ex_stage
   #(
+   .USE_QNT          ( USE_QNT            ),
    .FPU              ( FPU                ),
    .FP_DIVSQRT       ( FP_DIVSQRT         ),
    .SHARED_FP        ( SHARED_FP          ),
@@ -794,8 +831,14 @@ module riscv_core
     .mult_sel_subword_i         ( mult_sel_subword_ex          ), // from ID/EX pipe registers
     .mult_signed_mode_i         ( mult_signed_mode_ex          ), // from ID/EX pipe registers
     .mult_imm_i                 ( mult_imm_ex                  ), // from ID/EX pipe registers
-    .mult_dot_op_a_i            ( mult_dot_op_a_ex             ), // from ID/EX pipe registers
-    .mult_dot_op_b_i            ( mult_dot_op_b_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_h_a_i            ( mult_dot_op_h_a_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_h_b_i            ( mult_dot_op_h_b_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_b_a_i            ( mult_dot_op_b_a_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_b_b_i            ( mult_dot_op_b_b_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_n_a_i            ( mult_dot_op_n_a_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_n_b_i            ( mult_dot_op_n_b_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_c_a_i            ( mult_dot_op_c_a_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_c_b_i            ( mult_dot_op_c_b_ex             ), // from ID/EX pipe registers
     .mult_dot_op_c_i            ( mult_dot_op_c_ex             ), // from ID/EX pipe registers
     .mult_dot_signed_i          ( mult_dot_signed_ex           ), // from ID/EX pipe registers
     .mult_is_clpx_i             ( mult_is_clpx_ex              ), // from ID/EX pipe registers
@@ -803,7 +846,13 @@ module riscv_core
     .mult_clpx_img_i            ( mult_clpx_img_ex             ), // from ID/EX pipe registers
 
     .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
-
+    .qnt_en_i                   ( qnt_en_ex                    ),
+    .qnt_vecmode_i              ( qnt_vecmode_ex               ),
+    .qnt_op_a_i                 ( qnt_op_a_ex                  ),
+    .qnt_op_b_i                 ( qnt_op_b_ex                  ),
+    .qnt_thresh_req_o           ( threshold_request_ex         ),
+    .qnt_thresh_addr_o          ( threshold_address_ex         ),
+    .data_gnt_mem_i             ( data_gnt_pmp                 ),
     // FPU
     .fpu_prec_i                 ( fprec_csr                    ),
     .fpu_fflags_o               ( fflags                       ),
@@ -842,8 +891,9 @@ module riscv_core
     .apu_master_valid_i         ( apu_master_valid_i           ),
     .apu_master_result_i        ( apu_master_result_i          ),
 
-    .lsu_en_i                   ( data_req_ex                  ),
+    .lsu_en_i                   ( data_req_qnt_ex              ),
     .lsu_rdata_i                ( lsu_rdata                    ),
+    .data_rvalid_ex_i              ( data_rvalid_i               ),
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),
@@ -881,6 +931,10 @@ module riscv_core
   );
 
 
+   assign data_req_qnt_ex = qnt_en_ex ? threshold_request_ex : data_req_ex;
+   assign data_addr_lsu_a = qnt_en_ex ? threshold_address_ex : alu_operand_a_ex;
+   assign data_type_lsu_ex = qnt_en_ex ? 2'b01  : data_type_ex;
+   assign data_sign_ext_lsu_ex = qnt_en_ex ? 2'b01 : data_sign_ext_ex;
   ////////////////////////////////////////////////////////////////////////////////////////
   //    _     ___    _    ____    ____ _____ ___  ____  _____   _   _ _   _ ___ _____   //
   //   | |   / _ \  / \  |  _ \  / ___|_   _/ _ \|  _ \| ____| | | | | \ | |_ _|_   _|  //
@@ -909,14 +963,14 @@ module riscv_core
 
     // signal from ex stage
     .data_we_ex_i          ( data_we_ex         ),
-    .data_type_ex_i        ( data_type_ex       ),
+    .data_type_ex_i        ( data_type_lsu_ex   ),
     .data_wdata_ex_i       ( alu_operand_c_ex   ),
     .data_reg_offset_ex_i  ( data_reg_offset_ex ),
-    .data_sign_ext_ex_i    ( data_sign_ext_ex   ),  // sign extension
+    .data_sign_ext_ex_i    ( data_sign_ext_lsu_ex),  // sign extension
 
     .data_rdata_ex_o       ( lsu_rdata          ),
-    .data_req_ex_i         ( data_req_ex        ),
-    .operand_a_ex_i        ( alu_operand_a_ex   ),
+    .data_req_ex_i         ( data_req_qnt_ex    ),
+    .operand_a_ex_i        ( data_addr_lsu_a    ),
     .operand_b_ex_i        ( alu_operand_b_ex   ),
     .addr_useincr_ex_i     ( useincr_addr_ex    ),
 
@@ -928,7 +982,9 @@ module riscv_core
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
 
     .ex_valid_i            ( ex_valid           ),
-    .busy_o                ( lsu_busy           )
+    .busy_o                ( lsu_busy           ),
+
+    .qnt_en_ex_i           (  qnt_en_ex         )
   );
 
   assign wb_valid = lsu_ready_wb & apu_ready_wb;

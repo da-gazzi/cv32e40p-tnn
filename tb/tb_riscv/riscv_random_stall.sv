@@ -31,6 +31,7 @@ module riscv_random_stall
 #(
     parameter MAX_STALL_N = 1,
     parameter DATA_WIDTH  = 32
+
 )
 
 (
@@ -74,6 +75,7 @@ typedef struct {
      logic [ 3:0]                  be;
      logic [DATA_WIDTH-1:0]        wdata;
      logic [DATA_WIDTH-1:0]        rdata;
+
    } stall_mem_t;
 
 class rand_gnt_cycles;
@@ -92,6 +94,7 @@ mailbox #(stall_mem_t) memory_transfers   = new (4);
  always_latch
  begin
    if (req_core_i)
+
        req_per_q    <= 1'b1;
    else
        req_per_q    <= 1'b0;

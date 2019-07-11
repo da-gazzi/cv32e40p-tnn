@@ -39,6 +39,7 @@ import riscv_defines::*;
 
 module riscv_ex_stage
 #(
+  parameter USE_QNT          = 1,
   parameter FPU              =  0,
   parameter FP_DIVSQRT       =  0,
   parameter SHARED_FP        =  0,
@@ -50,123 +51,143 @@ module riscv_ex_stage
   parameter APU_NUSFLAGS_CPU =  5
 )
 (
-  input  logic        clk,
-  input  logic        rst_n,
+  input logic                            clk,
+  input logic                            rst_n,
 
   // ALU signals from ID stage
-  input  logic [ALU_OP_WIDTH-1:0] alu_operator_i,
-  input  logic [31:0] alu_operand_a_i,
-  input  logic [31:0] alu_operand_b_i,
-  input  logic [31:0] alu_operand_c_i,
-  input  logic        alu_en_i,
-  input  logic [ 4:0] bmask_a_i,
-  input  logic [ 4:0] bmask_b_i,
-  input  logic [ 1:0] imm_vec_ext_i,
-  input  logic [ 1:0] alu_vec_mode_i,
-  input  logic        alu_is_clpx_i,
-  input  logic        alu_is_subrot_i,
-  input  logic [ 1:0] alu_clpx_shift_i,
+  input logic [ALU_OP_WIDTH-1:0]         alu_operator_i,
+  input logic [31:0]                     alu_operand_a_i,
+  input logic [31:0]                     alu_operand_b_i,
+  input logic [31:0]                     alu_operand_c_i,
+  input logic                            alu_en_i,
+  input logic [ 4:0]                     bmask_a_i,
+  input logic [ 4:0]                     bmask_b_i,
+  input logic [ 1:0]                     imm_vec_ext_i,
+  input logic [ 2:0]                     alu_vec_mode_i,
+  input logic                            alu_is_clpx_i,
+  input logic                            alu_is_subrot_i,
+  input logic [ 1:0]                     alu_clpx_shift_i,
 
   // Multiplier signals
-  input  logic [ 2:0] mult_operator_i,
-  input  logic [31:0] mult_operand_a_i,
-  input  logic [31:0] mult_operand_b_i,
-  input  logic [31:0] mult_operand_c_i,
-  input  logic        mult_en_i,
-  input  logic        mult_sel_subword_i,
-  input  logic [ 1:0] mult_signed_mode_i,
-  input  logic [ 4:0] mult_imm_i,
+  input logic [ 3:0]                     mult_operator_i,
+  input logic [31:0]                     mult_operand_a_i,
+  input logic [31:0]                     mult_operand_b_i,
+  input logic [31:0]                     mult_operand_c_i,
+  input logic                            mult_en_i,
+  input logic                            mult_sel_subword_i,
+  input logic [ 1:0]                     mult_signed_mode_i,
+  input logic [ 4:0]                     mult_imm_i,
 
-  input  logic [31:0] mult_dot_op_a_i,
-  input  logic [31:0] mult_dot_op_b_i,
-  input  logic [31:0] mult_dot_op_c_i,
-  input  logic [ 1:0] mult_dot_signed_i,
-  input  logic        mult_is_clpx_i,
-  input  logic [ 1:0] mult_clpx_shift_i,
-  input  logic        mult_clpx_img_i,
+  input logic [31:0]                     mult_dot_op_h_a_i,
+  input logic [31:0]                     mult_dot_op_h_b_i,
+  input logic [31:0]                     mult_dot_op_b_a_i,
+  input logic [31:0]                     mult_dot_op_b_b_i,
+  input logic [31:0]                     mult_dot_op_n_a_i,
+  input logic [31:0]                     mult_dot_op_n_b_i,
+  input logic [31:0]                     mult_dot_op_c_a_i,
+  input logic [31:0]                     mult_dot_op_c_b_i,
+  input logic [31:0]                     mult_dot_op_c_i,
+  input logic [ 1:0]                     mult_dot_signed_i,
+  input logic                            mult_is_clpx_i,
+  input logic [ 1:0]                     mult_clpx_shift_i,
+  input logic                            mult_clpx_img_i,
 
-  output logic        mult_multicycle_o,
+  output logic                           mult_multicycle_o,
+
+  // quantization unit signals
+  input logic                            qnt_en_i,
+  input logic [2:0]                      qnt_vecmode_i,
+
+  input logic [31:0]                     qnt_op_a_i,
+  input logic [31:0]                     qnt_op_b_i,
+
+  output logic [31:0]                    qnt_thresh_addr_o,
+  output logic                           qnt_thresh_req_o,
+
+  input logic                            data_gnt_mem_i,
 
   // FPU signals
-  input  logic [C_PC-1:0]             fpu_prec_i,
-  output logic [C_FFLAG-1:0]          fpu_fflags_o,
-  output logic                        fpu_fflags_we_o,
+  input logic [C_PC-1:0]                 fpu_prec_i,
+  output logic [C_FFLAG-1:0]             fpu_fflags_o,
+  output logic                           fpu_fflags_we_o,
 
   // APU signals
-  input  logic                        apu_en_i,
-  input  logic [APU_WOP_CPU-1:0]      apu_op_i,
-  input  logic [1:0]                  apu_lat_i,
-  input  logic [APU_NARGS_CPU-1:0][31:0] apu_operands_i,
-  input  logic [5:0]                  apu_waddr_i,
-  input  logic [APU_NDSFLAGS_CPU-1:0] apu_flags_i,
+  input logic                            apu_en_i,
+  input logic [APU_WOP_CPU-1:0]          apu_op_i,
+  input logic [1:0]                      apu_lat_i,
+  input logic [APU_NARGS_CPU-1:0][31:0]  apu_operands_i,
+  input logic [5:0]                      apu_waddr_i,
+  input logic [APU_NDSFLAGS_CPU-1:0]     apu_flags_i,
 
-  input  logic [2:0][5:0]             apu_read_regs_i,
-  input  logic [2:0]                  apu_read_regs_valid_i,
-  output logic                        apu_read_dep_o,
-  input  logic [1:0][5:0]             apu_write_regs_i,
-  input  logic [1:0]                  apu_write_regs_valid_i,
-  output logic                        apu_write_dep_o,
+  input logic [2:0][5:0]                 apu_read_regs_i,
+  input logic [2:0]                      apu_read_regs_valid_i,
+  output logic                           apu_read_dep_o,
+  input logic [1:0][5:0]                 apu_write_regs_i,
+  input logic [1:0]                      apu_write_regs_valid_i,
+  output logic                           apu_write_dep_o,
 
-  output logic                        apu_perf_type_o,
-  output logic                        apu_perf_cont_o,
-  output logic                        apu_perf_wb_o,
+  output logic                           apu_perf_type_o,
+  output logic                           apu_perf_cont_o,
+  output logic                           apu_perf_wb_o,
 
-  output logic                        apu_busy_o,
-  output logic                        apu_ready_wb_o,
+  output logic                           apu_busy_o,
+  output logic                           apu_ready_wb_o,
 
   // apu-interconnect
   // handshake signals
-  output logic                       apu_master_req_o,
-  output logic                       apu_master_ready_o,
-  input logic                        apu_master_gnt_i,
+  output logic                           apu_master_req_o,
+  output logic                           apu_master_ready_o,
+  input logic                            apu_master_gnt_i,
   // request channel
   output logic [APU_NARGS_CPU-1:0][31:0] apu_master_operands_o,
-  output logic [APU_WOP_CPU-1:0]     apu_master_op_o,
+  output logic [APU_WOP_CPU-1:0]         apu_master_op_o,
   // response channel
-  input logic                        apu_master_valid_i,
-  input logic [31:0]                 apu_master_result_i,
+  input logic                            apu_master_valid_i,
+  input logic [31:0]                     apu_master_result_i,
 
-  input  logic        lsu_en_i,
-  input  logic [31:0] lsu_rdata_i,
+  input logic                            lsu_en_i,
+  input logic [31:0]                     lsu_rdata_i,
+  input logic                            data_rvalid_ex_i,
 
   // input from ID stage
-  input  logic        branch_in_ex_i,
-  input  logic [5:0]  regfile_alu_waddr_i,
-  input  logic        regfile_alu_we_i,
+  input logic                            branch_in_ex_i,
+  input logic [5:0]                      regfile_alu_waddr_i,
+  input logic                            regfile_alu_we_i,
 
   // directly passed through to WB stage, not used in EX
-  input  logic        regfile_we_i,
-  input  logic [5:0]  regfile_waddr_i,
+  input logic                            regfile_we_i,
+  input logic [5:0]                      regfile_waddr_i,
 
   // CSR access
-  input  logic        csr_access_i,
-  input  logic [31:0] csr_rdata_i,
+  input logic                            csr_access_i,
+  input logic [31:0]                     csr_rdata_i,
 
   // Output of EX stage pipeline
-  output logic [5:0]  regfile_waddr_wb_o,
-  output logic        regfile_we_wb_o,
-  output logic [31:0] regfile_wdata_wb_o,
+  output logic [5:0]                     regfile_waddr_wb_o,
+  output logic                           regfile_we_wb_o,
+  output logic [31:0]                    regfile_wdata_wb_o,
 
   // Forwarding ports : to ID stage
-  output logic  [5:0] regfile_alu_waddr_fw_o,
-  output logic        regfile_alu_we_fw_o,
-  output logic [31:0] regfile_alu_wdata_fw_o,    // forward to RF and ID/EX pipe, ALU & MUL
+  output logic [5:0]                     regfile_alu_waddr_fw_o,
+  output logic                           regfile_alu_we_fw_o,
+  output logic [31:0]                    regfile_alu_wdata_fw_o, // forward to RF and ID/EX pipe, ALU & MUL
 
   // To IF: Jump and branch target and decision
-  output logic [31:0] jump_target_o,
-  output logic        branch_decision_o,
+  output logic [31:0]                    jump_target_o,
+  output logic                           branch_decision_o,
 
   // Stall Control
-  input  logic        lsu_ready_ex_i, // EX part of LSU is done
-  input  logic        lsu_err_i,
+  input logic                            lsu_ready_ex_i, // EX part of LSU is done
+  input logic                            lsu_err_i,
 
-  output logic        ex_ready_o, // EX stage ready for new data
-  output logic        ex_valid_o, // EX stage gets new data
-  input  logic        wb_ready_i  // WB stage ready for new data
+  output logic                           ex_ready_o, // EX stage ready for new data
+  output logic                           ex_valid_o, // EX stage gets new data
+  input logic                            wb_ready_i  // WB stage ready for new data
 );
 
   logic [31:0]    alu_result;
   logic [31:0]    mult_result;
+  logic [31:0]   qnt_result;
   logic           alu_cmp_result;
 
   logic           regfile_we_lsu;
@@ -177,6 +198,9 @@ module riscv_ex_stage
 
   logic           alu_ready;
   logic           mult_ready;
+  logic          qnt_ready;
+
+  logic [31:0] threshold_data;
   logic           fpu_ready;
   logic           fpu_valid;
 
@@ -217,6 +241,8 @@ module riscv_ex_stage
         regfile_alu_wdata_fw_o = alu_result;
       if (mult_en_i)
         regfile_alu_wdata_fw_o = mult_result;
+      if (qnt_en_i)
+        regfile_alu_wdata_fw_o = qnt_result;
       if (csr_access_i)
         regfile_alu_wdata_fw_o = csr_rdata_i;
     end
@@ -319,8 +345,14 @@ module riscv_ex_stage
     .op_c_i          ( mult_operand_c_i     ),
     .imm_i           ( mult_imm_i           ),
 
-    .dot_op_a_i      ( mult_dot_op_a_i      ),
-    .dot_op_b_i      ( mult_dot_op_b_i      ),
+    .dot_op_h_a_i      ( mult_dot_op_h_a_i      ),
+    .dot_op_h_b_i      ( mult_dot_op_h_b_i      ),
+    .dot_op_b_a_i      ( mult_dot_op_b_a_i      ),
+    .dot_op_b_b_i      ( mult_dot_op_b_b_i      ),
+    .dot_op_n_a_i      ( mult_dot_op_n_a_i      ),
+    .dot_op_n_b_i      ( mult_dot_op_n_b_i      ),
+    .dot_op_c_a_i      ( mult_dot_op_c_a_i      ),
+    .dot_op_c_b_i      ( mult_dot_op_c_b_i      ),
     .dot_op_c_i      ( mult_dot_op_c_i      ),
     .dot_signed_i    ( mult_dot_signed_i    ),
     .is_clpx_i       ( mult_is_clpx_i       ),
@@ -334,6 +366,49 @@ module riscv_ex_stage
     .ex_ready_i      ( ex_ready_o           )
   );
 
+
+   // quantization unit
+
+   assign threshold_data = {32{qnt_en_i}} & lsu_rdata_i;
+
+generate
+  if (USE_QNT==1) begin
+
+  riscv_qnt_unit     qnt_i
+   (
+
+    .clk             ( clk                  ),
+    .rst_n           ( rst_n                ),
+
+    .enable_i        ( qnt_en_i         ),
+    .vecmode_i       ( qnt_vecmode_i        ),
+
+    .op_a_i          ( qnt_op_a_i           ),
+    .op_b_i          ( qnt_op_b_i           ),
+
+    .threshold_i        (   threshold_data    ),
+    .threshold_valid_i  (   data_rvalid_ex_i      ),
+    .request_granted_i  (    data_gnt_mem_i       ),
+
+    .threshold_request_o  ( qnt_thresh_req_o ),
+    .threshold_address_o  ( qnt_thresh_addr_o ),
+
+    .result_o             ( qnt_result      ),
+    .multicycle_o         (                 ), // assign me
+
+    .ex_ready_i           ( ex_ready_o      ),
+    .ready_o              ( qnt_ready       )
+
+    );
+  end // if (USE_QNT==1)
+  else begin
+     //assign qnt_en_i = 1'b0;
+     //assign qnt_vecmode_i = 3'b000;
+     assign qnt_ready    = 1'b1;
+     assign qnt_thresh_req_o = 1'b0;
+  end // else: !if(USE_QNT==1)
+
+   endgenerate
    generate
       if (FPU == 1) begin
          ////////////////////////////////////////////////////
@@ -553,9 +628,9 @@ module riscv_ex_stage
   // As valid always goes to the right and ready to the left, and we are able
   // to finish branches without going to the WB stage, ex_valid does not
   // depend on ex_ready.
-  assign ex_ready_o = (~apu_stall & alu_ready & mult_ready & lsu_ready_ex_i
+  assign ex_ready_o = (~apu_stall & alu_ready & mult_ready & qnt_ready & lsu_ready_ex_i
                        & wb_ready_i & ~wb_contention & fpu_ready) | (branch_in_ex_i);
   assign ex_valid_o = (apu_valid | alu_en_i | mult_en_i | csr_access_i | lsu_en_i)
-                       & (alu_ready & mult_ready & lsu_ready_ex_i & wb_ready_i);
+                       & (alu_ready & mult_ready & qnt_ready & lsu_ready_ex_i & wb_ready_i);
 
 endmodule

@@ -148,7 +148,6 @@ start:
 1:	auipc gp, %pcrel_hi(__global_pointer$)
 	addi  gp, gp, %pcrel_lo(1b)
 .option pop
-
 	/* start performance counters */
 	jal ra, init_stats
 
@@ -165,7 +164,9 @@ start:
 	/* zero-initialize all registers */
 	addi x1, zero, 0
 	addi x2, zero, 0
+
 	/* addi x3, zero, 0 */ /* gp already initialized */
+
 	addi x4, zero, 0
 	addi x5, zero, 0
 	addi x6, zero, 0
@@ -230,6 +231,7 @@ start:
 	TEST(lui)
 	TEST(auipc)
 	//TEST(j) /* doesn't exist anymore */
+
 	TEST(jal)
 	TEST(jalr)
 
@@ -335,9 +337,11 @@ start:
 	TEST(I_RF_size_01)
 	TEST(I_RF_width_01)
 	TEST(I_RF_x0_01)
+
 	/* TEST(I_SB_01) */ /* broken test: relies on hardcoded addresses */
 
 	/* TEST(I_SH_01) */ /* broken test: relies on hardcoded addresses */
+
 	TEST(I_SLL_01)
 	TEST(I_SLLI_01)
 	TEST(I_SLT_01)

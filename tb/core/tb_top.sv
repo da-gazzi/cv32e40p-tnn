@@ -36,7 +36,6 @@ module tb_top
 
     // cycle counter
     int unsigned            cycle_cnt_q;
-
     // testbench result
     logic                   tests_passed;
     logic                   tests_failed;

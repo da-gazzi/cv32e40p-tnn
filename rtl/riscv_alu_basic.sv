@@ -37,7 +37,8 @@ module riscv_alu_basic
   input  logic [31:0]              operand_b_i,
   input  logic [31:0]              operand_c_i,
 
-  input  logic [ 1:0]              vector_mode_i,
+
+  input  logic [ 2:0]              vector_mode_i,
   input  logic [ 4:0]              bmask_a_i,
   input  logic [ 4:0]              bmask_b_i,
   input  logic [ 1:0]              imm_vec_ext_i,

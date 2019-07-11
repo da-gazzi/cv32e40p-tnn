@@ -79,6 +79,7 @@ RISCV_EXE_PREFIX         = $(RISCV)/bin/riscv32-unknown-elf-
 
 # firmware vars
 FIRMWARE                 = firmware/
+
 RISCV_TEST_INCLUDES      = -Iriscv_tests/ -Iriscv_tests/macros/scalar \
 				-Iriscv_tests/rv64ui -Iriscv_tests/rv64um
 FIRMWARE_OBJS		 = $(addprefix firmware/, start.o \
@@ -87,6 +88,7 @@ FIRMWARE_TEST_OBJS       = $(addsuffix .o, \
 				$(basename $(wildcard riscv_tests/rv32ui/*.S)) \
 				$(basename $(wildcard riscv_tests/rv32um/*.S)) \
 				$(basename $(wildcard riscv_tests/rv32uc/*.S)))
+
 COMPLIANCE_TEST_OBJS	 = $(addsuffix .o, \
 				$(basename $(wildcard riscv_compliance_tests/*.S)))
 
@@ -174,7 +176,8 @@ verilate-clean:
 
 # fpnew dependencies
 fpnew/src/fpnew_pkg.sv:
-	git clone https://github.com/pulp-platform/fpnew --recurse
+
+	git clone git@github.com:pulp-platform/fpnew.git --recurse
 
 # run tb and exit
 .PHONY: vsim-run
@@ -238,7 +241,6 @@ custom-vsim-run-gui: vsim-run-gui
 custom-veri-run: verilate custom/hello_world.hex
 	./testbench_verilator $(VERI_FLAGS) \
 		"+firmware=custom/hello_world.hex"
-
 # compile and dump picorv firmware
 firmware/firmware.elf: $(FIRMWARE_OBJS) $(FIRMWARE_TEST_OBJS) $(COMPLIANCE_TEST_OBJS) \
 				firmware/link.ld
@@ -275,6 +277,7 @@ riscv_tests/rv32uc/%.o: riscv_tests/rv32uc/%.S riscv_tests/riscv_test.h \
 			riscv_tests/macros/scalar/test_macros.h
 	$(RISCV_EXE_PREFIX)gcc -c -march=rv32im -g -o $@ \
 		$(RISCV_TEST_INCLUDES) \
+
 		-DTEST_FUNC_NAME=$(notdir $(basename $<)) \
 		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' \
 		-DTEST_FUNC_RET=$(notdir $(basename $<))_ret $<

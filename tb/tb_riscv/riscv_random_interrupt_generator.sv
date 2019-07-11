@@ -48,7 +48,9 @@ module riscv_random_interrupt_generator
     input logic  [31:0]   irq_pc_trig_i
 );
 
+
 `ifndef VERILATOR
+
 class rand_irq_cycles;
     rand int n;
 endclass : rand_irq_cycles
@@ -136,6 +138,7 @@ begin
         irq_id_random = value.n;
         irq_random    = 1'b1;
         irq_act_id_o  = value.n;
+
         @(posedge clk_i);
         //we don't care about the ack in this mode
         for(i=0; i<max_irq_cycles; i++) begin
@@ -156,6 +159,7 @@ begin
     wait(irq_pc_id_i == irq_pc_trig_i);
     irq_monitor    = 1'b1;
     irq_id_monitor = irq_min_id_i;
+
     while(irq_ack_i != 1'b1) begin
         @(posedge clk_i);   //Keep the request high until the acknowledge is received
     end
@@ -175,4 +179,5 @@ begin
 end
 
 `endif
+
 endmodule

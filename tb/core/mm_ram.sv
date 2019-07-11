@@ -69,6 +69,7 @@ module mm_ram
     logic [INSTR_RDATA_WIDTH-1:0]  core_instr_rdata;
     logic [31:0]                   core_data_rdata;
 
+
     // signals to ram
     logic                          ram_data_req;
     logic [RAM_ADDR_WIDTH-1:0]     ram_data_addr;
@@ -76,6 +77,7 @@ module mm_ram
     logic [31:0]                   ram_data_rdata;
     logic                          ram_data_we;
     logic [3:0]                    ram_data_be;
+
     logic                          ram_data_gnt;
     logic                          ram_data_valid;
 
@@ -90,6 +92,7 @@ module mm_ram
     logic [RAM_ADDR_WIDTH-1:0]     ram_instr_addr;
     logic                          ram_instr_gnt;
     logic                          ram_instr_valid;
+
 
     // signals to print peripheral
     logic [31:0]                   print_wdata;
@@ -236,7 +239,6 @@ module mm_ram
                     // end simulation
                     exit_valid_o = '1;
                     exit_value_o = '0;
-
                 end else if (data_addr_i == 32'h1500_0000) begin
                     timer_wdata = data_wdata_i;
                     timer_reg_valid = '1;
@@ -244,6 +246,7 @@ module mm_ram
                 end else if (data_addr_i == 32'h1500_0004) begin
                     timer_wdata = data_wdata_i;
                     timer_val_valid = '1;
+
 
                 end else if (data_addr_i[31:16] == 16'h1600) begin
                     rnd_stall_req   = data_req_i;
@@ -271,6 +274,7 @@ module mm_ram
                     rnd_stall_wdata    = data_wdata_i;
                     rnd_stall_addr     = data_addr_i;
                     rnd_stall_we       = data_we_i;
+
                 end else
                     select_rdata_d = ERR;
 
@@ -293,6 +297,7 @@ module mm_ram
       || data_addr_i == 32'h2000_0010
       || data_addr_i[31:16] == 16'h1600))
         else $fatal("out of bounds write to %08x with %08x",
+
                     data_addr_i, data_wdata_i);
 `endif
 
@@ -337,6 +342,7 @@ module mm_ram
     assign irq_id_o = irq_q ? TIMER_IRQ_ID : RND_IRQ_ID;
     assign irq_o    = irq_q | rnd_irq;
 
+
     // Control timer. We need one to have some kind of timeout for tests that
     // get stuck in some loop. The riscv-tests also mandate that. Enable timer
     // interrupt by writing 1 to timer_irq_mask_q. Write initial value to
@@ -351,6 +357,7 @@ module mm_ram
                 rnd_stall_regs[i] <= '0;
             end
             rnd_stall_rdata  <= '0;
+
         end else begin
             // set timer irq mask
             if(timer_reg_valid) begin
@@ -401,6 +408,7 @@ module mm_ram
          .we_a_i    ( '0              ),
          .be_a_i    ( 4'b1111         ),	// Always want 32-bits
 
+
          .en_b_i    ( ram_data_req    ),
          .addr_b_i  ( ram_data_addr   ),
          .wdata_b_i ( ram_data_wdata  ),
@@ -419,7 +427,6 @@ module mm_ram
             sig_begin_q <= sig_begin_d;
         end
 
-
     end
 
     always_ff @(posedge clk_i, negedge rst_ni) begin
@@ -434,6 +441,7 @@ module mm_ram
             data_rvalid_q  <= ram_data_req;
             instr_rvalid_q <= ram_instr_req;
             state_valid_q  <= state_valid_n;
+
 
         end
     end

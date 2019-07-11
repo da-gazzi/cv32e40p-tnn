@@ -173,7 +173,7 @@ module riscv_cs_registers
   `define MSTATUS_SPP_BITS        8
   `define MSTATUS_MPP_BITS    12:11
   `define MSTATUS_MPRV_BITS      17
-
+  
   // misa
   localparam logic [1:0] MXL = 2'd1; // M-XLEN: XLEN in M-Mode for RV32
   localparam logic [31:0] MISA_VALUE =
@@ -412,6 +412,7 @@ end else begin //PULP_SECURE == 0
                                   2'h0,
                                   mstatus_q.uie
                                 };
+      
       // misa: machine isa register
       12'h301: csr_rdata_int = MISA_VALUE;
       // mtvec: machine trap-handler base address
@@ -538,13 +539,11 @@ if(PULP_SECURE==1) begin
                begin
                     depc_n = csr_wdata_int & ~32'b1; // force 16-bit alignment
                end
-
       CSR_DSCRATCH0:
                if (csr_we_int)
                begin
                     dscratch0_n = csr_wdata_int;
                end
-
       CSR_DSCRATCH1:
                if (csr_we_int)
                begin

@@ -50,6 +50,7 @@ vector_table:
 	j __no_irq_handler
 	j verification_irq_handler
 
+
 /* this is fixed to 0x8000, used for PULP_SECURE=0. We redirect this entry to the
 new vector table (which is at mtvec) */
 /* .section .legacy_irq, "ax" */
@@ -106,6 +107,7 @@ end_handler:
 /* this interrupt can be generated for verification purposes, random or when the PC is equal to a given value*/
 verification_irq_handler:
 	mret
+
 
 .section .rodata
 illegal_insn_msg:

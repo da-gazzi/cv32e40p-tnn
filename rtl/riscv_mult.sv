@@ -36,7 +36,7 @@ module riscv_mult
   input  logic        rst_n,
 
   input  logic        enable_i,
-  input  logic [ 2:0] operator_i,
+  input  logic [ 3:0] operator_i,
 
   // integer and short multiplier
   input  logic        short_subword_i,
@@ -51,8 +51,14 @@ module riscv_mult
 
   // dot multiplier
   input  logic [ 1:0] dot_signed_i,
-  input  logic [31:0] dot_op_a_i,
-  input  logic [31:0] dot_op_b_i,
+  input  logic [31:0] dot_op_h_a_i,
+  input  logic [31:0] dot_op_h_b_i,
+  input  logic [31:0] dot_op_b_a_i,
+  input  logic [31:0] dot_op_b_b_i,
+  input  logic [31:0] dot_op_n_a_i,
+  input  logic [31:0] dot_op_n_b_i,
+  input  logic [31:0] dot_op_c_a_i,
+  input  logic [31:0] dot_op_c_b_i,
   input  logic [31:0] dot_op_c_i,
   input  logic        is_clpx_i,
   input  logic [ 1:0] clpx_shift_i,
@@ -241,6 +247,8 @@ module riscv_mult
   ///////////////////////////////////////////////
 
   logic [31:0] dot_char_result;
+  logic [31:0] dot_nibble_result;
+  logic [31:0] dot_crumble_result;
   logic [32:0] dot_short_result;
   logic [31:0] accumulator;
   logic [15:0] clpx_shift_result;
@@ -252,21 +260,30 @@ module riscv_mult
         logic [3:0][ 8:0] dot_char_op_b;
         logic [3:0][17:0] dot_char_mul;
 
+        logic [7:0][4:0] dot_nibble_op_a;
+        logic [7:0][4:0] dot_nibble_op_b;
+        logic [7:0][9:0] dot_nibble_mul;
+
+        logic [15:0][2:0] dot_crumble_op_a;
+        logic [15:0][2:0] dot_crumble_op_b;
+        logic [15:0][3:0] dot_crumble_mul;
+
         logic [1:0][16:0] dot_short_op_a;
         logic [1:0][16:0] dot_short_op_b;
         logic [1:0][33:0] dot_short_mul;
         logic      [16:0] dot_short_op_a_1_neg; //to compute -rA[31:16]*rB[31:16] -> (!rA[31:16] + 1)*rB[31:16] = !rA[31:16]*rB[31:16] + rB[31:16]
         logic      [31:0] dot_short_op_b_ext;
 
-        assign dot_char_op_a[0] = {dot_signed_i[1] & dot_op_a_i[ 7], dot_op_a_i[ 7: 0]};
-        assign dot_char_op_a[1] = {dot_signed_i[1] & dot_op_a_i[15], dot_op_a_i[15: 8]};
-        assign dot_char_op_a[2] = {dot_signed_i[1] & dot_op_a_i[23], dot_op_a_i[23:16]};
-        assign dot_char_op_a[3] = {dot_signed_i[1] & dot_op_a_i[31], dot_op_a_i[31:24]};
 
-        assign dot_char_op_b[0] = {dot_signed_i[0] & dot_op_b_i[ 7], dot_op_b_i[ 7: 0]};
-        assign dot_char_op_b[1] = {dot_signed_i[0] & dot_op_b_i[15], dot_op_b_i[15: 8]};
-        assign dot_char_op_b[2] = {dot_signed_i[0] & dot_op_b_i[23], dot_op_b_i[23:16]};
-        assign dot_char_op_b[3] = {dot_signed_i[0] & dot_op_b_i[31], dot_op_b_i[31:24]};
+        assign dot_char_op_a[0] = {dot_signed_i[1] & dot_op_b_a_i[ 7], dot_op_b_a_i[ 7: 0]};
+        assign dot_char_op_a[1] = {dot_signed_i[1] & dot_op_b_a_i[15], dot_op_b_a_i[15: 8]};
+        assign dot_char_op_a[2] = {dot_signed_i[1] & dot_op_b_a_i[23], dot_op_b_a_i[23:16]};
+        assign dot_char_op_a[3] = {dot_signed_i[1] & dot_op_b_a_i[31], dot_op_b_a_i[31:24]};
+
+        assign dot_char_op_b[0] = {dot_signed_i[0] & dot_op_b_b_i[ 7], dot_op_b_b_i[ 7: 0]};
+        assign dot_char_op_b[1] = {dot_signed_i[0] & dot_op_b_b_i[15], dot_op_b_b_i[15: 8]};
+        assign dot_char_op_b[2] = {dot_signed_i[0] & dot_op_b_b_i[23], dot_op_b_b_i[23:16]};
+        assign dot_char_op_b[3] = {dot_signed_i[0] & dot_op_b_b_i[31], dot_op_b_b_i[31:24]};
 
         assign dot_char_mul[0]  = $signed(dot_char_op_a[0]) * $signed(dot_char_op_b[0]);
         assign dot_char_mul[1]  = $signed(dot_char_op_a[1]) * $signed(dot_char_op_b[1]);
@@ -277,13 +294,108 @@ module riscv_mult
                                   $signed(dot_char_mul[2]) + $signed(dot_char_mul[3]) +
                                   $signed(dot_op_c_i);
 
+        /* nibble */
+        assign dot_nibble_op_a[0] = {dot_signed_i[1] & dot_op_n_a_i[3], dot_op_n_a_i[3:0]};
+        assign dot_nibble_op_a[1] = {dot_signed_i[1] & dot_op_n_a_i[7], dot_op_n_a_i[7:4]};
+        assign dot_nibble_op_a[2] = {dot_signed_i[1] & dot_op_n_a_i[11], dot_op_n_a_i[11:8]};
+        assign dot_nibble_op_a[3] = {dot_signed_i[1] & dot_op_n_a_i[15], dot_op_n_a_i[15:12]};
+        assign dot_nibble_op_a[4] = {dot_signed_i[1] & dot_op_n_a_i[19], dot_op_n_a_i[19:16]};
+        assign dot_nibble_op_a[5] = {dot_signed_i[1] & dot_op_n_a_i[23], dot_op_n_a_i[23:20]};
+        assign dot_nibble_op_a[6] = {dot_signed_i[1] & dot_op_n_a_i[27], dot_op_n_a_i[27:24]};
+        assign dot_nibble_op_a[7] = {dot_signed_i[1] & dot_op_n_a_i[31], dot_op_n_a_i[31:28]};
 
-        assign dot_short_op_a[0]    = {dot_signed_i[1] & dot_op_a_i[15], dot_op_a_i[15: 0]};
-        assign dot_short_op_a[1]    = {dot_signed_i[1] & dot_op_a_i[31], dot_op_a_i[31:16]};
-        assign dot_short_op_a_1_neg = dot_short_op_a[1] ^ {17{(is_clpx_i & ~clpx_img_i)}}; //negates whether clpx_img_i is 0 or 1, only REAL PART needs to be negated
+        assign dot_nibble_op_b[0] = {dot_signed_i[0] & dot_op_n_b_i[3], dot_op_n_b_i[3:0]};
+        assign dot_nibble_op_b[1] = {dot_signed_i[0] & dot_op_n_b_i[7], dot_op_n_b_i[7:4]};
+        assign dot_nibble_op_b[2] = {dot_signed_i[0] & dot_op_n_b_i[11], dot_op_n_b_i[11:8]};
+        assign dot_nibble_op_b[3] = {dot_signed_i[0] & dot_op_n_b_i[15], dot_op_n_b_i[15:12]};
+        assign dot_nibble_op_b[4] = {dot_signed_i[0] & dot_op_n_b_i[19], dot_op_n_b_i[19:16]};
+        assign dot_nibble_op_b[5] = {dot_signed_i[0] & dot_op_n_b_i[23], dot_op_n_b_i[23:20]};
+        assign dot_nibble_op_b[6] = {dot_signed_i[0] & dot_op_n_b_i[27], dot_op_n_b_i[27:24]};
+        assign dot_nibble_op_b[7] = {dot_signed_i[0] & dot_op_n_b_i[31], dot_op_n_b_i[31:28]};
 
-        assign dot_short_op_b[0] = (is_clpx_i & clpx_img_i) ? {dot_signed_i[0] & dot_op_b_i[31], dot_op_b_i[31:16]} : {dot_signed_i[0] & dot_op_b_i[15], dot_op_b_i[15: 0]};
-        assign dot_short_op_b[1] = (is_clpx_i & clpx_img_i) ? {dot_signed_i[0] & dot_op_b_i[15], dot_op_b_i[15: 0]} : {dot_signed_i[0] & dot_op_b_i[31], dot_op_b_i[31:16]};
+        assign dot_nibble_mul[0]  = $signed(dot_nibble_op_a[0]) * $signed(dot_nibble_op_b[0]);
+        assign dot_nibble_mul[1]  = $signed(dot_nibble_op_a[1]) * $signed(dot_nibble_op_b[1]);
+        assign dot_nibble_mul[2]  = $signed(dot_nibble_op_a[2]) * $signed(dot_nibble_op_b[2]);
+        assign dot_nibble_mul[3]  = $signed(dot_nibble_op_a[3]) * $signed(dot_nibble_op_b[3]);
+        assign dot_nibble_mul[4]  = $signed(dot_nibble_op_a[4]) * $signed(dot_nibble_op_b[4]);
+        assign dot_nibble_mul[5]  = $signed(dot_nibble_op_a[5]) * $signed(dot_nibble_op_b[5]);
+        assign dot_nibble_mul[6]  = $signed(dot_nibble_op_a[6]) * $signed(dot_nibble_op_b[6]);
+        assign dot_nibble_mul[7]  = $signed(dot_nibble_op_a[7]) * $signed(dot_nibble_op_b[7]);
+
+        assign dot_nibble_result  = $signed(dot_nibble_mul[0]) + $signed(dot_nibble_mul[1]) +
+                                    $signed(dot_nibble_mul[2]) + $signed(dot_nibble_mul[3]) +
+                                    $signed(dot_nibble_mul[4]) + $signed(dot_nibble_mul[5]) +
+                                    $signed(dot_nibble_mul[6]) + $signed(dot_nibble_mul[7]) +
+                                    $signed(dot_op_c_i);
+
+        /*crumble */
+        assign dot_crumble_op_a[0]  = {dot_signed_i[1] & dot_op_c_a_i[1], dot_op_c_a_i[1:0]};
+        assign dot_crumble_op_a[1]  = {dot_signed_i[1] & dot_op_c_a_i[3], dot_op_c_a_i[3:2]};
+        assign dot_crumble_op_a[2]  = {dot_signed_i[1] & dot_op_c_a_i[5], dot_op_c_a_i[5:4]};
+        assign dot_crumble_op_a[3]  = {dot_signed_i[1] & dot_op_c_a_i[7], dot_op_c_a_i[7:6]};
+        assign dot_crumble_op_a[4]  = {dot_signed_i[1] & dot_op_c_a_i[9], dot_op_c_a_i[9:8]};
+        assign dot_crumble_op_a[5]  = {dot_signed_i[1] & dot_op_c_a_i[11], dot_op_c_a_i[11:10]};
+        assign dot_crumble_op_a[6]  = {dot_signed_i[1] & dot_op_c_a_i[13], dot_op_c_a_i[13:12]};
+        assign dot_crumble_op_a[7]  = {dot_signed_i[1] & dot_op_c_a_i[15], dot_op_c_a_i[15:14]};
+        assign dot_crumble_op_a[8]  = {dot_signed_i[1] & dot_op_c_a_i[17], dot_op_c_a_i[17:16]};
+        assign dot_crumble_op_a[9]  = {dot_signed_i[1] & dot_op_c_a_i[19], dot_op_c_a_i[19:18]};
+        assign dot_crumble_op_a[10] = {dot_signed_i[1] & dot_op_c_a_i[21], dot_op_c_a_i[21:20]};
+        assign dot_crumble_op_a[11] = {dot_signed_i[1] & dot_op_c_a_i[23], dot_op_c_a_i[23:22]};
+        assign dot_crumble_op_a[12] = {dot_signed_i[1] & dot_op_c_a_i[25], dot_op_c_a_i[25:24]};
+        assign dot_crumble_op_a[13] = {dot_signed_i[1] & dot_op_c_a_i[27], dot_op_c_a_i[27:26]};
+        assign dot_crumble_op_a[14] = {dot_signed_i[1] & dot_op_c_a_i[29], dot_op_c_a_i[29:28]};
+        assign dot_crumble_op_a[15] = {dot_signed_i[1] & dot_op_c_a_i[31], dot_op_c_a_i[31:30]};
+
+        assign dot_crumble_op_b[0]  = {dot_signed_i[0] & dot_op_c_b_i[1], dot_op_c_b_i[1:0]};
+        assign dot_crumble_op_b[1]  = {dot_signed_i[0] & dot_op_c_b_i[3], dot_op_c_b_i[3:2]};
+        assign dot_crumble_op_b[2]  = {dot_signed_i[0] & dot_op_c_b_i[5], dot_op_c_b_i[5:4]};
+        assign dot_crumble_op_b[3]  = {dot_signed_i[0] & dot_op_c_b_i[7], dot_op_c_b_i[7:6]};
+        assign dot_crumble_op_b[4]  = {dot_signed_i[0] & dot_op_c_b_i[9], dot_op_c_b_i[9:8]};
+        assign dot_crumble_op_b[5]  = {dot_signed_i[0] & dot_op_c_b_i[11], dot_op_c_b_i[11:10]};
+        assign dot_crumble_op_b[6]  = {dot_signed_i[0] & dot_op_c_b_i[13], dot_op_c_b_i[13:12]};
+        assign dot_crumble_op_b[7]  = {dot_signed_i[0] & dot_op_c_b_i[15], dot_op_c_b_i[15:14]};
+        assign dot_crumble_op_b[8]  = {dot_signed_i[0] & dot_op_c_b_i[17], dot_op_c_b_i[17:16]};
+        assign dot_crumble_op_b[9]  = {dot_signed_i[0] & dot_op_c_b_i[19], dot_op_c_b_i[19:18]};
+        assign dot_crumble_op_b[10] = {dot_signed_i[0] & dot_op_c_b_i[21], dot_op_c_b_i[21:20]};
+        assign dot_crumble_op_b[11] = {dot_signed_i[0] & dot_op_c_b_i[23], dot_op_c_b_i[23:22]};
+        assign dot_crumble_op_b[12] = {dot_signed_i[0] & dot_op_c_b_i[25], dot_op_c_b_i[25:24]};
+        assign dot_crumble_op_b[13] = {dot_signed_i[0] & dot_op_c_b_i[27], dot_op_c_b_i[27:26]};
+        assign dot_crumble_op_b[14] = {dot_signed_i[0] & dot_op_c_b_i[29], dot_op_c_b_i[29:28]};
+        assign dot_crumble_op_b[15] = {dot_signed_i[0] & dot_op_c_b_i[31], dot_op_c_b_i[31:30]};
+
+        assign dot_crumble_mul[0]  = $signed(dot_crumble_op_a[0]) * $signed(dot_crumble_op_b[0]);
+        assign dot_crumble_mul[1]  = $signed(dot_crumble_op_a[1]) * $signed(dot_crumble_op_b[1]);
+        assign dot_crumble_mul[2]  = $signed(dot_crumble_op_a[2]) * $signed(dot_crumble_op_b[2]);
+        assign dot_crumble_mul[3]  = $signed(dot_crumble_op_a[3]) * $signed(dot_crumble_op_b[3]);
+        assign dot_crumble_mul[4]  = $signed(dot_crumble_op_a[4]) * $signed(dot_crumble_op_b[4]);
+        assign dot_crumble_mul[5]  = $signed(dot_crumble_op_a[5]) * $signed(dot_crumble_op_b[5]);
+        assign dot_crumble_mul[6]  = $signed(dot_crumble_op_a[6]) * $signed(dot_crumble_op_b[6]);
+        assign dot_crumble_mul[7]  = $signed(dot_crumble_op_a[7]) * $signed(dot_crumble_op_b[7]);
+        assign dot_crumble_mul[8]  = $signed(dot_crumble_op_a[8]) * $signed(dot_crumble_op_b[8]);
+        assign dot_crumble_mul[9]  = $signed(dot_crumble_op_a[9]) * $signed(dot_crumble_op_b[9]);
+        assign dot_crumble_mul[10]  = $signed(dot_crumble_op_a[10]) * $signed(dot_crumble_op_b[10]);
+        assign dot_crumble_mul[11]  = $signed(dot_crumble_op_a[11]) * $signed(dot_crumble_op_b[11]);
+        assign dot_crumble_mul[12]  = $signed(dot_crumble_op_a[12]) * $signed(dot_crumble_op_b[12]);
+        assign dot_crumble_mul[13]  = $signed(dot_crumble_op_a[13]) * $signed(dot_crumble_op_b[13]);
+        assign dot_crumble_mul[14]  = $signed(dot_crumble_op_a[14]) * $signed(dot_crumble_op_b[14]);
+        assign dot_crumble_mul[15]  = $signed(dot_crumble_op_a[15]) * $signed(dot_crumble_op_b[15]);
+
+        assign dot_crumble_result = $signed(dot_crumble_mul[0]) + $signed(dot_crumble_mul[1]) +
+                                    $signed(dot_crumble_mul[2]) + $signed(dot_crumble_mul[3]) +
+                                    $signed(dot_crumble_mul[4]) + $signed(dot_crumble_mul[5]) +
+                                    $signed(dot_crumble_mul[6]) + $signed(dot_crumble_mul[7]) +
+                                    $signed(dot_crumble_mul[8]) + $signed(dot_crumble_mul[9]) +
+                                    $signed(dot_crumble_mul[10]) + $signed(dot_crumble_mul[11]) +
+                                    $signed(dot_crumble_mul[12]) + $signed(dot_crumble_mul[13]) +
+                                    $signed(dot_crumble_mul[14]) + $signed(dot_crumble_mul[15]) +
+                                    $signed(dot_op_c_i);
+
+        assign dot_short_op_a[0]    = {dot_signed_i[1] & dot_op_h_a_i[15], dot_op_h_a_i[15: 0]};
+        assign dot_short_op_a[1]    = {dot_signed_i[1] & dot_op_h_a_i[31], dot_op_h_a_i[31:16]};
+        assign dot_short_op_a_1_neg = dot_short_op_a[1] ^ {17{(clpx_img_i)}}; //negates whether clpx_img_i is 0 or 1, only REAL PART needs to be negated
+
+        assign dot_short_op_b[0] = clpx_img_i ? {dot_signed_i[0] & dot_op_h_b_i[31], dot_op_h_b_i[31:16]} : {dot_signed_i[0] & dot_op_h_b_i[15], dot_op_h_b_i[15: 0]};
+        assign dot_short_op_b[1] = clpx_img_i ? {dot_signed_i[0] & dot_op_h_b_i[15], dot_op_h_b_i[15: 0]} : {dot_signed_i[0] & dot_op_h_b_i[31], dot_op_h_b_i[31:16]};
 
         assign dot_short_mul[0]  = $signed(dot_short_op_a[0]) * $signed(dot_short_op_b[0]);
         assign dot_short_mul[1]  = $signed(dot_short_op_a_1_neg) * $signed(dot_short_op_b[1]);
@@ -295,8 +407,10 @@ module riscv_mult
         assign clpx_shift_result = $signed(dot_short_result[31:15])>>>clpx_shift_i;
 
      end else begin
-        assign dot_char_result  = '0;
-        assign dot_short_result = '0;
+        assign dot_char_result    = '0;
+        assign dot_short_result   = '0;
+        assign dot_nibble_result  = '0;
+        assign dot_crumble_result = '0;
      end
   endgenerate
 
@@ -319,6 +433,8 @@ module riscv_mult
       MUL_I, MUL_IR, MUL_H: result_o = short_result[31:0];
 
       MUL_DOT8:  result_o = dot_char_result[31:0];
+      MUL_DOT4:  result_o = dot_nibble_result[31:0];
+      MUL_DOT2:  result_o = dot_crumble_result[31:0];
       MUL_DOT16: begin
         if(is_clpx_i) begin
           if(clpx_img_i) begin

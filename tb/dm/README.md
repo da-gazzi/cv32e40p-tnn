@@ -49,3 +49,4 @@ Example Run
 3. (in new terminal) `export JTAG_VPI_PORT=port_name_from 1.`
 2. (in new terminal) `openocd -f pulpissimo_debug.cfg`
 4. Now you can connect with gdb and interact with the testbench
+

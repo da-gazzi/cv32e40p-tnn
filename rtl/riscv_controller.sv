@@ -291,13 +291,11 @@ module riscv_controller
 
     perf_pipeline_stall_o  = 1'b0;
 
-
     //this signal goes to 1 only registered interrupt requests are killed by exc_kill_o
     //so that the current instructions will have the deassert_we_o signal equal to 0 once the controller is back to DECODE
     instr_valid_irq_flush_n = 1'b0;
 
     hwloop_mask_o           = 1'b0;
-
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
       RESET:
@@ -436,6 +434,7 @@ module riscv_controller
           // branch in the EX stage is either not taken, or there is no
           // conditional branch in the EX stage
           else if (instr_valid_i || instr_valid_irq_flush_q) //valid block or replay after interrupt speculation
+
           begin // now analyze the current instruction in the ID stage
 
             is_decoding_o = 1'b1;
@@ -647,10 +646,10 @@ module riscv_controller
             exc_kill_o              = 1'b1;
             instr_valid_irq_flush_n = 1'b1;
             ctrl_fsm_ns             = DECODE;
+
           end
         end
       end
-
       IRQ_FLUSH_ELW:
       begin
         is_decoding_o = 1'b0;
@@ -685,6 +684,7 @@ module riscv_controller
         if(id_ready_i)
           ctrl_fsm_ns = (debug_req_i & ~debug_mode_q) ? DBG_FLUSH : IRQ_FLUSH_ELW;
           // if from the ELW EXE we go to IRQ_FLUSH_ELW, it is assumed that if there was an IRQ req together with the grant and IE was valid, then
+
           // there must be no hazard due to xIE
         else
           ctrl_fsm_ns = ELW_EXE;
@@ -1086,7 +1086,6 @@ module riscv_controller
       illegal_insn_q <= 1'b0;
 
       instr_valid_irq_flush_q <= 1'b0;
-
     end
     else
     begin

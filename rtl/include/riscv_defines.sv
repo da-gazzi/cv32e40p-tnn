@@ -173,18 +173,23 @@ parameter ALU_FMAX    = 7'b1000110;
 parameter ALU_FMIN    = 7'b1000111;
 parameter ALU_FCLASS  = 7'b1001000;
 
-parameter MUL_MAC32 = 3'b000;
-parameter MUL_MSU32 = 3'b001;
-parameter MUL_I     = 3'b010;
-parameter MUL_IR    = 3'b011;
-parameter MUL_DOT8  = 3'b100;
-parameter MUL_DOT16 = 3'b101;
-parameter MUL_H     = 3'b110;
+
+parameter MUL_MAC32 = 4'b0000;
+parameter MUL_MSU32 = 4'b0001;
+parameter MUL_I     = 4'b0010;
+parameter MUL_IR    = 4'b0011;
+parameter MUL_DOT8  = 4'b0100;
+parameter MUL_DOT16 = 4'b0101;
+parameter MUL_H     = 4'b0110;
+parameter MUL_DOT4  = 4'b1000;
+parameter MUL_DOT2  = 4'b1001;
 
 // vector modes
-parameter VEC_MODE32 = 2'b00;
-parameter VEC_MODE16 = 2'b10;
-parameter VEC_MODE8  = 2'b11;
+parameter VEC_MODE32 = 3'b000;
+parameter VEC_MODE16 = 3'b010;
+parameter VEC_MODE8  = 3'b011;
+parameter VEC_MODE4  = 3'b100;
+parameter VEC_MODE2  = 3'b110;
 
 /////////////////////////////////////////////////////////
 //    ____ ____    ____            _     _             //
@@ -444,6 +449,7 @@ parameter PCMR_USER = 12'hCC1; //NON standard read-only (User CSRs). Old address
 
 parameter PCER_MACHINE = 12'h7E0; //NON standard read/write (Machine CSRs)
 parameter PCMR_MACHINE = 12'h7E1; //NON standard read/write (Machine CSRs)
+
 
 // Debug CSR
 parameter CSR_DCSR           = 12'h7b0;
