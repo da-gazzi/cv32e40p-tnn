@@ -481,7 +481,6 @@ module riscv_alu
           shift_right_result[ 3: 2] = $signed( {shift_arithmetic & shift_op_a[31], shift_op_a[ 3: 2] }) >>> shift_amt_int[ 2];
           shift_right_result[ 1: 0] = $signed( {shift_arithmetic & shift_op_a[31], shift_op_a[ 1: 0] }) >>> shift_amt_int[ 0];
       end
->>>>>>> 72dfac9... add Xpulpnn extension
       default: // VEC_MODE32
       begin
           shift_right_result = shift_op_a_32 >> shift_amt_int[4:0];
