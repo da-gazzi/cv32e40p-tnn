@@ -1607,7 +1607,10 @@ module riscv_id_stage
           mult_dot_op_c_ex_o        <= alu_operand_c;
           mult_is_clpx_ex_o         <= is_clpx;
           mult_clpx_shift_ex_o      <= instr[14:13];
-          //mult_clpx_img_ex_o        <= instr[25];
+          if (is_clpx) 
+            mult_clpx_img_ex_o        <= instr[25];
+          else
+            mult_clpx_img_ex_o      <= '0;
         end
 
         qnt_en_ex_o                 <= qnt_enable;
