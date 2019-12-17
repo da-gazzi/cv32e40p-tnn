@@ -1590,10 +1590,12 @@ module riscv_id_stage
             MUL_DOT16: begin
               mult_dot_op_h_a_ex_o        <= alu_operand_a;
               mult_dot_op_h_b_ex_o        <= alu_operand_b;
+	            mult_clpx_img_ex_o          <= instr[25];
             end
             MUL_DOT8: begin
               mult_dot_op_b_a_ex_o        <= alu_operand_a;
               mult_dot_op_b_b_ex_o        <= alu_operand_b;
+              //mult_clpx_img_ex_o          <= instr[25];
             end
             MUL_DOT4: begin
               mult_dot_op_n_a_ex_o        <= alu_operand_a;
@@ -1607,10 +1609,10 @@ module riscv_id_stage
           mult_dot_op_c_ex_o        <= alu_operand_c;
           mult_is_clpx_ex_o         <= is_clpx;
           mult_clpx_shift_ex_o      <= instr[14:13];
-          if (is_clpx) 
-            mult_clpx_img_ex_o        <= instr[25];
-          else
-            mult_clpx_img_ex_o      <= '0;
+          //if (is_clpx) 
+            //mult_clpx_img_ex_o        <= instr[25];
+          //else
+            //mult_clpx_img_ex_o      <= '0;
         end
 
         qnt_en_ex_o                 <= qnt_enable;

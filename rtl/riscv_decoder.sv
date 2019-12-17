@@ -2055,38 +2055,58 @@ module riscv_decoder
         // vector size
         unique case( instr_rdata_i[14:12])
           3'b000: begin alu_vec_mode_o = VEC_MODE16; mult_operator_o = MUL_DOT16; regb_used_o = 1'b1; end
-          3'b100: begin alu_vec_mode_o = VEC_MODE16; mult_operator_o = MUL_DOT16; scalar_replication_o = 1'b1; regb_used_o = 1'b1; end
-          3'b110: begin alu_vec_mode_o = VEC_MODE16; mult_operator_o = MUL_DOT16; scalar_replication_o = 1'b1; alu_op_b_mux_sel_o = OP_B_IMM; end
-          3'b001: begin alu_vec_mode_o = VEC_MODE8;  mult_operator_o = MUL_DOT8; regb_used_o = 1'b1; end
-          3'b101: begin alu_vec_mode_o = VEC_MODE8;  mult_operator_o = MUL_DOT8; scalar_replication_o = 1'b1; regb_used_o = 1'b1; end
-          3'b111: begin alu_vec_mode_o = VEC_MODE8;  mult_operator_o = MUL_DOT8; scalar_replication_o = 1'b1; alu_op_b_mux_sel_o = OP_B_IMM; end
+          3'b100: begin
+                    alu_vec_mode_o = VEC_MODE16; 
+                    mult_operator_o = MUL_DOT16; 
+                    scalar_replication_o = 1'b1; 
+                    regb_used_o = 1'b1; 
+                  end
+          3'b110: begin 
+                    alu_vec_mode_o = VEC_MODE16; 
+                    mult_operator_o = MUL_DOT16; 
+                    scalar_replication_o = 1'b1; 
+                    alu_op_b_mux_sel_o = OP_B_IMM; 
+                  end
+          3'b001: begin 
+                    alu_vec_mode_o = VEC_MODE8;  
+                    mult_operator_o = MUL_DOT8; 
+                    regb_used_o = 1'b1; 
+                  end
+          3'b101: begin
+                    alu_vec_mode_o = VEC_MODE8;  
+                    mult_operator_o = MUL_DOT8; 
+                    scalar_replication_o = 1'b1; 
+                    regb_used_o = 1'b1;
+                  end
+          3'b111: begin 
+                    alu_vec_mode_o = VEC_MODE8;  
+                    mult_operator_o = MUL_DOT8; 
+                    scalar_replication_o = 1'b1; 
+                    alu_op_b_mux_sel_o = OP_B_IMM; 
+                  end
           3'b010: begin
-            regb_used_o = 1'b1;
-            if(instr_rdata_i[25]) begin
-              alu_vec_mode_o  = VEC_MODE2;
-              mult_operator_o = MUL_DOT2;
-              qnt_vecmode_o   = VEC_MODE2;
-
-              //regb_used_o = 1'b1;
-            end else begin
-              alu_vec_mode_o = VEC_MODE4;
-              mult_operator_o = MUL_DOT4;
-              qnt_vecmode_o   = VEC_MODE4;
-
-              //regb_used_o = 1'b1;
-            end
-          end
+                    regb_used_o = 1'b1;
+                    if(instr_rdata_i[25]) begin
+                      alu_vec_mode_o  = VEC_MODE2;
+                      mult_operator_o = MUL_DOT2;
+                      qnt_vecmode_o   = VEC_MODE2;
+                    end else begin
+                      alu_vec_mode_o = VEC_MODE4;
+                      mult_operator_o = MUL_DOT4;
+                      qnt_vecmode_o   = VEC_MODE4;
+                    end
+                  end
           3'b011: begin
-            scalar_replication_o = 1'b1;
-            regb_used_o = 1'b1;
-            if(instr_rdata_i[25]) begin
-              alu_vec_mode_o  = VEC_MODE2;
-              mult_operator_o = MUL_DOT2;
-            end else begin
-              alu_vec_mode_o = VEC_MODE4;
-              mult_operator_o = MUL_DOT4;
-            end
-          end
+                    scalar_replication_o = 1'b1;
+                    regb_used_o = 1'b1;
+                    if(instr_rdata_i[25]) begin
+                      alu_vec_mode_o  = VEC_MODE2;
+                      mult_operator_o = MUL_DOT2;
+                    end else begin
+                      alu_vec_mode_o = VEC_MODE4;
+                      mult_operator_o = MUL_DOT4;
+                    end
+                  end
           default: illegal_insn_o = 1'b1;
         endcase
 
@@ -2212,6 +2232,8 @@ module riscv_decoder
             alu_en_o             = 1'b0;
             mult_dot_en          = 1'b1;
             mult_dot_signed_o    = 2'b11;
+            alu_vec_mode_o       = VEC_MODE16; 
+            mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             regc_used_o          = 1'b1;
             regc_mux_o           = REGC_RD;
@@ -2223,6 +2245,8 @@ module riscv_decoder
 
           6'b01101_1: begin // pv.subrotmj.h.{/,div2,div4,div8}
             alu_operator_o       = ALU_SUB;
+            alu_vec_mode_o       = VEC_MODE16; 
+            mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
             alu_op_b_mux_sel_o   = OP_B_REGB_OR_FWD;
@@ -2232,6 +2256,8 @@ module riscv_decoder
 
           6'b01011_1: begin // pv.cplxconj.h
             alu_operator_o       = ALU_ABS;
+            alu_vec_mode_o       = VEC_MODE16; 
+            mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
             regb_used_o          = 1'b0;
@@ -2239,6 +2265,8 @@ module riscv_decoder
 
           6'b01110_1: begin // pv.add.h.{div2,div4,div8}
             alu_operator_o       = ALU_ADD;
+            alu_vec_mode_o       = VEC_MODE16; 
+            mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
             alu_op_b_mux_sel_o   = OP_B_REGB_OR_FWD;
@@ -2247,6 +2275,8 @@ module riscv_decoder
 
           6'b01100_1: begin // pv.sub.h.{div2,div4,div8}
             alu_operator_o       = ALU_SUB;
+            alu_vec_mode_o       = VEC_MODE16; 
+            mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
             alu_op_b_mux_sel_o   = OP_B_REGB_OR_FWD;
