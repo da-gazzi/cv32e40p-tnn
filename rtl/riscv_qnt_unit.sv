@@ -70,18 +70,22 @@ module riscv_qnt_unit
   // LSB of input , first pixel to be qnt
   // take only 16 bit of thresholds- threshols are native 16 bit
   //consider eliminate is_prev_inv_comp2
-  assign comp_op_a   = (inverted_comp==1'b1) ? threshold_i[15: 0]  : op_a_i[15: 0] ;
-  assign comp_op_b   = (inverted_comp==1'b1) ? op_a_i[15: 0]       : threshold_i[15: 0];
+  assign comp_op_a   =  op_a_i[15: 0] ;
+  assign comp_op_b   =  threshold_i[15: 0];
+  //assign comp_op_a   = (inverted_comp==1'b1) ? threshold_i[15: 0]  : op_a_i[15: 0] ;
+  //assign comp_op_b   = (inverted_comp==1'b1) ? op_a_i[15: 0]       : threshold_i[15: 0];
 
   // MSB of input , second pixel to be qnt
   // take only 16 bit of thresholds- threshols are native 16 bit
   //consider eliminate is_prev_inv_comp2
-  assign comp2_op_a   = (inverted_comp2==1'b1) ? threshold_i[15: 0]  : op_a_i[31:16] ;
-  assign comp2_op_b   = (inverted_comp2==1'b1) ? op_a_i[31:16]       : threshold_i[15: 0];
+  assign comp2_op_a   = op_a_i[31:16] ;
+  assign comp2_op_b   =  threshold_i[15: 0];
+  //assign comp2_op_a   = (inverted_comp2==1'b1) ? threshold_i[15: 0]  : op_a_i[31:16] ;
+  //assign comp2_op_b   = (inverted_comp2==1'b1) ? op_a_i[31:16]       : threshold_i[15: 0];
 
   // Comparison of input pixels with thresholds
-  assign cmp_res  = ($signed(comp_op_a)  > $signed(comp_op_b)) ;
-  assign cmp_res2 = ($signed(comp2_op_a) > $signed(comp2_op_b));
+  assign cmp_res  = (inverted_comp ==1'b1) ? !($signed(comp_op_a)  > $signed(comp_op_b))  : ($signed(comp_op_a)  > $signed(comp_op_b));
+  assign cmp_res2 = (inverted_comp2==1'b1) ? !($signed(comp2_op_a) > $signed(comp2_op_b)) : ($signed(comp2_op_a) > $signed(comp2_op_b));
 
 
   // temporary register, needed to make the upload of qntzed pix accordingly to the comp result
