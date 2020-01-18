@@ -27,7 +27,7 @@ module riscv_qnt_unit
   );
 
   // FSM signals
-  typedef enum      logic [4:0] {INIT, FIRST_CMP, FIRST_CMP2, SECOND_CMP, SECOND_CMP2, THIRD_CMP, THIRD_CMP2, FOURTH_CMP, FINISH} state;
+  typedef enum      logic [4:0] {INIT, FIRST_CMP, SECOND_CMP, FINISH, WAIT_GNT_FST, WAIT_GNT_SND} state;
   logic             is_stall, inverted_comp, is_prev_inv_comp2, is_not_first_addr, res_shift_en, update_on_previous, is_second_pix_fetch_addr, update_first_pix, update_second_pix, inverted_comp2, is_prev_inv_comp;
   logic [1:0]       addr_incr;
   logic 	    is_stall_q;
@@ -64,6 +64,8 @@ module riscv_qnt_unit
   logic [ 5: 0]    th_address2;
   logic [15: 0]    op_b2;
   logic [ 5: 0]    offset_init;
+  logic [ 2: 0]    cnt_qnt_q, cnt_qnt_n;
+
 
   // DATAPATH : COMPARISON AND UPDATE OF RESULT
 
@@ -103,10 +105,10 @@ module riscv_qnt_unit
   always_comb begin
     offset_a = 4'b0000;
     case(addr_incr)
-      2'b00: offset_a = 4'b0000;  //offset a is 4 bit
-      2'b01: offset_a = 4'b1000;
-      2'b10: offset_a = 4'b0100;
-      2'b11: offset_a = 4'b0010;
+      2'b00: begin if(vecmode_i == VEC_MODE2)  offset_a = 4'b0000;  else offset_a = 4'b0000; end //offset a is 4 bit
+      2'b01: begin if(vecmode_i == VEC_MODE2) offset_a = 4'b0010; else  offset_a = 4'b1000; end
+      2'b10: begin if(vecmode_i == VEC_MODE2) offset_a = 4'b0000; else offset_a = 4'b0100; end
+      2'b11: begin if(vecmode_i == VEC_MODE2) offset_a = 4'b0000; else offset_a = 4'b0010; end
     endcase // case (addr_incr)
   end
 
@@ -119,11 +121,11 @@ module riscv_qnt_unit
 
 
   // next address should remain fixed if at this cycle we are processing the other pixel
-  assign next_address  = is_second_pix_fetch_addr ? th_address : ((cmp_res_q  ^ is_prev_inv_comp) ? (th_address  + offset_a): (th_address  - offset_a));
-  assign next_address2 = is_second_pix_fetch_addr ? ((cmp_res2_q ^ is_prev_inv_comp2) ? (th_address2 + offset_a): (th_address2 - offset_a)) : th_address2;
+  assign next_address  = (is_second_pix_fetch_addr ? th_address : ((cmp_res_q  ^ is_prev_inv_comp) ? (th_address  + offset_a): (th_address  - offset_a)));
+  assign next_address2 = (is_second_pix_fetch_addr ? ((cmp_res2_q ^ is_prev_inv_comp2) ? (th_address2 + offset_a): (th_address2 - offset_a)) : th_address2);
 
   // here we need a signal to choose properly the address to send to the LSU
-  assign threshold_address_o = is_second_pix_fetch_addr ? {op_b_i[31:16], op_b2[15:6], next_address2} :  {op_b_i[31:6], next_address};
+  assign threshold_address_o = (is_second_pix_fetch_addr ? {op_b_i[31:16], op_b2[15:6], next_address2} :  {op_b_i[31:6], next_address});
 
 
   // DATA REGISTERS
@@ -142,11 +144,16 @@ module riscv_qnt_unit
       cmp_res2_q      <=  1'b0;
       res_q           <= 32'b0;
       res2_q          <= 32'b0;
+      cnt_qnt_q       <= '0;
     end else if (enable_i & ~is_stall) begin
       curr_address    <= next_address;
       curr_address2   <= next_address2;
       cmp_res_q       <= cmp_res;
       cmp_res2_q      <= cmp_res2;
+      res_q           <= res_n;
+      res2_q          <= res2_n;
+      cnt_qnt_q       <= cnt_qnt_n;
+    end else if (enable_i) begin
       res_q           <= res_n;
       res2_q          <= res2_n;
     end
@@ -178,238 +185,126 @@ module riscv_qnt_unit
     ns = INIT;
     ready_o = 1'b1;
     result_o = 32'b0;
-
+    cnt_qnt_n = cnt_qnt_q;
     case(cs)
       INIT: begin
+      cnt_qnt_n = '0;
         if(enable_i) begin
           threshold_request_o = 1'b1;
           ready_o = 1'b0;
+          if (request_granted_i)
+            ns = FIRST_CMP;
+          else
+            ns = INIT;
         end
-
-        if (request_granted_i & enable_i)
-          ns = FIRST_CMP;
-        else
-          ns = INIT;
 
       end
 
       FIRST_CMP: begin
         ready_o = 1'b0;
-        inverted_comp = 1'b1;
-        is_prev_inv_comp = 1'b1;
-        is_prev_inv_comp2 = 1'b1;  //onsider eliminte this signal
-        inverted_comp2 = 1'b1;
+        //inverted_comp = 1'b1;
+        //is_prev_inv_comp = 1'b1;
+        //is_prev_inv_comp2 = 1'b1;  //onsider eliminte this signal
+        //inverted_comp2 = 1'b1;
         //addr_incr = 2'h0;  // here we gen the first address of thresh of pix 2, then +/-0
         //is_not_first_addr = 1'b0;  // here we generate the first address of threhold related to pixel 2, update on initial address
-        res_shift_en = 1'b1;  // shift enabled for pixel 1
+        //res_shift_en = 1'b1;  // shift enabled for pixel 1
         //update_on_previous = 1'b0;  // update on '0' --> init
         is_second_pix_fetch_addr = 1'b1; // fetch address of threshold pixel 2
-        update_first_pix = 1'b1; // enable partial result pixel 1
+        is_not_first_addr = cnt_qnt_q== 3'b0 ? 1'b0 : 1'b1;
+        //update_first_pix = 1'b1; // enable partial result pixel 1
         //update_second_pix = 1'b0; // disable partial result pixel 2
         threshold_request_o = 1'b1;
 
-
-        if(vecmode_i == VEC_MODE2) begin
-          if (threshold_valid_i & request_granted_i) begin
-            ns = THIRD_CMP2;
-	     is_stall = 1'b0;
+        if(threshold_valid_i) begin
+          inverted_comp = cnt_qnt_q== 3'b0 ? 1'b1 :1'b0;
+          is_prev_inv_comp = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+          is_prev_inv_comp2 = cnt_qnt_q== 1 ? 1'b1 :1'b0;  //onsider eliminte this signal
+          inverted_comp2 = cnt_qnt_q== 0 ? 1'b1 :1'b0;
+          update_on_previous = (cnt_qnt_q>0) ? 1'b1 : 1'b0;
+          res_shift_en = 1'b1;
+          update_first_pix = 1'b1;
+          addr_incr = cnt_qnt_q;
+          if(request_granted_i) begin
+            if(vecmode_i == VEC_MODE2) begin
+              ns = cnt_qnt_q == 1 ? FINISH : SECOND_CMP;
+            end else begin
+              ns = cnt_qnt_q == 3 ? FINISH : SECOND_CMP;
+            end
+            cnt_qnt_n = cnt_qnt_q + 1;
           end else begin
-            ns = FIRST_CMP;
-	    is_stall = 1'b1;
-	  end
-
-        end else begin
-	  if(is_stall_q) begin
-	     if (threshold_valid_i | request_granted_i) begin
-		ns = FIRST_CMP2;
-	     end else begin
-		ns = FIRST_CMP;
-		is_stall = 1'b1;
-	     end
-	  end else if (threshold_valid_i & request_granted_i) begin
-            ns = FIRST_CMP2;
-	    is_stall = 1'b0;
-          end else begin
-            ns = FIRST_CMP;
-	    is_stall = 1'b1;
+            is_stall = 1'b1;
+            ns = WAIT_GNT_SND;
           end
-	end // else: !if(vecmode_i == VEC_MODE2)
-      end
-
-      FIRST_CMP2: begin
-        ready_o = 1'b0;
-        inverted_comp = 1'b1;
-        inverted_comp2 = 1'b1;
-        is_prev_inv_comp = 1'b1;
-        is_prev_inv_comp2 = 1'b1;  //consider eliminte this signal
-        addr_incr = 2'h1;  // here we gen the second address of thresh of pix 1, then +/- 4 in the tree
-        is_not_first_addr = 1'b1;  // update address on previous value
-        res_shift_en = 1'b1;  // shift enabled for pixel 2
-        //update_on_previous = 1'b0;  // update on '0' --> init pixel 2
-        //is_second_pix_fetch_addr = 1'b0; // fetch address of threshold pixel 1
-        update_second_pix = 1'b1; // enable partial result pixel 2
-        //update_first_pix = 1'b0; // disable partial result pixel 1
-        threshold_request_o = 1'b1;
-        if(is_stall_q) begin
-	   if (threshold_valid_i | request_granted_i) begin
-	      ns = SECOND_CMP;
-	   end else begin
-	      ns = FIRST_CMP2;
-	      is_stall = 1'b1;
-	   end
-	end else if (threshold_valid_i & request_granted_i) begin
-          ns = SECOND_CMP;
-	  is_stall = 1'b0;
-        end else begin
-          ns = FIRST_CMP2;
-	  is_stall = 1'b1;
-	end
+        end
       end
 
       SECOND_CMP: begin
         ready_o = 1'b0;
-        //inverted_comp = 1'b0;
-        is_prev_inv_comp2 = 1'b1;  //consider eliminte this signal
-        addr_incr = 2'h1;  // here we gen the second address of thresh of pix 2, then +/- 4 in the tree
-        is_not_first_addr = 1'b1;  // update on previous address
-        res_shift_en = 1'b1;  // shift enabled for pixel 1
-        update_on_previous = 1'b1;  // update on previous partial result
-        is_second_pix_fetch_addr = 1'b1; // fetch address of threshold pixel 2
-        update_first_pix = 1'b1; // enable partial result pixel 1
-        //update_second_pix = 1'b0; // disable partial result pixel 2
-        threshold_request_o = 1'b1;
-	if(is_stall_q) begin
-	   if (threshold_valid_i | request_granted_i) begin
-	      ns = SECOND_CMP2;
-	   end else begin
-	      ns = SECOND_CMP;
-	      is_stall = 1'b1;
-	   end
-	end else if (threshold_valid_i & request_granted_i) begin
-           ns = SECOND_CMP2;
-	   is_stall = 1'b0;
-        end else begin
-           ns = SECOND_CMP;
-	   is_stall = 1'b1;
-	end
-      end // case: SECOND_CMP
-
-      SECOND_CMP2: begin   // cmp pix 2 with secondo threshold, fetch third threshold related to pix 1
-        ready_o = 1'b0;
-        //inverted_comp = 1'b0;
-        //is_prev_inv_comp2 = 1'b0;  //consider eliminte this signal
-        addr_incr = 2'h2;  // here we gen the third address of thresh of pix 1, then +/- 2 in the tree
-        is_not_first_addr = 1'b1;  // update on previous address
-        res_shift_en = 1'b1;  // shift enabled for pixel 2
-        update_on_previous = 1'b1;  // update on previous partial result
+        //addr_incr = 2'h1;  // here we gen the second address of thresh of pix 1, then +/- 4 in the tree
+        is_not_first_addr = cnt_qnt_q== 3'b0 ? 1'b0 : 1'b1;
+        //res_shift_en = 1'b1;  // shift enabled for pixel 2
+        //update_on_previous = 1'b0;  // update on '0' --> init pixel 2
         //is_second_pix_fetch_addr = 1'b0; // fetch address of threshold pixel 1
+        //update_second_pix = 1'b1; // enable partial result pixel 2
         //update_first_pix = 1'b0; // disable partial result pixel 1
-        update_second_pix = 1'b1; // enable partial result pixel 2
         threshold_request_o = 1'b1;
-	if(is_stall_q) begin
-	   if (threshold_valid_i | request_granted_i) begin
-	      ns = THIRD_CMP;
-	   end else begin
-	      ns = SECOND_CMP2;
-	      is_stall = 1'b1;
-	   end
-	end else if (threshold_valid_i & request_granted_i) begin
-           ns = THIRD_CMP;
-	   is_stall = 1'b0;
-        end else begin
-           ns = SECOND_CMP2;
-	   is_stall = 1'b1;
-	end
-      end
 
-      THIRD_CMP: begin   // cmp pixel 1 with third threshold, fetch third threshold of pixel 2
-        ready_o = 1'b0;
-        //inverted_comp = 1'b0;
-        //is_prev_inv_comp2 = 1'b0;  //consider eliminte this signal
-        addr_incr = 2'h2;  // here we gen the third address of thresh of pix 2, then +/- 2 in the tree
-        is_not_first_addr = 1'b1;  // update on previous address
-        res_shift_en = 1'b1;  // shift enabled for pixel 1
-        update_on_previous = 1'b1;  // update on previous partial result
-        is_second_pix_fetch_addr = 1'b1; // fetch address of threshold pixel 2
-        update_first_pix = 1'b1; // enable partial result pixel 1
-        //update_second_pix = 1'b0; // disable partial result pixel 2
-        threshold_request_o = 1'b1;
-	if(is_stall_q) begin
-	   if (threshold_valid_i | request_granted_i) begin
-	      ns = THIRD_CMP2;
-	   end else begin
-	      ns = THIRD_CMP;
-	      is_stall = 1'b1;
-	   end
-	end else if (threshold_valid_i & request_granted_i) begin
-          ns = THIRD_CMP2;
-	  is_stall = 1'b0;
-        end else begin
-          ns = THIRD_CMP;
-	  is_stall = 1'b1;
-	end
-      end
-
-      THIRD_CMP2: begin   // cmp pixel 2 with third threshold, fetch fourth threshold of pix 1
-        ready_o = 1'b0;
-        //inverted_comp = 1'b0;
-        if (vecmode_i == VEC_MODE2) begin
-          inverted_comp2 = 1'b1;
-          is_prev_inv_comp = 1'b1;
+        if(threshold_valid_i) begin
+          inverted_comp = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+          is_prev_inv_comp = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+          is_prev_inv_comp2 = cnt_qnt_q== 1 ? 1'b1 :1'b0;  //onsider eliminte this signal
+          inverted_comp2 = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+          update_on_previous = (cnt_qnt_q>1) ? 1'b1 : 1'b0;
+          res_shift_en = 1'b1;
+          update_second_pix = 1'b1;
+          addr_incr = cnt_qnt_q;
+          if(request_granted_i) begin
+            ns = FIRST_CMP;
+          end else begin
+            is_stall = 1'b1;
+            ns = WAIT_GNT_FST;
+          end
         end
-        //is_prev_inv_comp2 = 1'b0;  //consider eliminte this signal
-        addr_incr = 2'h3;  // here we gen the fourth address of thresh of pix 1, then +/- 1 in the tree
-        is_not_first_addr = 1'b1;  // update on previous address
-        res_shift_en = 1'b1;  // shift enabled for pixel 2
-        update_on_previous = 1'b1;  // update on previous partial result
-        //is_second_pix_fetch_addr = 1'b0; // fetch address of threshold pixel 1
-        //update_first_pix = 1'b0; // disable partial result pixel 1
-        update_second_pix = 1'b1; // enable partial result pixel 2
-        threshold_request_o = 1'b1;
-	if(is_stall_q) begin
-	   if (threshold_valid_i | request_granted_i) begin
-	      ns =FOURTH_CMP;
-	   end else begin
-	      ns = THIRD_CMP2;
-	      is_stall = 1'b1;
-	   end
-	end else if (threshold_valid_i & request_granted_i) begin
-           ns = FOURTH_CMP;
-	   is_stall = 1'b0;
-        end else begin
-           ns = THIRD_CMP2;
-	   is_stall = 1'b1;
-	end
-      end // case: THIRD_CMP2
+      end
 
-      FOURTH_CMP: begin  // cmp pixel 1 with fourth threshold, fetch fourth threshold of pix 2
+      WAIT_GNT_FST: begin
         ready_o = 1'b0;
-        //inverted_comp = 1'b0;
-        if( vecmode_i == VEC_MODE2)
-          is_prev_inv_comp2 = 1'b1;
-        //is_prev_inv_comp2 = 1'b0;  //consider eliminte this signal
-        addr_incr = 2'h3;  // here we gen the fourth address of thresh of pix 2, then +/- 1 in the tree
-        is_not_first_addr = 1'b1;  // update on previous address
-        res_shift_en = 1'b1;  // shift enabled for pixel 1, last update
-        update_on_previous = 1'b1;  // update on previous partial result
-        is_second_pix_fetch_addr = 1'b1; // fetch address of threshold pixel 2
-        update_first_pix = 1'b1; // enable partial result pixel 1
-        //update_second_pix = 1'b0; // disable partial result pixel 2
+        is_stall = 1'b1;
         threshold_request_o = 1'b1;
-	if(is_stall_q) begin
-	   if (threshold_valid_i | request_granted_i) begin
-	      ns = FINISH;
-	   end else begin
-	      ns = FOURTH_CMP;
-		is_stall = 1'b1;
-	   end
-	end else if (threshold_valid_i & request_granted_i) begin
-           ns = FINISH;
-	   is_stall = 1'b0;
+        is_not_first_addr = cnt_qnt_q== 3'b0 ? 1'b0 : 1'b1;
+        inverted_comp = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+        is_prev_inv_comp = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+        is_prev_inv_comp2 = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+        addr_incr = cnt_qnt_q;
+        if(request_granted_i) begin
+          ns = FIRST_CMP;
         end else begin
-           ns = FOURTH_CMP;
-	   is_stall = 1'b1;
-	end
+          is_stall = 1'b1;
+          ns = WAIT_GNT_FST;
+        end
+      end
+
+      WAIT_GNT_SND: begin
+        ready_o = 1'b0;
+        is_stall = 1'b1;
+        threshold_request_o = 1'b1;
+        is_second_pix_fetch_addr = 1'b1;
+        is_not_first_addr = cnt_qnt_q== 3'b0 ? 1'b0 : 1'b1;
+        is_prev_inv_comp = cnt_qnt_q== 1 ? 1'b1 :1'b0;
+        is_prev_inv_comp2 = cnt_qnt_q== 1 ? 1'b1 :1'b0;  //onsider eliminte this signal
+        inverted_comp2 = cnt_qnt_q== 0 ? 1'b1 :1'b0;
+        addr_incr = cnt_qnt_q;
+        if(request_granted_i) begin
+          if (((vecmode_i == VEC_MODE2) & (cnt_qnt_q == 1)) | ((vecmode_i == VEC_MODE4) & (cnt_qnt_q == 3))) begin
+            ns = FINISH;
+          end else begin
+            ns = SECOND_CMP;
+          end
+        end else begin
+          is_stall = 1'b1;
+          ns = WAIT_GNT_SND;
+        end
       end
 
       FINISH: begin
@@ -427,14 +322,14 @@ module riscv_qnt_unit
 
         if(threshold_valid_i) begin
           ns = INIT;
-	  is_stall = 1'b0;
+	        is_stall = 1'b0;
           if(vecmode_i == VEC_MODE2)
             result_o = { 28'b0 , res2_n[ 1: 0] , res_n[ 1: 0]};
           else
             result_o = { 24'b0 , res2_n[ 3: 0] , res_n[ 3: 0]};
-        end else begin
+          end else begin
           ns = cs;
-	  is_stall = 1'b1;
+	        is_stall = 1'b1;
         end
       end
 
