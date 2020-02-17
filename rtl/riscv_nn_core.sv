@@ -29,7 +29,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import apu_core_package::*;
+import apu_core_nn_package::*;
 
 `include "riscv_nn_config.sv"
 
