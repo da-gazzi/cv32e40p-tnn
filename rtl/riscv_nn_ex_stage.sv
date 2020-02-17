@@ -34,7 +34,7 @@
 
 `include "apu_macros.sv"
 
-import apu_core_package::*;
+import apu_core_nn_package::*;
 import riscv_nn_defines::*;
 
 module riscv_nn_ex_stage
