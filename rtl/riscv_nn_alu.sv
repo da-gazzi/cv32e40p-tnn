@@ -26,9 +26,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_alu
+module riscv_nn_alu
 #(
   parameter SHARED_INT_DIV = 0,
   parameter FPU            = 0
@@ -1304,7 +1304,7 @@ module riscv_alu
 
 
       // inputs A and B are swapped
-      riscv_alu_div div_i
+      riscv_nn_alu_div div_i
         (
          .Clk_CI       ( clk               ),
          .Rst_RBI      ( rst_n             ),

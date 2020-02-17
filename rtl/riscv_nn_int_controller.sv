@@ -21,9 +21,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_int_controller
+module riscv_nn_int_controller
 #(
   parameter PULP_SECURE = 0
 )

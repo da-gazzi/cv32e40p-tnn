@@ -24,7 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-module riscv_load_store_unit
+module riscv_nn_load_store_unit
 (
     input  logic         clk,
     input  logic         rst_n,

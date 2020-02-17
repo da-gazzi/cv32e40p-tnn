@@ -35,9 +35,9 @@
 `include "apu_macros.sv"
 
 import apu_core_package::*;
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_ex_stage
+module riscv_nn_ex_stage
 #(
   parameter USE_QNT          = 1,
   parameter FPU              =  0,
@@ -284,7 +284,7 @@ module riscv_ex_stage
   //                        //
   ////////////////////////////
 
-  riscv_alu
+  riscv_nn_alu
   #(
     .SHARED_INT_DIV( SHARED_INT_DIV ),
     .FPU           ( FPU            )
@@ -325,7 +325,7 @@ module riscv_ex_stage
   //                                                            //
   ////////////////////////////////////////////////////////////////
 
-  riscv_mult
+  riscv_nn_mult
   #(
     .SHARED_DSP_MULT(SHARED_DSP_MULT)
    )
@@ -374,7 +374,7 @@ module riscv_ex_stage
 generate
   if (USE_QNT==1) begin
 
-  riscv_qnt_unit     qnt_i
+  riscv_nn_qnt_unit     qnt_i
    (
 
     .clk             ( clk                  ),
@@ -420,7 +420,7 @@ generate
          //                                                //
          ////////////////////////////////////////////////////
 
-         riscv_apu_disp apu_disp_i
+         riscv_nn_apu_disp apu_disp_i
          (
          .clk_i              ( clk                            ),
          .rst_ni             ( rst_n                          ),

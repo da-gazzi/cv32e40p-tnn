@@ -27,7 +27,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module riscv_register_file
+module riscv_nn_register_file
 #(
     parameter ADDR_WIDTH    = 5,
     parameter DATA_WIDTH    = 32,

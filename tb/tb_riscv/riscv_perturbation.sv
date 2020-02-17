@@ -22,8 +22,8 @@
 //                                                                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
-`include "riscv_config.sv"
+import riscv_nn_defines::*;
+`include "riscv_nn_config.sv"
 
 module riscv_perturbation
 #(

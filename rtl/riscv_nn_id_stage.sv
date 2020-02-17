@@ -27,8 +27,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
-import apu_core_package::*;
+import riscv_nn_defines::*;
+import apu_core_nn_package::*;
 
 
 // Source/Destination register instruction index
@@ -37,7 +37,7 @@ import apu_core_package::*;
 `define REG_S4 31:27
 `define REG_D  11:07
 
-module riscv_id_stage
+module riscv_nn_id_stage
 #(
   parameter N_HWLP            =  2,
   parameter N_HWLP_BITS       =  $clog2(N_HWLP),
@@ -1059,7 +1059,7 @@ module riscv_id_stage
   //                                           //
   ///////////////////////////////////////////////
 
-  riscv_decoder
+  riscv_nn_decoder
     #(
       .FPU                 ( FPU                  ),
       .FP_DIVSQRT          ( FP_DIVSQRT           ),
@@ -1197,7 +1197,7 @@ module riscv_id_stage
   //                                                                //
   ////////////////////////////////////////////////////////////////////
 
-  riscv_controller
+  riscv_nn_controller
   #(
     .FPU ( FPU )
   )
@@ -1367,7 +1367,7 @@ module riscv_id_stage
 //                                                                    //
 ////////////////////////////////////////////////////////////////////////
 
-  riscv_int_controller
+  riscv_nn_int_controller
   #(
     .PULP_SECURE(PULP_SECURE)
    )
@@ -1405,7 +1405,7 @@ module riscv_id_stage
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
 
-  riscv_hwloop_regs
+  riscv_nn_hwloop_regs
   #(
     .N_REGS ( N_HWLP )
   )

@@ -9,8 +9,8 @@
 // specific language governing permissions and limitations under the License.
 
 
-package riscv_tracer_defines;
-import riscv_defines::*;
+package riscv_nn_tracer_defines;
+import riscv_nn_defines::*;
 
 // settings
 parameter bit SymbolicRegs = 0; // show abi names for registers

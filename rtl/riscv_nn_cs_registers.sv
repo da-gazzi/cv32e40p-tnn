@@ -26,7 +26,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
 `ifndef PULP_FPGA_EMUL
  `ifdef SYNTHESIS
@@ -34,7 +34,7 @@ import riscv_defines::*;
  `endif
 `endif
 
-module riscv_cs_registers
+module riscv_nn_cs_registers
 #(
   parameter N_HWLP        = 2,
   parameter N_HWLP_BITS   = $clog2(N_HWLP),

@@ -31,18 +31,17 @@
 
 import apu_core_package::*;
 
-`include "riscv_config.sv"
+`include "riscv_nn_config.sv"
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_core
+module riscv_nn_core
 #(
   parameter N_EXT_PERF_COUNTERS =  0,
   parameter INSTR_RDATA_WIDTH   = 32,
   parameter PULP_SECURE         =  0,
   parameter N_PMP_ENTRIES       = 16,
   parameter USE_PMP             =  1, //if PULP_SECURE is 1, you can still not use the PMP
-  parameter USE_QNT             =  0,
   parameter PULP_CLUSTER        =  1,
   parameter FPU                 =  0,
   parameter Zfinx               =  0,
@@ -129,6 +128,7 @@ module riscv_core
   localparam N_HWLP      = 2;
   localparam N_HWLP_BITS = $clog2(N_HWLP);
   localparam APU         = ((SHARED_DSP_MULT==1) | (SHARED_INT_DIV==1) | (FPU==1)) ? 1 : 0;
+  localparam USE_QNT     = 0;
 
   // IF/ID signals
   logic              is_hwlp_id;
@@ -480,7 +480,7 @@ module riscv_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  riscv_if_stage
+  riscv_nn_if_stage
   #(
     .N_HWLP              ( N_HWLP            ),
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH ),
@@ -562,7 +562,7 @@ module riscv_core
   //  |___|____/  |____/ |_/_/   \_\____|_____|  //
   //                                             //
   /////////////////////////////////////////////////
-  riscv_id_stage
+  riscv_nn_id_stage
   #(
     .N_HWLP                       ( N_HWLP               ),
     .PULP_SECURE                  ( PULP_SECURE          ),
@@ -789,7 +789,7 @@ module riscv_core
   //  |_____/_/\_\ |____/ |_/_/   \_\____|_____|     //
   //                                                 //
   /////////////////////////////////////////////////////
-  riscv_ex_stage
+  riscv_nn_ex_stage
   #(
    .USE_QNT          ( USE_QNT            ),
    .FPU              ( FPU                ),
@@ -944,7 +944,7 @@ module riscv_core
   //                                                                                    //
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  riscv_load_store_unit  load_store_unit_i
+  riscv_nn_load_store_unit  load_store_unit_i
   (
     .clk                   ( clk                ),
     .rst_n                 ( rst_ni             ),
@@ -1000,7 +1000,7 @@ module riscv_core
   //   Control and Status Registers   //
   //////////////////////////////////////
 
-  riscv_cs_registers
+  riscv_nn_cs_registers
   #(
     .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   ),
     .FPU             ( FPU                   ),
@@ -1125,7 +1125,7 @@ module riscv_core
 
   generate
   if(PULP_SECURE && USE_PMP) begin : RISCY_PMP
-  riscv_pmp
+  riscv_nn_pmp
   #(
      .N_PMP_ENTRIES(N_PMP_ENTRIES)
   )
@@ -1180,7 +1180,7 @@ module riscv_core
   logic tracer_clk;
   assign #1 tracer_clk = clk_i;
 
-  riscv_tracer riscv_tracer_i
+  riscv_nn_tracer riscv_nn_tracer_i
   (
     .clk            ( tracer_clk                           ), // always-running clock for tracing
     .rst_n          ( rst_ni                               ),

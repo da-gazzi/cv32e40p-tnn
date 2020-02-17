@@ -27,9 +27,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_controller
+module riscv_nn_controller
 #(
   parameter FPU               = 0
 )
@@ -213,8 +213,8 @@ module riscv_controller
   begin
     // print warning in case of decoding errors
     if (is_decoding_o && illegal_insn_i) begin
-      $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i,
-               riscv_id_stage.pc_id_i);
+      $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_nn_core.core_id_i,
+               riscv_nn_id_stage.pc_id_i);
     end
   end
   // synopsys translate_on

@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-module riscv_L0_buffer
+module riscv_nn_L0_buffer
 #(
   parameter                                   RDATA_IN_WIDTH = 128
 )

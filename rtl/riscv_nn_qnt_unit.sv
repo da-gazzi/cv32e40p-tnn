@@ -1,6 +1,6 @@
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_qnt_unit
+module riscv_nn_qnt_unit
 (
   input logic         clk,
   input logic         rst_n,

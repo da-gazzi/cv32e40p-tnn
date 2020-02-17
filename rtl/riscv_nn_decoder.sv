@@ -27,9 +27,9 @@
 
 `include "apu_macros.sv"
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_decoder
+module riscv_nn_decoder
 #(
   parameter FPU               = 0,
   parameter FP_DIVSQRT        = 0,
