@@ -27,6 +27,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_nn_config.sv"
+
 import riscv_nn_defines::*;
 import apu_core_nn_package::*;
 
@@ -154,12 +156,12 @@ module riscv_nn_id_stage
     output logic                           mult_is_clpx_ex_o,
     output logic [ 1:0]                    mult_clpx_shift_ex_o,
     output logic                           mult_clpx_img_ex_o,
-
+`ifdef USE_QNT
     output logic                           qnt_en_ex_o,
     output logic [2:0]                     qnt_vecmode_ex_o,
     output logic [31:0]                    qnt_op_a_ex_o,
     output logic [31:0]                    qnt_op_b_ex_o,
-
+`endif
     // APU
     output logic                           apu_en_ex_o,
     output logic [WAPUTYPE-1:0]            apu_type_ex_o,
@@ -362,10 +364,11 @@ module riscv_nn_id_stage
   logic        mult_dot_en;      // use dot product
   logic [1:0]  mult_dot_signed;  // Signed mode dot products (can be mixed types)
 
-
+`ifdef USE_QNT
   // quant module control
    logic       qnt_enable;       // quantization unit
    logic [2:0] qnt_vecmode;      // vecmode for quantization: 4 or 2 bit
+`endif
 
   // FPU signals
   logic [C_FPNEW_FMTBITS-1:0]  fpu_src_fmt;
@@ -1137,11 +1140,11 @@ module riscv_nn_id_stage
     .mult_imm_mux_o                  ( mult_imm_mux              ),
     .mult_dot_en_o                   ( mult_dot_en               ),
     .mult_dot_signed_o               ( mult_dot_signed           ),
-
+`ifdef USE_QNT
     // QNT signals
     .qnt_enable_o                    ( qnt_enable                ),
     .qnt_vecmode_o                   ( qnt_vecmode               ),
-
+`endif
     // FPU / APU signals
     .frm_i                           ( frm_i                     ),
     .fpu_src_fmt_o                   ( fpu_src_fmt               ),
@@ -1485,11 +1488,12 @@ module riscv_nn_id_stage
       mult_clpx_shift_ex_o        <= 2'b0;
       mult_clpx_img_ex_o          <= 1'b0;
 
+`ifdef USE_QNT
       qnt_en_ex_o                 <= 1'b0;
       qnt_vecmode_ex_o            <= VEC_MODE4;
       qnt_op_a_ex_o               <= '0;
       qnt_op_b_ex_o               <= '0;
-
+`endif
       apu_en_ex_o                 <= '0;
       apu_type_ex_o               <= '0;
       apu_op_ex_o                 <= '0;
@@ -1614,6 +1618,7 @@ module riscv_nn_id_stage
           //else
             //mult_clpx_img_ex_o      <= '0;
         end
+`ifdef USE_QNT
 
         qnt_en_ex_o                 <= qnt_enable;
 
@@ -1622,7 +1627,7 @@ module riscv_nn_id_stage
           qnt_op_a_ex_o               <= alu_operand_a;
           qnt_op_b_ex_o               <= alu_operand_b;
         end
-
+`endif
         // APU pipeline
         apu_en_ex_o                 <= apu_en;
         if (apu_en) begin
@@ -1657,9 +1662,10 @@ module riscv_nn_id_stage
           data_sign_ext_ex_o        <= data_sign_ext_id;
           data_reg_offset_ex_o      <= data_reg_offset_id;
           data_load_event_ex_o      <= data_load_event_id;
-
+`ifdef USE_QNT
         end else if (qnt_enable) begin
           data_we_ex_o              <= '0;   // disable we when decoding qnt insn
+`endif
           end else begin
           data_load_event_ex_o      <= 1'b0;
         end

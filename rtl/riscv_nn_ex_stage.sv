@@ -33,6 +33,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "apu_macros.sv"
+`include "riscv_nn_config.sv"
 
 import apu_core_nn_package::*;
 import riscv_nn_defines::*;
@@ -94,6 +95,7 @@ module riscv_nn_ex_stage
 
   output logic                           mult_multicycle_o,
 
+`ifdef USE_QNT
   // quantization unit signals
   input logic                            qnt_en_i,
   input logic [2:0]                      qnt_vecmode_i,
@@ -103,7 +105,7 @@ module riscv_nn_ex_stage
 
   output logic [31:0]                    qnt_thresh_addr_o,
   output logic                           qnt_thresh_req_o,
-
+`endif
   input logic                            data_gnt_mem_i,
 
   // FPU signals
@@ -187,7 +189,9 @@ module riscv_nn_ex_stage
 
   logic [31:0]    alu_result;
   logic [31:0]    mult_result;
+`ifdef USE_QNT
   logic [31:0]   qnt_result;
+`endif
   logic           alu_cmp_result;
 
   logic           regfile_we_lsu;
@@ -198,8 +202,9 @@ module riscv_nn_ex_stage
 
   logic           alu_ready;
   logic           mult_ready;
+`ifdef USE_QNT
   logic          qnt_ready;
-
+`endif
   logic [31:0] threshold_data;
   logic           fpu_ready;
   logic           fpu_valid;
@@ -241,8 +246,10 @@ module riscv_nn_ex_stage
         regfile_alu_wdata_fw_o = alu_result;
       if (mult_en_i)
         regfile_alu_wdata_fw_o = mult_result;
+`ifdef USE_QNT
       if (qnt_en_i)
         regfile_alu_wdata_fw_o = qnt_result;
+`endif
       if (csr_access_i)
         regfile_alu_wdata_fw_o = csr_rdata_i;
     end
@@ -366,11 +373,10 @@ module riscv_nn_ex_stage
     .ex_ready_i      ( ex_ready_o           )
   );
 
-
+`ifdef USE_QNT
    // quantization unit
 
    assign threshold_data = {32{qnt_en_i}} & lsu_rdata_i;
-
 generate
   if (USE_QNT==1) begin
 
@@ -407,8 +413,8 @@ generate
      assign qnt_ready    = 1'b1;
      assign qnt_thresh_req_o = 1'b0;
   end // else: !if(USE_QNT==1)
-
    endgenerate
+`endif
    generate
       if (FPU == 1) begin
          ////////////////////////////////////////////////////
@@ -628,9 +634,16 @@ generate
   // As valid always goes to the right and ready to the left, and we are able
   // to finish branches without going to the WB stage, ex_valid does not
   // depend on ex_ready.
+`ifdef USE_QNT
   assign ex_ready_o = (~apu_stall & alu_ready & mult_ready & qnt_ready & lsu_ready_ex_i
                        & wb_ready_i & ~wb_contention & fpu_ready) | (branch_in_ex_i);
   assign ex_valid_o = (apu_valid | alu_en_i | mult_en_i | csr_access_i | lsu_en_i)
                        & (alu_ready & mult_ready & qnt_ready & lsu_ready_ex_i & wb_ready_i);
+`else 
+  assign ex_ready_o = (~apu_stall & alu_ready & mult_ready & lsu_ready_ex_i
+                       & wb_ready_i & ~wb_contention & fpu_ready) | (branch_in_ex_i);
+  assign ex_valid_o = (apu_valid | alu_en_i | mult_en_i | csr_access_i | lsu_en_i)
+                       & (alu_ready & mult_ready  & lsu_ready_ex_i & wb_ready_i);
+`endif
 
 endmodule

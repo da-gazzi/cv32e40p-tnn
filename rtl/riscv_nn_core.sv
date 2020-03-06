@@ -205,7 +205,7 @@ module riscv_nn_core
   logic        mult_is_clpx_ex_o;
   logic [ 1:0] mult_clpx_shift_ex;
   logic        mult_clpx_img_ex;
-
+`ifdef USE_QNT
   // quantization unit control
   logic        qnt_en_ex;
   logic [2:0] qnt_vecmode_ex;
@@ -213,7 +213,7 @@ module riscv_nn_core
   logic [31:0] qnt_op_b_ex;
   logic      threshold_request_ex;
   logic [31:0] threshold_address_ex;
-
+`endif
   // FPU
   logic [C_PC-1:0]            fprec_csr;
   logic [C_RM-1:0]            frm_csr;
@@ -289,9 +289,9 @@ module riscv_nn_core
 
 
 
-
+`ifdef USE_QNT
   logic       data_req_qnt_ex;  // multiplexed signal to lsu
-
+`endif
   // stall control
   logic        halt_if;
   logic        id_ready;
@@ -676,12 +676,12 @@ module riscv_nn_core
     .mult_is_clpx_ex_o            ( mult_is_clpx_ex      ), // from ID to EX stage
     .mult_clpx_shift_ex_o         ( mult_clpx_shift_ex   ), // from ID to EX stage
     .mult_clpx_img_ex_o           ( mult_clpx_img_ex     ), // from ID to EX stage
-
+`ifdef USE_QNT
     .qnt_en_ex_o                  ( qnt_en_ex            ),
     .qnt_vecmode_ex_o             ( qnt_vecmode_ex       ),
     .qnt_op_a_ex_o                ( qnt_op_a_ex          ),
     .qnt_op_b_ex_o                ( qnt_op_b_ex          ),
-
+`endif
     // FPU
     .frm_i                        ( frm_csr                 ),
 
@@ -846,12 +846,14 @@ module riscv_nn_core
     .mult_clpx_img_i            ( mult_clpx_img_ex             ), // from ID/EX pipe registers
 
     .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
+`ifdef USE_QNT
     .qnt_en_i                   ( qnt_en_ex                    ),
     .qnt_vecmode_i              ( qnt_vecmode_ex               ),
     .qnt_op_a_i                 ( qnt_op_a_ex                  ),
     .qnt_op_b_i                 ( qnt_op_b_ex                  ),
     .qnt_thresh_req_o           ( threshold_request_ex         ),
     .qnt_thresh_addr_o          ( threshold_address_ex         ),
+`endif
     .data_gnt_mem_i             ( data_gnt_pmp                 ),
     // FPU
     .fpu_prec_i                 ( fprec_csr                    ),
@@ -890,8 +892,11 @@ module riscv_nn_core
     // response channel
     .apu_master_valid_i         ( apu_master_valid_i           ),
     .apu_master_result_i        ( apu_master_result_i          ),
-
+`ifdef USE_QNT
     .lsu_en_i                   ( data_req_qnt_ex              ),
+`else 
+    .lsu_en_i                   ( data_req_ex                  ),
+`endif
     .lsu_rdata_i                ( lsu_rdata                    ),
     .data_rvalid_ex_i              ( data_rvalid_i               ),
 
@@ -930,11 +935,12 @@ module riscv_nn_core
     .wb_ready_i                 ( lsu_ready_wb                 )
   );
 
-
+`ifdef USE_QNT
    assign data_req_qnt_ex = qnt_en_ex ? threshold_request_ex : data_req_ex;
    assign data_addr_lsu_a = qnt_en_ex ? threshold_address_ex : alu_operand_a_ex;
    assign data_type_lsu_ex = qnt_en_ex ? 2'b01  : data_type_ex;
    assign data_sign_ext_lsu_ex = qnt_en_ex ? 2'b01 : data_sign_ext_ex;
+`endif
   ////////////////////////////////////////////////////////////////////////////////////////
   //    _     ___    _    ____    ____ _____ ___  ____  _____   _   _ _   _ ___ _____   //
   //   | |   / _ \  / \  |  _ \  / ___|_   _/ _ \|  _ \| ____| | | | | \ | |_ _|_   _|  //
@@ -963,14 +969,26 @@ module riscv_nn_core
 
     // signal from ex stage
     .data_we_ex_i          ( data_we_ex         ),
+`ifdef USE_QNT
     .data_type_ex_i        ( data_type_lsu_ex   ),
-    .data_wdata_ex_i       ( alu_operand_c_ex   ),
-    .data_reg_offset_ex_i  ( data_reg_offset_ex ),
     .data_sign_ext_ex_i    ( data_sign_ext_lsu_ex),  // sign extension
+`else 
+    .data_type_ex_i        ( data_type_ex       ),
+    .data_sign_ext_ex_i    ( data_sign_ext_lsu_ex),  // sign extension
+`endif
+    .data_wdata_ex_i       ( alu_operand_c_ex   ),
+    .data_reg_offset_ex_i  ( data_sign_ext_ex   ),
+    
 
     .data_rdata_ex_o       ( lsu_rdata          ),
+`ifdef USE_QNT
     .data_req_ex_i         ( data_req_qnt_ex    ),
     .operand_a_ex_i        ( data_addr_lsu_a    ),
+`else 
+    .data_req_ex_i         ( data_req_ex        ),
+    .operand_a_ex_i        ( alu_operand_a_ex   ),
+`endif
+    
     .operand_b_ex_i        ( alu_operand_b_ex   ),
     .addr_useincr_ex_i     ( useincr_addr_ex    ),
 
@@ -982,9 +1000,11 @@ module riscv_nn_core
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
 
     .ex_valid_i            ( ex_valid           ),
-    .busy_o                ( lsu_busy           ),
-
+    .busy_o                ( lsu_busy           )
+`ifdef USE_QNT
+    ,
     .qnt_en_ex_i           (  qnt_en_ex         )
+`endif
   );
 
   assign wb_valid = lsu_ready_wb & apu_ready_wb;

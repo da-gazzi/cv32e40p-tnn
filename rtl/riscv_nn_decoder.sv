@@ -26,6 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "apu_macros.sv"
+`include "riscv_nn_config.sv"
 
 import riscv_nn_defines::*;
 
@@ -108,9 +109,10 @@ module riscv_nn_decoder
   output logic [1:0]                  mult_signed_mode_o, // Multiplication in signed mode
   output logic [1:0]                  mult_dot_signed_o, // Dot product in signed mode
 
+`ifdef USE_QNT
   output logic                        qnt_enable_o, // Enable the quantization unit
   output logic [2:0]                  qnt_vecmode_o,
-
+`endif
   // FPU
   input logic [C_RM-1:0]              frm_i, // Rounding mode from float CSR
 
@@ -192,10 +194,10 @@ module riscv_nn_decoder
   logic       mult_dot_en;
   logic       apu_en;
 
-
+`ifdef USE_QNT
   //quant Unit
-
   logic       qnt_en;
+`endif
   // this instruction needs floating-point rounding-mode verification
   logic check_fprm;
 
@@ -239,10 +241,10 @@ module riscv_nn_decoder
     mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 1'b0;
     mult_dot_signed_o           = 2'b00;
-
+`ifdef USE_QNT
     qnt_en                      = 1'b0;
     qnt_vecmode_o               = VEC_MODE4;
-    
+`endif
     apu_en                      = 1'b0;
     apu_type_o                  = '0;
     apu_op_o                    = '0;
@@ -2089,11 +2091,15 @@ module riscv_nn_decoder
                     if(instr_rdata_i[25]) begin
                       alu_vec_mode_o  = VEC_MODE2;
                       mult_operator_o = MUL_DOT2;
+`ifdef USE_QNT
                       qnt_vecmode_o   = VEC_MODE2;
+`endif
                     end else begin
                       alu_vec_mode_o = VEC_MODE4;
                       mult_operator_o = MUL_DOT4;
+`ifdef USE_QNT
                       qnt_vecmode_o   = VEC_MODE4;
+`endif
                     end
                   end
           3'b011: begin
@@ -2156,16 +2162,20 @@ module riscv_nn_decoder
             regc_mux_o     = REGC_RD;
           end
           6'b11100_0: begin // pv.packlo
+`ifdef USE_QNT
              if(alu_vec_mode_o == VEC_MODE4 || alu_vec_mode_o == VEC_MODE2) begin
                 qnt_en = 1'b1;   // quantization unit //pv.qnt.n/c
                 prepost_useincr_o = 1'b0;
                 qnt_vecmode_o = alu_vec_mode_o;
              end else begin
+`endif
                 alu_operator_o = ALU_PCKLO;
                 regb_used_o    = 1'b1;
                 regc_used_o    = 1'b1;
                 regc_mux_o     = REGC_RD;
+`ifdef USE_QNT
              end
+`endif
           end
 
           6'b01111_0: begin // pv.extract
@@ -2522,7 +2532,9 @@ module riscv_nn_decoder
   assign apu_en_o          = (deassert_we_i) ? 1'b0          : apu_en;
   assign mult_int_en_o     = (deassert_we_i) ? 1'b0          : mult_int_en;
   assign mult_dot_en_o     = (deassert_we_i) ? 1'b0          : mult_dot_en;
+`ifdef USE_QNT
   assign qnt_enable_o      = (deassert_we_i) ? 1'b0          : qnt_en;
+`endif
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
