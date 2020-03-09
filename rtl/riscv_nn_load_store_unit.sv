@@ -62,10 +62,13 @@ module riscv_nn_load_store_unit
     output logic         lsu_ready_wb_o, // LSU ready for new data in WB stage
 
     input  logic         ex_valid_i,
-    output logic         busy_o,
+    output logic         busy_o
 
+`ifdef USE_QNT
+    ,
     // interface with qnt unit
     input  logic         qnt_en_ex_i
+`endif
 );
 
   logic [31:0]  data_addr_int;
@@ -366,7 +369,11 @@ module riscv_nn_load_store_unit
           if(data_gnt_i) begin
             lsu_ready_ex_o = 1'b1;
 
+`ifdef QNT_UNIT
             if (ex_valid_i | qnt_en_ex_i)
+`else
+            if (ex_valid_i)
+`endif
               NS = WAIT_RVALID;
             else
               NS = WAIT_RVALID_EX_STALL;
@@ -398,7 +405,11 @@ module riscv_nn_load_store_unit
               lsu_ready_ex_o = 1'b1;
 
 
-              if(ex_valid_i | qnt_en_ex_i)
+`ifdef QNT_UNIT
+            if (ex_valid_i | qnt_en_ex_i)
+`else
+            if (ex_valid_i)
+`endif
                 NS = WAIT_RVALID;
               else
                 NS = WAIT_RVALID_EX_STALL;

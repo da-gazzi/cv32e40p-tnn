@@ -103,6 +103,7 @@ module riscv_nn_tracer (
   string       fn;
   integer      cycles;
   logic [ 5:0] rd, rs1, rs2, rs3, rs4;
+  logic        rnn_sr;
 
   typedef struct {
     logic [ 5:0] addr;
@@ -579,6 +580,46 @@ module riscv_nn_tracer (
       end
     endfunction
 
+    function void printMLInstr();
+      string mnemonic;
+      begin
+        unique case (instr[31:27])
+
+        5'b10111: begin
+          if (instr[12] == 1'b0) begin
+            mnemonic = "pv.mlsdotsp.h";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end else begin
+            mnemonic = "pv.mlsdotsp.b";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end
+        end
+        5'b10101: begin
+          if (instr[12] == 1'b0) begin
+            mnemonic = "pv.mlsdotusp.h";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end else begin
+            mnemonic = "pv.mlsdotusp.b";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end
+        end
+        5'b10100: begin
+          if (instr[12] == 1'b0) begin
+            mnemonic = "pv.mlsdotup.h";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end else begin
+            mnemonic = "pv.mlsdotup.b";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end
+        end
+        endcase
+      end
+    endfunction
+
+
+
+
+
     function void printVecInstr();
       string mnemonic;
       string str_asm;
@@ -754,6 +795,7 @@ module riscv_nn_tracer (
   assign rs2 = {rs2_is_fp, instr[`REG_S2]};
   assign rs3 = {rs3_is_fp, instr[`REG_S3]};
   assign rs4 = {rs3_is_fp, instr[`REG_S4]};
+  assign rnn_sr = {instr[26]};
 
   // virtual ID/EX pipeline
   initial
@@ -1014,6 +1056,7 @@ module riscv_nn_tracer (
         {25'b?, OPCODE_STORE_POST}: trace.printStoreInstr();
         {25'b?, OPCODE_HWLOOP}:     trace.printHwloopInstr();
         {25'b?, OPCODE_VECOP}:      trace.printVecInstr();
+        {25'b?, OPCODE_MAC_LOAD}:         trace.printMLInstr();
         default:           trace.printMnemonic("INVALID");
       endcase // unique case (instr)
 

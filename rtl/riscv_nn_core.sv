@@ -149,6 +149,7 @@ module riscv_nn_core
   logic              trap_addr_mux;
   logic              lsu_load_err;
   logic              lsu_store_err;
+  logic [1:0]        lsu_tospr_ex;  //RNN_EXT
 
   // ID performance counter signals
   logic        is_decoding;
@@ -246,11 +247,12 @@ module riscv_nn_core
   // Register Write Control
   logic [5:0]  regfile_waddr_ex;
   logic        regfile_we_ex;
-  logic [5:0]  regfile_waddr_fw_wb_o;        // From WB to ID
+  logic [5:0]  regfile_waddr_fw_wb;        // From WB to ID RNN_EXT prev fw_wb_o
   logic        regfile_we_wb;
   logic [31:0] regfile_wdata;
 
   logic [5:0]  regfile_alu_waddr_ex;
+  logic [5:0]  regfile_alu_waddr2_ex; //RNN_EXT
   logic        regfile_alu_we_ex;
 
   logic [5:0]  regfile_alu_waddr_fw;
@@ -292,6 +294,8 @@ module riscv_nn_core
 `ifdef USE_QNT
   logic       data_req_qnt_ex;  // multiplexed signal to lsu
 `endif
+
+ logic        loadComputeVLIW_ex; //RNN_EXT
   // stall control
   logic        halt_if;
   logic        id_ready;
@@ -653,6 +657,7 @@ module riscv_nn_core
 
     .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
     .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
+    .regfile_alu_waddr2_ex_o       ( regfile_alu_waddr2_ex ), //RNN_EXT
 
     // MUL
     .mult_operator_ex_o           ( mult_operator_ex     ), // from ID to EX stage
@@ -743,6 +748,10 @@ module riscv_nn_core
     .data_misaligned_i            ( data_misaligned      ),
     .data_err_i                   ( data_err_pmp         ),
     .data_err_ack_o               ( data_err_ack         ),
+
+    .lsu_tospr_ex_o               (lsu_tospr_ex          ), //RNN_EXT
+    .loadComputeVLIW_ex_i         (loadComputeVLIW_ex    ), //RNN_EXT
+
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
     .irq_sec_i                    ( (PULP_SECURE) ? irq_sec_i : 1'b0 ),
@@ -762,7 +771,7 @@ module riscv_nn_core
     .debug_ebreaku_i              ( debug_ebreaku        ),
 
     // Forward Signals
-    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o),  // Write address ex-wb pipeline
+    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb  ),  // Write address ex-wb pipeline //RNN_EXT prev fw_wb_o
     .regfile_we_wb_i              ( regfile_we_wb        ),  // write enable for the register file
     .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
 
@@ -855,6 +864,8 @@ module riscv_nn_core
     .qnt_thresh_addr_o          ( threshold_address_ex         ),
 `endif
     .data_gnt_mem_i             ( data_gnt_pmp                 ),
+
+    .computeLoadVLIW_ex_o       (loadComputeVLIW_ex            ), //RNN_EXT
     // FPU
     .fpu_prec_i                 ( fprec_csr                    ),
     .fpu_fflags_o               ( fflags                       ),
@@ -899,6 +910,7 @@ module riscv_nn_core
 `endif
     .lsu_rdata_i                ( lsu_rdata                    ),
     .data_rvalid_ex_i              ( data_rvalid_i               ),
+    .lsu_tospr_ex_i             ( lsu_tospr_ex                 ), //RNN_EXT 
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),
@@ -907,13 +919,14 @@ module riscv_nn_core
     // From ID Stage: Regfile control signals
     .branch_in_ex_i             ( branch_in_ex                 ),
     .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
+    .regfile_alu_waddr2_i       ( regfile_alu_waddr2_ex         ), //RNN_EXT
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
 
     .regfile_waddr_i            ( regfile_waddr_ex             ),
     .regfile_we_i               ( regfile_we_ex                ),
 
     // Output of ex stage pipeline
-    .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
+    .regfile_waddr_wb_o         ( regfile_waddr_fw_wb          ), //RNN_EXT, prev fw_wb_o
     .regfile_we_wb_o            ( regfile_we_wb                ),
     .regfile_wdata_wb_o         ( regfile_wdata                ),
 

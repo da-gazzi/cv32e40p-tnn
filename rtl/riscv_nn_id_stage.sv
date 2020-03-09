@@ -125,6 +125,8 @@ module riscv_nn_id_stage
     output logic [5:0]                     regfile_alu_waddr_ex_o,
     output logic                           regfile_alu_we_ex_o,
 
+    output logic [5:0]                     regfile_alu_waddr2_ex_o,
+
     // ALU
     output logic                           alu_en_ex_o,
     output logic [ALU_OP_WIDTH-1:0]        alu_operator_ex_o,
@@ -221,6 +223,11 @@ module riscv_nn_id_stage
     input logic                            data_misaligned_i,
     input logic                            data_err_i,
     output logic                           data_err_ack_o,
+
+    //RNN_EXT
+    output logic [1:0]                     lsu_tospr_ex_o,
+    input logic                            loadComputeVLIW_ex_i,
+
     // Interrupt signals
     input logic                            irq_i,
     input logic                            irq_sec_i,
@@ -336,7 +343,7 @@ module riscv_nn_id_stage
   logic        fregfile_ena; // whether the fp register file is enabled
 
   logic [5:0]  regfile_waddr_id;
-  logic [5:0]  regfile_alu_waddr_id;
+  logic [5:0]  regfile_alu_waddr_id, regfile_alu_waddr2_id; //RNN_EXT
   logic        regfile_alu_we_id, regfile_alu_we_dec_id;
 
   logic [31:0] regfile_data_ra_id;
@@ -404,6 +411,7 @@ module riscv_nn_id_stage
   logic [1:0]  data_reg_offset_id;
   logic        data_req_id;
   logic        data_load_event_id;
+  logic [1:0]  lsu_tospr_id;   //RNN_EXT
 
   // hwloop signals
   logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;
@@ -538,6 +546,7 @@ module riscv_nn_id_stage
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
                                 regfile_waddr_id : regfile_addr_ra_id;
+  assign regfile_alu_waddr2_id = lsu_tospr_id[0] ?  regfile_addr_ra_id : 'b0; 
 
   // Forwarding control signals
   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
@@ -1177,6 +1186,7 @@ module riscv_nn_id_stage
     .data_sign_extension_o           ( data_sign_ext_id          ),
     .data_reg_offset_o               ( data_reg_offset_id        ),
     .data_load_event_o               ( data_load_event_id        ),
+    .lsu_tospr_o                     ( lsu_tospr_id              ), //RNN_EXT
 
     // hwloop signals
     .hwloop_we_o                     ( hwloop_we_int             ),
@@ -1313,6 +1323,7 @@ module riscv_nn_id_stage
     // Write targets from ID
     .regfile_we_id_i                ( regfile_alu_we_dec_id  ),
     .regfile_alu_waddr_id_i         ( regfile_alu_waddr_id   ),
+    .regfile_alu_waddr2_id_i        ( regfile_alu_waddr2_id  ),   
 
     // Forwarding signals from regfile
     .regfile_we_ex_i                ( regfile_we_ex_o        ),
@@ -1351,6 +1362,10 @@ module riscv_nn_id_stage
     .ex_valid_i                     ( ex_valid_i             ),
 
     .wb_ready_i                     ( wb_ready_i             ),
+
+
+    .computeLoadVLIW_i              (loadComputeVLIW_ex_i),
+
 
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),
@@ -1509,6 +1524,7 @@ module riscv_nn_id_stage
       regfile_we_ex_o             <= 1'b0;
 
       regfile_alu_waddr_ex_o      <= 6'b0;
+      regfile_alu_waddr2_ex_o     <= 6'b0;
       regfile_alu_we_ex_o         <= 1'b0;
       prepost_useincr_ex_o        <= 1'b0;
 
@@ -1521,6 +1537,7 @@ module riscv_nn_id_stage
       data_reg_offset_ex_o        <= 2'b0;
       data_req_ex_o               <= 1'b0;
       data_load_event_ex_o        <= 1'b0;
+      lsu_tospr_ex_o              <= 2'b0;
 
       data_misaligned_ex_o        <= 1'b0;
 
@@ -1647,6 +1664,7 @@ module riscv_nn_id_stage
         regfile_alu_we_ex_o         <= regfile_alu_we_id;
         if (regfile_alu_we_id) begin
           regfile_alu_waddr_ex_o    <= regfile_alu_waddr_id;
+          regfile_alu_waddr2_ex_o   <= regfile_alu_waddr2_id; 
         end
 
         prepost_useincr_ex_o        <= prepost_useincr;
@@ -1654,6 +1672,7 @@ module riscv_nn_id_stage
         csr_access_ex_o             <= csr_access;
         csr_op_ex_o                 <= csr_op;
 
+        lsu_tospr_ex_o              <= lsu_tospr_id;
         data_req_ex_o               <= data_req_id;
         if (data_req_id)
         begin // only needed for LSU when there is an active request

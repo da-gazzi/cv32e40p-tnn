@@ -53,6 +53,8 @@ parameter OPCODE_OP_FNMSUB = 7'h4b;
 parameter OPCODE_STORE_FP  = 7'h27;
 parameter OPCODE_LOAD_FP   = 7'h07;
 
+
+
 // those opcodes are now used for PULP custom instructions
 // parameter OPCODE_CUST0     = 7'h0b
 // parameter OPCODE_CUST1     = 7'h2b
@@ -63,6 +65,10 @@ parameter OPCODE_STORE_POST = 7'h2b;
 parameter OPCODE_PULP_OP    = 7'h5b;
 parameter OPCODE_VECOP      = 7'h57;
 parameter OPCODE_HWLOOP     = 7'h7b;
+
+// RNN_EXTENSIONS (MAC&LOAD)
+
+parameter OPCODE_MAC_LOAD  = 7'h77;
 
 parameter REGC_S1   = 2'b10;
 parameter REGC_S4   = 2'b00;
@@ -89,6 +95,7 @@ parameter ALU_ADDR  = 7'b0011100;
 parameter ALU_SUBR  = 7'b0011101;
 parameter ALU_ADDUR = 7'b0011110;
 parameter ALU_SUBUR = 7'b0011111;
+parameter ALU_ADD4  = 7'b0100000; // RNN Extension for increment by 4
 
 parameter ALU_XOR   = 7'b0101111;
 parameter ALU_OR    = 7'b0101110;

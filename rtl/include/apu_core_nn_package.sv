@@ -67,4 +67,6 @@ package apu_core_nn_package;
 
    // iter divsqrt
 
+   parameter RNN_EXTENSIONS = 1;
+
 endpackage // apu_core_package

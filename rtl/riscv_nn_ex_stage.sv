@@ -149,11 +149,16 @@ module riscv_nn_ex_stage
 
   input logic                            lsu_en_i,
   input logic [31:0]                     lsu_rdata_i,
+  input logic [1:0]                      lsu_tospr_ex_i,
   input logic                            data_rvalid_ex_i,
+
+  // RNN Extension
+  output logic                           computeLoadVLIW_ex_o,
 
   // input from ID stage
   input logic                            branch_in_ex_i,
   input logic [5:0]                      regfile_alu_waddr_i,
+  input logic [5:0]                      regfile_alu_waddr2_i,
   input logic                            regfile_alu_we_i,
 
   // directly passed through to WB stage, not used in EX
@@ -192,6 +197,9 @@ module riscv_nn_ex_stage
 `ifdef USE_QNT
   logic [31:0]   qnt_result;
 `endif
+
+   logic [31:0]    mult_result_p;  //RNN_EXT
+  logic [31:0]    mult_result_n;  //RNN_EXT
   logic           alu_cmp_result;
 
   logic           regfile_we_lsu;
@@ -222,6 +230,17 @@ module riscv_nn_ex_stage
   logic           apu_ready;
   logic           apu_gnt;
 
+  // RNN Extensions   //RNN_EXT
+  logic           spr_rnn_en;  //RNN_EXT
+  logic [1:0][31:0] spr_rnn, spr_rnn_n;  //RNN_EXT
+  logic [1:0]     lsu_tospr_wb;  //RNN_EXT
+  logic [5:0]     regfile_alu_waddr2_wb;  //RNN_EXT
+  logic [31:0]    mult_dot_op_h_a_ml; //RNN_EXT
+  logic [31:0]    mult_dot_op_b_a_ml;  //RNN_EXT
+  logic           loadComputeVLIW;  //RNN_EXT
+
+  assign loadComputeVLIW = alu_en_i & mult_en_i;
+  assign computeLoadVLIW_ex_o = loadComputeVLIW;
   // ALU write port mux
   always_comb
   begin
@@ -255,9 +274,11 @@ module riscv_nn_ex_stage
     end
   end
 
+  assign mult_result_n = mult_result; //RNN_EXT
   // LSU write port mux
   always_comb
   begin
+    spr_rnn_en = 1'b0;  //RNN_EXT
     regfile_we_wb_o    = 1'b0;
     regfile_waddr_wb_o = regfile_waddr_lsu;
     regfile_wdata_wb_o = lsu_rdata_i;
@@ -268,13 +289,25 @@ module riscv_nn_ex_stage
       if (apu_valid & (!apu_singlecycle & !apu_multicycle)) begin
          wb_contention_lsu = 1'b1;
 //         $error("%t, wb-contention", $time);
+      // APU two-cycle operations are written back on LSU port
+      end else if (apu_valid & (!apu_singlecycle & !apu_multicycle)) begin
+          regfile_we_wb_o    = 1'b1;
+          regfile_waddr_wb_o = apu_waddr;
+          regfile_wdata_wb_o = apu_result;
       end
-    // APU two-cycle operations are written back on LSU port
-    end else if (apu_valid & (!apu_singlecycle & !apu_multicycle)) begin
-      regfile_we_wb_o    = 1'b1;
-      regfile_waddr_wb_o = apu_waddr;
-      regfile_wdata_wb_o = apu_result;
+      if(lsu_tospr_wb[0]) begin// does not work because of latency
+          spr_rnn_en = 1'b1;       //spr instead of gpr
+          // regfile_we_wb_o = 1'b0;  //spr instead of gpr
+          // regfile_waddr_wb_o = regfile_alu_waddr2_wb;
+      end
     end
+    if(lsu_tospr_wb[0]) begin 
+      regfile_waddr_wb_o = regfile_waddr_lsu; 
+      regfile_wdata_wb_o = mult_result_p;
+    end
+
+  
+
   end
 
   // branch handling
@@ -332,6 +365,11 @@ module riscv_nn_ex_stage
   //                                                            //
   ////////////////////////////////////////////////////////////////
 
+
+  assign mult_dot_op_h_a_ml = (lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_h_a_i;
+  assign mult_dot_op_b_a_ml = (lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_b_a_i;
+	
+
   riscv_nn_mult
   #(
     .SHARED_DSP_MULT(SHARED_DSP_MULT)
@@ -352,9 +390,9 @@ module riscv_nn_ex_stage
     .op_c_i          ( mult_operand_c_i     ),
     .imm_i           ( mult_imm_i           ),
 
-    .dot_op_h_a_i      ( mult_dot_op_h_a_i      ),
+    .dot_op_h_a_i      ( mult_dot_op_h_a_ml     ),
     .dot_op_h_b_i      ( mult_dot_op_h_b_i      ),
-    .dot_op_b_a_i      ( mult_dot_op_b_a_i      ),
+    .dot_op_b_a_i      ( mult_dot_op_b_a_ml     ),
     .dot_op_b_b_i      ( mult_dot_op_b_b_i      ),
     .dot_op_n_a_i      ( mult_dot_op_n_a_i      ),
     .dot_op_n_b_i      ( mult_dot_op_n_b_i      ),
@@ -605,6 +643,26 @@ generate
 
    assign apu_busy_o = apu_active;
 
+  // SPR
+  assign spr_rnn_n[0] = (spr_rnn_en && lsu_tospr_wb[1]==1'b0) ? lsu_rdata_i : spr_rnn[0]; //RNN_EXT
+  assign spr_rnn_n[1] = (spr_rnn_en && lsu_tospr_wb[1]==1'b1) ? lsu_rdata_i : spr_rnn[1]; //RNN_EXT
+
+always_ff @(posedge clk, negedge rst_n)
+  begin : SPR
+    if (~rst_n)
+    begin
+      spr_rnn   <= '0;
+      mult_result_p <= '0; //RNN_EXT
+    end
+    else
+    begin
+        spr_rnn       <= spr_rnn_n;
+        mult_result_p <= mult_result_n; //RNN_EXT
+    end
+  end
+
+
+
   ///////////////////////////////////////
   // EX/WB Pipeline Register           //
   ///////////////////////////////////////
@@ -614,12 +672,16 @@ generate
     begin
       regfile_waddr_lsu   <= '0;
       regfile_we_lsu      <= 1'b0;
+      lsu_tospr_wb        <= 2'b0;  //RNN_EXT
+      regfile_alu_waddr2_wb <= 'b0;  //RNN_EXT
     end
     else
     begin
       if (ex_valid_o) // wb_ready_i is implied
       begin
         regfile_we_lsu    <= regfile_we_i & ~lsu_err_i;
+        lsu_tospr_wb <= lsu_tospr_ex_i; //RNN_EXT//RNN_EXT
+        regfile_alu_waddr2_wb <= regfile_alu_waddr2_i; //RNN_EXT
         if (regfile_we_i & ~lsu_err_i ) begin
           regfile_waddr_lsu <= regfile_waddr_i;
         end
