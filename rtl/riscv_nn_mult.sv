@@ -266,7 +266,7 @@ module riscv_nn_mult
 
         logic [15:0][2:0] dot_crumble_op_a;
         logic [15:0][2:0] dot_crumble_op_b;
-        logic [15:0][3:0] dot_crumble_mul;
+        logic [15:0][5:0] dot_crumble_mul;
 
         logic [1:0][16:0] dot_short_op_a;
         logic [1:0][16:0] dot_short_op_b;
