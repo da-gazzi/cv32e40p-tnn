@@ -987,10 +987,10 @@ module riscv_nn_core
     .data_sign_ext_ex_i    ( data_sign_ext_lsu_ex),  // sign extension
 `else 
     .data_type_ex_i        ( data_type_ex       ),
-    .data_sign_ext_ex_i    ( data_sign_ext_lsu_ex),  // sign extension
+    .data_sign_ext_ex_i    ( data_sign_ext_ex),  // sign extension
 `endif
     .data_wdata_ex_i       ( alu_operand_c_ex   ),
-    .data_reg_offset_ex_i  ( data_sign_ext_ex   ),
+    .data_reg_offset_ex_i  ( data_reg_offset_ex   ),
     
 
     .data_rdata_ex_o       ( lsu_rdata          ),
