@@ -180,7 +180,7 @@ module riscv_nn_decoder
                                  ((SHARED_FP_DIVSQRT==2)  ? ((SHARED_FP==1) ? APUTYPE_FP+4 : APUTYPE_FP+1) : 0);
   localparam APUTYPE_SQRT       = (SHARED_FP_DIVSQRT==1)  ? ((SHARED_FP==1) ? APUTYPE_FP+5 : APUTYPE_FP)   :
                                  ((SHARED_FP_DIVSQRT==2)  ? ((SHARED_FP==1) ? APUTYPE_FP+4 : APUTYPE_FP+1) : 0);
-
+     
   // write enable/request control
   logic       regfile_mem_we;
   logic       regfile_alu_we;
@@ -511,6 +511,9 @@ module riscv_nn_decoder
       // |  _ <| |\  | |\  | | |___ >  <| ||  __/ | | \__ \ | (_) | | | | //
       // |_| \_\_| \_|_| \_| |_____/_/\_\\__\___|_| |_|___/_|\___/|_| |_| //
       //////////////////////////////////////////////////////////////////////
+
+      
+
 // `ifdef RNN_EXTENSION
       OPCODE_MAC_LOAD: begin // RNN Extension RNN_EXT
 
@@ -538,14 +541,12 @@ module riscv_nn_decoder
 
         alu_op_b_mux_sel_o      = OP_B_REGB_OR_FWD;
         
-        unique case (instr_rdata_i[31:27])
+        case (instr_rdata_i[31:27])
 
 
         5'b10111: begin //M&L SDOTP S-S
-          
           mult_dot_en             = 1'b1;   // enable dotp unit
           mult_dot_signed_o       = 2'b11; // set for signed-signed interpretation of operands
-
           end
         5'b10101: begin //M&L SDOTP U-S
 
@@ -561,14 +562,13 @@ module riscv_nn_decoder
           end
 
         default : begin
-
           illegal_insn_o          = 1'b1;
 
           end
         endcase
 
 
-        unique case (instr_rdata_i[14:12])
+        case (instr_rdata_i[14:12])
 
         3'b000: begin // 16-b precision
 
@@ -582,8 +582,17 @@ module riscv_nn_decoder
 
           end
 
-        default: begin //default condition
+        3'b010: begin
+          mult_operator_o         = MUL_DOT4;
+          end
 
+        3'b011: begin
+
+          mult_operator_o         = MUL_DOT2;
+
+        end
+
+        default: begin //default condition
           illegal_insn_o          = 1'b1;
 
           end
