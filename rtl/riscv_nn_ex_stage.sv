@@ -261,16 +261,21 @@ module riscv_nn_ex_stage
     end else begin
       regfile_alu_we_fw_o      = regfile_alu_we_i & ~apu_en_i; // private fpu incomplete?
       regfile_alu_waddr_fw_o   = regfile_alu_waddr_i;
-      if (alu_en_i)
+      if (loadComputeVLIW) begin
         regfile_alu_wdata_fw_o = alu_result;
-      if (mult_en_i)
-        regfile_alu_wdata_fw_o = mult_result;
-`ifdef USE_QNT
-      if (qnt_en_i)
-        regfile_alu_wdata_fw_o = qnt_result;
-`endif
-      if (csr_access_i)
-        regfile_alu_wdata_fw_o = csr_rdata_i;
+      end else begin
+        if (alu_en_i)
+          regfile_alu_wdata_fw_o = alu_result;
+        if (mult_en_i)
+          regfile_alu_wdata_fw_o = mult_result;
+
+  `ifdef USE_QNT
+        if (qnt_en_i)
+          regfile_alu_wdata_fw_o = qnt_result;
+  `endif
+        if (csr_access_i)
+          regfile_alu_wdata_fw_o = csr_rdata_i;
+      end
     end
   end
 
