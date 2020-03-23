@@ -300,13 +300,15 @@ module riscv_nn_ex_stage
           regfile_waddr_wb_o = apu_waddr;
           regfile_wdata_wb_o = apu_result;
       end
-      if(lsu_tospr_wb[0]) begin// does not work because of latency
+      if(lsu_tospr_ex_i[0]) begin// does not work because of latency
           spr_rnn_en = 1'b1;       //spr instead of gpr
+          regfile_waddr_wb_o = regfile_waddr_lsu; 
+          regfile_wdata_wb_o = mult_result_p;
           // regfile_we_wb_o = 1'b0;  //spr instead of gpr
           // regfile_waddr_wb_o = regfile_alu_waddr2_wb;
       end
     end
-    if(lsu_tospr_wb[0]) begin 
+    if(lsu_tospr_ex_i[0]) begin 
       regfile_waddr_wb_o = regfile_waddr_lsu; 
       regfile_wdata_wb_o = mult_result_p;
     end
