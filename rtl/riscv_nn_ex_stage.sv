@@ -237,6 +237,8 @@ module riscv_nn_ex_stage
   logic [5:0]     regfile_alu_waddr2_wb;  //RNN_EXT
   logic [31:0]    mult_dot_op_h_a_ml; //RNN_EXT
   logic [31:0]    mult_dot_op_b_a_ml;  //RNN_EXT
+  logic [31:0]    mult_dot_op_n_a_ml; //RNN_EXT
+  logic [31:0]    mult_dot_op_c_a_ml; //RNN_EXT
   logic           loadComputeVLIW;  //RNN_EXT
 
   assign loadComputeVLIW = alu_en_i & mult_en_i;
@@ -300,15 +302,15 @@ module riscv_nn_ex_stage
           regfile_waddr_wb_o = apu_waddr;
           regfile_wdata_wb_o = apu_result;
       end
-      if(lsu_tospr_ex_i[0]) begin// does not work because of latency
+      if(lsu_tospr_wb[0]) begin// does not work because of latency
           spr_rnn_en = 1'b1;       //spr instead of gpr
-          regfile_waddr_wb_o = regfile_waddr_lsu; 
-          regfile_wdata_wb_o = mult_result_p;
+          //regfile_waddr_wb_o = regfile_waddr_lsu; 
+          //regfile_wdata_wb_o = mult_result_p;
           // regfile_we_wb_o = 1'b0;  //spr instead of gpr
           // regfile_waddr_wb_o = regfile_alu_waddr2_wb;
       end
     end
-    if(lsu_tospr_ex_i[0]) begin 
+    if(lsu_tospr_wb[0]) begin 
       regfile_waddr_wb_o = regfile_waddr_lsu; 
       regfile_wdata_wb_o = mult_result_p;
     end
@@ -373,9 +375,10 @@ module riscv_nn_ex_stage
   ////////////////////////////////////////////////////////////////
 
 
-  assign mult_dot_op_h_a_ml = (lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_h_a_i;
-  assign mult_dot_op_b_a_ml = (lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_b_a_i;
-	
+  assign mult_dot_op_h_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_h_a_i);
+  assign mult_dot_op_b_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_b_a_i);
+	assign mult_dot_op_n_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_n_a_i);
+  assign mult_dot_op_c_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_c_a_i);
 
   riscv_nn_mult
   #(
@@ -401,9 +404,9 @@ module riscv_nn_ex_stage
     .dot_op_h_b_i      ( mult_dot_op_h_b_i      ),
     .dot_op_b_a_i      ( mult_dot_op_b_a_ml     ),
     .dot_op_b_b_i      ( mult_dot_op_b_b_i      ),
-    .dot_op_n_a_i      ( mult_dot_op_n_a_i      ),
+    .dot_op_n_a_i      ( mult_dot_op_n_a_ml     ),
     .dot_op_n_b_i      ( mult_dot_op_n_b_i      ),
-    .dot_op_c_a_i      ( mult_dot_op_c_a_i      ),
+    .dot_op_c_a_i      ( mult_dot_op_c_a_ml     ),
     .dot_op_c_b_i      ( mult_dot_op_c_b_i      ),
     .dot_op_c_i      ( mult_dot_op_c_i      ),
     .dot_signed_i    ( mult_dot_signed_i    ),
