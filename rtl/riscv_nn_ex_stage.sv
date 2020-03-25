@@ -375,10 +375,10 @@ module riscv_nn_ex_stage
   ////////////////////////////////////////////////////////////////
 
 
-  assign mult_dot_op_h_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_h_a_i);
-  assign mult_dot_op_b_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_b_a_i);
-	assign mult_dot_op_n_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_n_a_i);
-  assign mult_dot_op_c_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_c_a_i);
+  assign mult_dot_op_h_a_ml = {32{(mult_operator_i == MUL_DOT16)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_h_a_i);
+  assign mult_dot_op_b_a_ml = {32{(mult_operator_i == MUL_DOT8)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_b_a_i);
+	assign mult_dot_op_n_a_ml = {32{(mult_operator_i == MUL_DOT4)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_n_a_i);
+  assign mult_dot_op_c_a_ml = {32{(mult_operator_i == MUL_DOT2)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_c_a_i);
 
   riscv_nn_mult
   #(
