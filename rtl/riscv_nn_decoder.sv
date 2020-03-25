@@ -560,6 +560,12 @@ module riscv_nn_decoder
           mult_dot_signed_o       = 2'b00;  // set for unsigned-unsigned interpretation of operands
 
           end
+        5'b10011: begin //M&L SDOTP S-U
+
+          mult_dot_en             = 1'b1;   // enable dotp unit
+          mult_dot_signed_o       = 2'b10;  // set for signed-unsigned interpretation of operands
+
+        end
 
         default : begin
           illegal_insn_o          = 1'b1;
