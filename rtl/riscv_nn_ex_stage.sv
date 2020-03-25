@@ -232,7 +232,7 @@ module riscv_nn_ex_stage
 
   // RNN Extensions   //RNN_EXT
   logic           spr_rnn_en;  //RNN_EXT
-  logic [2:0][31:0] spr_rnn, spr_rnn_n;  //RNN_EXT
+  logic [3:0][31:0] spr_rnn, spr_rnn_n;  //RNN_EXT
   logic [2:0]     lsu_tospr_wb;  //RNN_EXT
   logic [5:0]     regfile_alu_waddr2_wb;  //RNN_EXT
   logic [31:0]    mult_dot_op_h_a_ml; //RNN_EXT
