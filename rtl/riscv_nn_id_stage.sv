@@ -225,7 +225,7 @@ module riscv_nn_id_stage
     output logic                           data_err_ack_o,
 
     //RNN_EXT
-    output logic [1:0]                     lsu_tospr_ex_o,
+    output logic [2:0]                     lsu_tospr_ex_o,
     input logic                            loadComputeVLIW_ex_i,
 
     // Interrupt signals
@@ -411,7 +411,7 @@ module riscv_nn_id_stage
   logic [1:0]  data_reg_offset_id;
   logic        data_req_id;
   logic        data_load_event_id;
-  logic [1:0]  lsu_tospr_id;   //RNN_EXT
+  logic [2:0]  lsu_tospr_id;   //RNN_EXT
 
   // hwloop signals
   logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;

@@ -149,7 +149,7 @@ module riscv_nn_core
   logic              trap_addr_mux;
   logic              lsu_load_err;
   logic              lsu_store_err;
-  logic [1:0]        lsu_tospr_ex;  //RNN_EXT
+  logic [2:0]        lsu_tospr_ex;  //RNN_EXT
 
   // ID performance counter signals
   logic        is_decoding;

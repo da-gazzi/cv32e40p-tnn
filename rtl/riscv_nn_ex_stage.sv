@@ -149,7 +149,7 @@ module riscv_nn_ex_stage
 
   input logic                            lsu_en_i,
   input logic [31:0]                     lsu_rdata_i,
-  input logic [1:0]                      lsu_tospr_ex_i,
+  input logic [2:0]                      lsu_tospr_ex_i,
   input logic                            data_rvalid_ex_i,
 
   // RNN Extension
@@ -232,8 +232,8 @@ module riscv_nn_ex_stage
 
   // RNN Extensions   //RNN_EXT
   logic           spr_rnn_en;  //RNN_EXT
-  logic [1:0][31:0] spr_rnn, spr_rnn_n;  //RNN_EXT
-  logic [1:0]     lsu_tospr_wb;  //RNN_EXT
+  logic [2:0][31:0] spr_rnn, spr_rnn_n;  //RNN_EXT
+  logic [2:0]     lsu_tospr_wb;  //RNN_EXT
   logic [5:0]     regfile_alu_waddr2_wb;  //RNN_EXT
   logic [31:0]    mult_dot_op_h_a_ml; //RNN_EXT
   logic [31:0]    mult_dot_op_b_a_ml;  //RNN_EXT
@@ -375,10 +375,10 @@ module riscv_nn_ex_stage
   ////////////////////////////////////////////////////////////////
 
 
-  assign mult_dot_op_h_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_h_a_i);
-  assign mult_dot_op_b_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_b_a_i);
-	assign mult_dot_op_n_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_n_a_i);
-  assign mult_dot_op_c_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[1]] : mult_dot_op_c_a_i);
+  assign mult_dot_op_h_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_h_a_i);
+  assign mult_dot_op_b_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_b_a_i);
+	assign mult_dot_op_n_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_n_a_i);
+  assign mult_dot_op_c_a_ml = ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_c_a_i);
 
   riscv_nn_mult
   #(
@@ -654,8 +654,10 @@ generate
    assign apu_busy_o = apu_active;
 
   // SPR
-  assign spr_rnn_n[0] = (spr_rnn_en && lsu_tospr_wb[1]==1'b0) ? lsu_rdata_i : spr_rnn[0]; //RNN_EXT
-  assign spr_rnn_n[1] = (spr_rnn_en && lsu_tospr_wb[1]==1'b1) ? lsu_rdata_i : spr_rnn[1]; //RNN_EXT
+  assign spr_rnn_n[0] = (spr_rnn_en && lsu_tospr_wb[2:1]==2'b00) ? lsu_rdata_i : spr_rnn[0]; //RNN_EXT
+  assign spr_rnn_n[1] = (spr_rnn_en && lsu_tospr_wb[2:1]==2'b01) ? lsu_rdata_i : spr_rnn[1]; //RNN_EXT
+  assign spr_rnn_n[2] = (spr_rnn_en && lsu_tospr_wb[2:1]==2'b10) ? lsu_rdata_i : spr_rnn[2]; //RNN_EXT
+  assign spr_rnn_n[3] = (spr_rnn_en && lsu_tospr_wb[2:1]==2'b11) ? lsu_rdata_i : spr_rnn[3]; //RNN_EXT
 
 always_ff @(posedge clk, negedge rst_n)
   begin : SPR

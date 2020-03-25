@@ -148,7 +148,7 @@ module riscv_nn_decoder
   output logic [1:0]                  data_sign_extension_o, // sign extension on read data from data memory / NaN boxing
   output logic [1:0]                  data_reg_offset_o, // offset in byte inside register for stores
   output logic                        data_load_event_o, // data request is in the special event range
-  output logic [1:0]                  lsu_tospr_o, // ls to spr (RNN extension) RNN_EXT
+  output logic [2:0]                  lsu_tospr_o, // ls to spr (RNN extension) RNN_EXT
 
   // hwloop signals
   output logic [2:0]                  hwloop_we_o, // write enable for hwloop regs
@@ -289,7 +289,7 @@ module riscv_nn_decoder
     data_reg_offset_o           = 2'b00;
     data_req                    = 1'b0;
     data_load_event_o           = 1'b0;
-    lsu_tospr_o                 = 2'b0; // RNN_EXT
+    lsu_tospr_o                 = 3'b0; // RNN_EXT
 
     illegal_insn_o              = 1'b0;
     ebrk_insn_o                 = 1'b0;
@@ -525,7 +525,7 @@ module riscv_nn_decoder
         regc_used_o             = 1'b1;
         regc_mux_o              = REGC_RD;
 
-        lsu_tospr_o             = {instr_rdata_i[26], 1'b1};  // 01 SPR[0]
+        lsu_tospr_o             = {instr_rdata_i[26], instr_rdata_i[25], 1'b1};  // 01 SPR[0]
                                                    // 11 SPR[1]
         alu_en_o                = 1'b1; // ALU for lwincrement part
 
