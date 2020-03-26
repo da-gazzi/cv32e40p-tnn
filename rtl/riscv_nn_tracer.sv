@@ -612,6 +612,15 @@ module riscv_nn_tracer (
             str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
           end
         end
+        5'b10011: begin
+          if (instr[12] == 1'b0) begin
+            mnemonic = "pv.mlsdotsup.h";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end else begin
+            mnemonic = "pv.mlsdotsup.b";
+            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          end
+        end
         endcase
       end
     endfunction
