@@ -1,4 +1,4 @@
-riscv_regfile_rtl:
+riscv_nn_regfile_rtl:
   targets: [
     rtl,
     tsmc55,
@@ -12,7 +12,7 @@ riscv_regfile_rtl:
     ./rtl/riscv_nn_register_file_latch.sv,
   ]
 
-riscv:
+riscv_nn:
   vlog_opts: [
     -L fpnew_lib,
   ]
@@ -48,7 +48,7 @@ riscv:
     ./rtl/riscv_nn_L0_buffer.sv,
     ./rtl/riscv_nn_pmp.sv,
   ]
-riscv_vip_rtl:
+riscv_nn_vip_rtl:
   targets: [
     rtl,
   ]
@@ -95,7 +95,7 @@ riscv_nn_regfile_fpga:
     ./rtl/riscv_nn_register_file.sv,
   ]
 
-tb_riscv:
+tb_riscv_nn:
   sim_tools: [
     questa
   ]
