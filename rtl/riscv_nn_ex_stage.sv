@@ -184,7 +184,7 @@ module riscv_nn_ex_stage
   output logic                           branch_decision_o,
 
   // Stall Control
-  input  logic        is_decoding_i,  // Used to mask data Dependency inside the APU dispatcher in case of an istruction non valid
+  input logic                            is_decoding_i, // Used to mask data Dependency inside the APU dispatcher in case of an istruction non valid
   input logic                            lsu_ready_ex_i, // EX part of LSU is done
   input logic                            lsu_err_i,
 
