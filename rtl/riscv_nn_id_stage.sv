@@ -1013,7 +1013,7 @@ module riscv_nn_id_stage
   //                                                     //
   /////////////////////////////////////////////////////////
 
-  register_file_test_wrap
+  register_file_nn_test_wrap
   #(
     .ADDR_WIDTH(6),
     .FPU(FPU),
