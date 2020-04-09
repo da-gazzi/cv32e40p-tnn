@@ -233,7 +233,7 @@ module riscv_nn_apu_disp (
   assign perf_type_o = stall_type;
   assign perf_cont_o = stall_nack;
   
-  assign apu_multicycle_o  =  (apu_lat == 2'h3 | ( apu_lat == 2'h0 & (valid_req | valid_inflight)));
+  assign apu_multicycle_o  =  (apu_lat == 2'h3 | ( apu_lat == 2'h0 & valid_inflight));
   assign apu_singlecycle_o = ~(valid_inflight | valid_waiting);
 
   //
