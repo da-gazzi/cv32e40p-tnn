@@ -92,6 +92,7 @@ module riscv_nn_ex_stage
   input logic                            mult_is_clpx_i,
   input logic [ 1:0]                     mult_clpx_shift_i,
   input logic                            mult_clpx_img_i,
+  input logic                            dot_spr_operand_i,
 
   output logic                           mult_multicycle_o,
 
@@ -235,6 +236,7 @@ module riscv_nn_ex_stage
   logic           spr_rnn_en;  //RNN_EXT
   logic [3:0][31:0] spr_rnn, spr_rnn_n;  //RNN_EXT
   logic [2:0]     lsu_tospr_wb;  //RNN_EXT
+  logic           dot_spr_operand_wb;
   logic [5:0]     regfile_alu_waddr2_wb;  //RNN_EXT
   logic [31:0]    mult_dot_op_h_a_ml; //RNN_EXT
   logic [31:0]    mult_dot_op_b_a_ml;  //RNN_EXT
@@ -242,7 +244,7 @@ module riscv_nn_ex_stage
   logic [31:0]    mult_dot_op_c_a_ml; //RNN_EXT
   logic           loadComputeVLIW;  //RNN_EXT
 
-  assign loadComputeVLIW = alu_en_i & mult_en_i;
+  assign loadComputeVLIW = dot_spr_operand_i & mult_en_i; //alu_en_i & mult_en_i;
   assign computeLoadVLIW_ex_o = loadComputeVLIW;
   // ALU write port mux
   always_comb
@@ -311,7 +313,8 @@ module riscv_nn_ex_stage
           // regfile_waddr_wb_o = regfile_alu_waddr2_wb;
       end
     end
-    if(lsu_tospr_wb[0]) begin 
+    //if(lsu_tospr_wb[0]) begin 
+    if (dot_spr_operand_wb) begin
       regfile_waddr_wb_o = regfile_waddr_lsu; 
       regfile_wdata_wb_o = mult_result_p;
     end
@@ -376,10 +379,10 @@ module riscv_nn_ex_stage
   ////////////////////////////////////////////////////////////////
 
 
-  assign mult_dot_op_h_a_ml = {32{(mult_operator_i == MUL_DOT16)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_h_a_i);
-  assign mult_dot_op_b_a_ml = {32{(mult_operator_i == MUL_DOT8)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_b_a_i);
-	assign mult_dot_op_n_a_ml = {32{(mult_operator_i == MUL_DOT4)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_n_a_i);
-  assign mult_dot_op_c_a_ml = {32{(mult_operator_i == MUL_DOT2)}} & ((lsu_tospr_ex_i[0]) ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_c_a_i);
+  assign mult_dot_op_h_a_ml = {32{(mult_operator_i == MUL_DOT16)}} & (dot_spr_operand_i ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_h_a_i); // previous was (lsu_tospr_ex_i[0])
+  assign mult_dot_op_b_a_ml = {32{(mult_operator_i == MUL_DOT8)}} & ( dot_spr_operand_i? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_b_a_i);
+	assign mult_dot_op_n_a_ml = {32{(mult_operator_i == MUL_DOT4)}} & (dot_spr_operand_i ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_n_a_i);
+  assign mult_dot_op_c_a_ml = {32{(mult_operator_i == MUL_DOT2)}} & (dot_spr_operand_i ? spr_rnn[lsu_tospr_ex_i[2:1]] : mult_dot_op_c_a_i);
 
   riscv_nn_mult
   #(
@@ -695,6 +698,7 @@ always_ff @(posedge clk, negedge rst_n)
       begin
         regfile_we_lsu    <= regfile_we_i & ~lsu_err_i;
         lsu_tospr_wb <= lsu_tospr_ex_i; //RNN_EXT//RNN_EXT
+        dot_spr_operand_wb <= dot_spr_operand_i;
         regfile_alu_waddr2_wb <= regfile_alu_waddr2_i; //RNN_EXT
         if (regfile_we_i & ~lsu_err_i ) begin
           regfile_waddr_lsu <= regfile_waddr_i;

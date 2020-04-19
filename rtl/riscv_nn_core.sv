@@ -681,6 +681,7 @@ module riscv_nn_core
     .mult_is_clpx_ex_o            ( mult_is_clpx_ex      ), // from ID to EX stage
     .mult_clpx_shift_ex_o         ( mult_clpx_shift_ex   ), // from ID to EX stage
     .mult_clpx_img_ex_o           ( mult_clpx_img_ex     ), // from ID to EX stage
+    .dot_spr_operand_ex_o         ( dot_spr_operand_ex   ),
 `ifdef USE_QNT
     .qnt_en_ex_o                  ( qnt_en_ex            ),
     .qnt_vecmode_ex_o             ( qnt_vecmode_ex       ),
@@ -853,6 +854,7 @@ module riscv_nn_core
     .mult_is_clpx_i             ( mult_is_clpx_ex              ), // from ID/EX pipe registers
     .mult_clpx_shift_i          ( mult_clpx_shift_ex           ), // from ID/EX pipe registers
     .mult_clpx_img_i            ( mult_clpx_img_ex             ), // from ID/EX pipe registers
+    .dot_spr_operand_i          ( dot_spr_operand_ex           ),
 
     .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
 `ifdef USE_QNT

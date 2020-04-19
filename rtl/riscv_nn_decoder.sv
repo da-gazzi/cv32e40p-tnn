@@ -108,6 +108,7 @@ module riscv_nn_decoder
   output logic                        mult_sel_subword_o, // Select subwords for 16x16 bit of multiplier
   output logic [1:0]                  mult_signed_mode_o, // Multiplication in signed mode
   output logic [1:0]                  mult_dot_signed_o, // Dot product in signed mode
+  output logic                        dot_spr_operand_o, // dot product with operand in SPR
 
 `ifdef USE_QNT
   output logic                        qnt_enable_o, // Enable the quantization unit
@@ -244,6 +245,7 @@ module riscv_nn_decoder
     mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 1'b0;
     mult_dot_signed_o           = 2'b00;
+    dot_spr_operand_o           = 1'b0;
 `ifdef USE_QNT
     qnt_en                      = 1'b0;
     qnt_vecmode_o               = VEC_MODE4;
@@ -518,19 +520,30 @@ module riscv_nn_decoder
       OPCODE_MAC_LOAD: begin // RNN Extension RNN_EXT
 
         myfancyinstrucion       = 1'b1; // just for debugging :)
-        regfile_alu_we          = 1'b1;
+        
         rega_used_o             = 1'b1;
         regb_used_o             = 1'b1;
 
         regc_used_o             = 1'b1;
         regc_mux_o              = REGC_RD;
 
-        lsu_tospr_o             = {instr_rdata_i[26], instr_rdata_i[25], 1'b1};  // 01 SPR[0]
-                                                   // 11 SPR[1]
-        alu_en_o                = 1'b1; // ALU for lwincrement part
+        dot_spr_operand_o       = 1'b1; // 1 if using dotp unit with SPR operand
 
+        if (instr_rdata_i[26]) begin
+        lsu_tospr_o             = {1'b0, instr_rdata_i[25], 1'b1};  // 01 SPR[0] // 11 SPR[1]
+        alu_en_o                = 1'b1; // ALU for lwincrement part
+        regfile_alu_we          = 1'b1;
         data_req                = 1'b1;    // date req enabled for load part
         data_type_o             = 2'b00;   // probably WORD
+        end else begin
+        lsu_tospr_o             = {1'b0, instr_rdata_i[25], 1'b0};  // 01 SPR[0] // 11 SPR[1]
+        alu_en_o                = 1'b0; // ALU for lwincrement part
+        regfile_alu_we          = 1'b0;
+        data_req                = 1'b0;    // date req enabled for load part
+        data_type_o             = 2'b00;   // probably WORD
+        end
+
+        
 
         alu_operator_o          = ALU_ADD4; // increment size for load part (WORD)
         prepost_useincr_o       = 1'b0; // enable post-access load

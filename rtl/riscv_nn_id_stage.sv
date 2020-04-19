@@ -158,6 +158,7 @@ module riscv_nn_id_stage
     output logic                           mult_is_clpx_ex_o,
     output logic [ 1:0]                    mult_clpx_shift_ex_o,
     output logic                           mult_clpx_img_ex_o,
+    output logic                           dot_spr_operand_ex_o,
 `ifdef USE_QNT
     output logic                           qnt_en_ex_o,
     output logic [2:0]                     qnt_vecmode_ex_o,
@@ -1149,6 +1150,7 @@ module riscv_nn_id_stage
     .mult_imm_mux_o                  ( mult_imm_mux              ),
     .mult_dot_en_o                   ( mult_dot_en               ),
     .mult_dot_signed_o               ( mult_dot_signed           ),
+    .dot_spr_operand_o               ( dot_spr_operand           ), 
 `ifdef USE_QNT
     // QNT signals
     .qnt_enable_o                    ( qnt_enable                ),
@@ -1502,6 +1504,7 @@ module riscv_nn_id_stage
       mult_is_clpx_ex_o           <= 1'b0;
       mult_clpx_shift_ex_o        <= 2'b0;
       mult_clpx_img_ex_o          <= 1'b0;
+      dot_spr_operand_ex_o        <= 1'b0;
 
 `ifdef USE_QNT
       qnt_en_ex_o                 <= 1'b0;
@@ -1594,6 +1597,7 @@ module riscv_nn_id_stage
         end
 
         mult_en_ex_o                <= mult_en;
+        dot_spr_operand_ex_o        <= dot_spr_operand;
         if (mult_int_en) begin
           mult_operator_ex_o        <= mult_operator;
           mult_sel_subword_ex_o     <= mult_sel_subword;
@@ -1606,7 +1610,6 @@ module riscv_nn_id_stage
         if (mult_dot_en) begin
           mult_operator_ex_o        <= mult_operator;
           mult_dot_signed_ex_o      <= mult_dot_signed;
-
           case(mult_operator)
             MUL_DOT16: begin
               mult_dot_op_h_a_ex_o        <= alu_operand_a;
@@ -1635,6 +1638,7 @@ module riscv_nn_id_stage
           //else
             //mult_clpx_img_ex_o      <= '0;
         end
+        
 `ifdef USE_QNT
 
         qnt_en_ex_o                 <= qnt_enable;
