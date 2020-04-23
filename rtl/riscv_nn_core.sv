@@ -1258,7 +1258,7 @@ module riscv_nn_core
     .wb_bypass      ( ex_stage_i.branch_in_ex_i            ),
 
     .wb_valid       ( wb_valid                             ),
-    .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
+    .wb_reg_addr    ( regfile_waddr_fw_wb                  ),
     .wb_reg_we      ( regfile_we_wb                        ),
     .wb_reg_wdata   ( regfile_wdata                        ),
 
