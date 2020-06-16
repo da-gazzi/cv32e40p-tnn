@@ -149,7 +149,8 @@ module riscv_nn_core
   logic              trap_addr_mux;
   logic              lsu_load_err;
   logic              lsu_store_err;
-  logic [2:0]        lsu_tospr_ex;  //RNN_EXT
+  logic [2:0]        lsu_tosprw_ex;  //RNN_EXT
+  logic [1:0]        lsu_tospra_ex; //RNN_EXT
 
   // ID performance counter signals
   logic        is_decoding;
@@ -750,7 +751,8 @@ module riscv_nn_core
     .data_err_i                   ( data_err_pmp         ),
     .data_err_ack_o               ( data_err_ack         ),
 
-    .lsu_tospr_ex_o               (lsu_tospr_ex          ), //RNN_EXT
+    .lsu_tosprw_ex_o              (lsu_tosprw_ex          ), //RNN_EXT
+    .lsu_tospra_ex_o              (lsu_tospra_ex         ), //RNN_EXT
     .loadComputeVLIW_ex_i         (loadComputeVLIW_ex    ), //RNN_EXT
 
     // Interrupt Signals
@@ -912,7 +914,8 @@ module riscv_nn_core
 `endif
     .lsu_rdata_i                ( lsu_rdata                    ),
     .data_rvalid_ex_i              ( data_rvalid_i               ),
-    .lsu_tospr_ex_i             ( lsu_tospr_ex                 ), //RNN_EXT 
+    .lsu_tosprw_ex_i            ( lsu_tosprw_ex                ), //RNN_EXT 
+    .lsu_tospra_ex_i            ( lsu_tospra_ex                ), //RNN_EXT
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),
