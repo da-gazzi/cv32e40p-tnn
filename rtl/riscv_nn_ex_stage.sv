@@ -312,21 +312,21 @@ module riscv_nn_ex_stage
           regfile_waddr_wb_o = apu_waddr;
           regfile_wdata_wb_o = apu_result;
       end
-      if(lsu_tosprw_wb[0] | lsu_tospra_wb[0) begin// does not work because of latency
+      if (lsu_tosprw_wb[0] | lsu_tospra_wb[0]) begin // does not work because of latency
           spr_rnn_en = 1'b1;       //spr instead of gpr
-          //regfile_waddr_wb_o = regfile_waddr_lsu; 
+          //regfile_waddr_wb_o = regfile_waddr_lsu;
           //regfile_wdata_wb_o = mult_result_p;
           // regfile_we_wb_o = 1'b0;  //spr instead of gpr
           // regfile_waddr_wb_o = regfile_alu_waddr2_wb;
       end
     end
-    //if(lsu_tosprw_wb[0]) begin 
+    //if(lsu_tosprw_wb[0]) begin
     if (dot_spr_operand_wb) begin
-      regfile_waddr_wb_o = regfile_waddr_lsu; 
+      regfile_waddr_wb_o = regfile_waddr_lsu;
       regfile_wdata_wb_o = mult_result_p;
     end
 
-  
+
 
   end
 
@@ -670,12 +670,12 @@ generate
    assign apu_busy_o = apu_active;
 
   // SPR
-  assign wspr_rnn_n[0] = (spr_rnn_en && lsu_tosprw_wb[2:1]==2'b00) ? lsu_rdata_i : wspr_rnn[0]; //RNN_EXT
-  assign wspr_rnn_n[1] = (spr_rnn_en && lsu_tosprw_wb[2:1]==2'b01) ? lsu_rdata_i : wspr_rnn[1]; //RNN_EXT
-  assign wspr_rnn_n[2] = (spr_rnn_en && lsu_tosprw_wb[2:1]==2'b10) ? lsu_rdata_i : wspr_rnn[2]; //RNN_EXT
-  assign wspr_rnn_n[3] = (spr_rnn_en && lsu_tosprw_wb[2:1]==2'b11) ? lsu_rdata_i : wspr_rnn[3]; //RNN_EXT
-  assign aspr_rnn_n[0] = (spr_rnn_en && lsu_tospra_wb[1]==1'b0)    ? lsu_rdata_i : aspr_rnn[0]; //RNN_EXT
-  assign aspr_rnn_n[1] = (spr_rnn_en && lsu_tospra_wb[1]==1'b1)    ? lsu_rdata_i : aspr_rnn[1]; //RNN_EXT
+  assign wspr_rnn_n[0] = (lsu_tosprw_wb[0] && spr_rnn_en && lsu_tosprw_wb[2:1]==2'b00) ? lsu_rdata_i : wspr_rnn[0]; //RNN_EXT
+  assign wspr_rnn_n[1] = (lsu_tosprw_wb[0] && spr_rnn_en && lsu_tosprw_wb[2:1]==2'b01) ? lsu_rdata_i : wspr_rnn[1]; //RNN_EXT
+  assign wspr_rnn_n[2] = (lsu_tosprw_wb[0] && spr_rnn_en && lsu_tosprw_wb[2:1]==2'b10) ? lsu_rdata_i : wspr_rnn[2]; //RNN_EXT
+  assign wspr_rnn_n[3] = (lsu_tosprw_wb[0] && spr_rnn_en && lsu_tosprw_wb[2:1]==2'b11) ? lsu_rdata_i : wspr_rnn[3]; //RNN_EXT
+  assign aspr_rnn_n[0] = (lsu_tospra_wb[0] && spr_rnn_en && lsu_tospra_wb[1]==1'b0)    ? lsu_rdata_i : aspr_rnn[0]; //RNN_EXT
+  assign aspr_rnn_n[1] = (lsu_tospra_wb[0] && spr_rnn_en && lsu_tospra_wb[1]==1'b1)    ? lsu_rdata_i : aspr_rnn[1]; //RNN_EXT
 always_ff @(posedge clk, negedge rst_n)
   begin : SPR
     if (~rst_n)
@@ -735,7 +735,7 @@ always_ff @(posedge clk, negedge rst_n)
                        & wb_ready_i & ~wb_contention & fpu_ready) | (branch_in_ex_i);
   assign ex_valid_o = (apu_valid | alu_en_i | mult_en_i | csr_access_i | lsu_en_i)
                        & (alu_ready & mult_ready & qnt_ready & lsu_ready_ex_i & wb_ready_i);
-`else 
+`else
   assign ex_ready_o = (~apu_stall & alu_ready & mult_ready & lsu_ready_ex_i
                        & wb_ready_i & ~wb_contention & fpu_ready) | (branch_in_ex_i);
   assign ex_valid_o = (apu_valid | alu_en_i | mult_en_i | csr_access_i | lsu_en_i)
