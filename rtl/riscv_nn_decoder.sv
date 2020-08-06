@@ -555,7 +555,7 @@ module riscv_nn_decoder
           regfile_alu_we          = 1'b1;
           data_req                = 1'b1;    // date req enabled for load part
           data_type_o             = 2'b00;   // probably WORD
-        else begin
+        end else begin
           lsu_tosprw_o          = { instr_rdata_i[22:21], 1'b0};
           lsu_tospra_o          = { instr_rdata_i[20], 1'b0}; 
           alu_en_o                = 1'b0; // ALU for lwincrement part
@@ -590,19 +590,19 @@ module riscv_nn_decoder
         alu_op_b_mux_sel_o      = OP_B_REGB_OR_FWD; // --> no more valid for v3. Operand b for the MAC fetched from SPRs
         
         case (instr_rdata_i[31:25])
-        7'b1011100: begin //M&L SDOTP S-S
+        7'b1111100: begin //M&L SDOTP S-S
           mult_dot_en             = 1'b1;   // enable dotp unit
           mult_dot_signed_o       = 2'b11; // set for signed-signed interpretation of operands
           end
-        7'b1010100: begin //M&L SDOTP U-
+        7'b1110100: begin //M&L SDOTP U-S
           mult_dot_en             = 1'b1;   // enable dotp unit
           mult_dot_signed_o       = 2'b01;  // set for unsigned-signed interpretation of operands
           end
-        7'b1010000: begin //M&L SDOTP U-U
+        7'b1110000: begin //M&L SDOTP U-U
           mult_dot_en             = 1'b1;   // enable dotp unit
           mult_dot_signed_o       = 2'b00;  // set for unsigned-unsigned interpretation of operands
           end
-        7'b1001100: begin //M&L SDOTP S-U
+        7'b1101100: begin //M&L SDOTP S-U
           mult_dot_en             = 1'b1;   // enable dotp unit
           mult_dot_signed_o       = 2'b10;  // set for signed-unsigned interpretation of operands
         end
