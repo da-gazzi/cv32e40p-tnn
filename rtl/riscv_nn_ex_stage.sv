@@ -706,6 +706,7 @@ always_ff @(posedge clk, negedge rst_n)
       lsu_tosprw_wb        <= 3'b0;  //RNN_EXT
       lsu_tospra_wb        <= 2'b0;
       regfile_alu_waddr2_wb <= 'b0;  //RNN_EXT
+      dot_spr_operand_wb    <= '0;
     end
     else
     begin
