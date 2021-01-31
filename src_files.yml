@@ -1,4 +1,4 @@
-riscv_regfile_rtl:
+riscv_nn_regfile_rtl:
   targets: [
     rtl,
     tsmc55,
@@ -8,11 +8,11 @@ riscv_regfile_rtl:
     ./rtl/include,
   ]
   files: [
-    ./rtl/register_file_test_wrap.sv,
-    ./rtl/riscv_register_file_latch.sv,
+    ./rtl/register_file_nn_test_wrap.sv,
+    ./rtl/riscv_nn_register_file_latch.sv,
   ]
 
-riscv:
+riscv_nn:
   vlog_opts: [
     -L fpnew_lib,
   ]
@@ -21,34 +21,34 @@ riscv:
     ../../rtl/includes,
   ]
   files: [
-    ./rtl/include/apu_core_package.sv,
-    ./rtl/include/riscv_defines.sv,
-    ./rtl/include/riscv_tracer_defines.sv,
-    ./rtl/riscv_alu.sv,
-    ./rtl/riscv_alu_basic.sv,
-    ./rtl/riscv_alu_div.sv,
-    ./rtl/riscv_qnt_unit.sv,
-    ./rtl/riscv_compressed_decoder.sv,
-    ./rtl/riscv_controller.sv,
-    ./rtl/riscv_cs_registers.sv,
-    ./rtl/riscv_decoder.sv,
-    ./rtl/riscv_int_controller.sv,
-    ./rtl/riscv_ex_stage.sv,
-    ./rtl/riscv_hwloop_controller.sv,
-    ./rtl/riscv_hwloop_regs.sv,
-    ./rtl/riscv_id_stage.sv,
-    ./rtl/riscv_if_stage.sv,
-    ./rtl/riscv_load_store_unit.sv,
-    ./rtl/riscv_mult.sv,
-    ./rtl/riscv_prefetch_buffer.sv,
-    ./rtl/riscv_prefetch_L0_buffer.sv,
-    ./rtl/riscv_core.sv,
-    ./rtl/riscv_apu_disp.sv,
-    ./rtl/riscv_fetch_fifo.sv,
-    ./rtl/riscv_L0_buffer.sv,
-    ./rtl/riscv_pmp.sv,
+    ./rtl/include/apu_core_nn_package.sv,
+    ./rtl/include/riscv_nn_defines.sv,
+    ./rtl/include/riscv_nn_tracer_defines.sv,
+    ./rtl/riscv_nn_alu.sv,
+    ./rtl/riscv_nn_alu_basic.sv,
+    ./rtl/riscv_nn_alu_div.sv,
+    ./rtl/riscv_nn_qnt_unit.sv,
+    ./rtl/riscv_nn_compressed_decoder.sv,
+    ./rtl/riscv_nn_controller.sv,
+    ./rtl/riscv_nn_cs_registers.sv,
+    ./rtl/riscv_nn_decoder.sv,
+    ./rtl/riscv_nn_int_controller.sv,
+    ./rtl/riscv_nn_ex_stage.sv,
+    ./rtl/riscv_nn_hwloop_controller.sv,
+    ./rtl/riscv_nn_hwloop_regs.sv,
+    ./rtl/riscv_nn_id_stage.sv,
+    ./rtl/riscv_nn_if_stage.sv,
+    ./rtl/riscv_nn_load_store_unit.sv,
+    ./rtl/riscv_nn_mult.sv,
+    ./rtl/riscv_nn_prefetch_buffer.sv,
+    ./rtl/riscv_nn_prefetch_L0_buffer.sv,
+    ./rtl/riscv_nn_core.sv,
+    ./rtl/riscv_nn_apu_disp.sv,
+    ./rtl/riscv_nn_fetch_fifo.sv,
+    ./rtl/riscv_nn_L0_buffer.sv,
+    ./rtl/riscv_nn_pmp.sv,
   ]
-riscv_vip_rtl:
+riscv_nn_vip_rtl:
   targets: [
     rtl,
   ]
@@ -56,13 +56,13 @@ riscv_vip_rtl:
     ./rtl/include,
   ]
   files: [
-    ./rtl/riscv_tracer.sv,
+    ./rtl/riscv_nn_tracer.sv,
   ]
   flags: [
     skip_synthesis,
   ]
 
-riscv_regfile_rtl:
+riscv_regfile_nn_rtl:
   targets: [
     rtl,
     tsmc55,
@@ -72,18 +72,18 @@ riscv_regfile_rtl:
     ./rtl/include,
   ]
   files: [
-    ./rtl/register_file_test_wrap.sv,
-    ./rtl/riscv_register_file_latch.sv,
+    ./rtl/register_file_nn_test_wrap.sv,
+    ./rtl/riscv_nn_register_file_latch.sv,
   ]
 
-riscv_regfile_verilator:
+riscv_nn_regfile_verilator:
   targets: [
     verilator,
   ]
   files: [
-    ./rtl/riscv_register_file.sv,
+    ./rtl/riscv_nn_register_file.sv,
   ]
-riscv_regfile_fpga:
+riscv_nn_regfile_fpga:
   targets: [
     xilinx,
   ]
@@ -91,11 +91,11 @@ riscv_regfile_fpga:
     ./rtl/include,
   ]
   files: [
-    ./rtl/register_file_test_wrap.sv,
-    ./rtl/riscv_register_file.sv,
+    ./rtl/register_file_nn_test_wrap.sv,
+    ./rtl/riscv_nn_register_file.sv,
   ]
 
-tb_riscv:
+tb_riscv_nn:
   sim_tools: [
     questa
   ]

@@ -22,12 +22,12 @@
 // input port: send address one cycle before the data
 // clear_i clears the FIFO for the following cycle. in_addr_i can be sent in
 // this cycle already
-module riscv_fetch_fifo
+module riscv_nn_fetch_fifo
 (
     input  logic        clk,
     input  logic        rst_n,
 
-    // control signals
+    // control signals 
     input  logic        clear_i,          // clears the contents of the fifo
 
     // input port

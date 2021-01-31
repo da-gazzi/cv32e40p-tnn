@@ -29,20 +29,19 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import apu_core_package::*;
+import apu_core_nn_package::*;
 
-`include "riscv_config.sv"
+`include "riscv_nn_config.sv"
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_core
+module riscv_nn_core
 #(
   parameter N_EXT_PERF_COUNTERS =  0,
   parameter INSTR_RDATA_WIDTH   = 32,
   parameter PULP_SECURE         =  0,
   parameter N_PMP_ENTRIES       = 16,
   parameter USE_PMP             =  1, //if PULP_SECURE is 1, you can still not use the PMP
-  parameter USE_QNT             =  0,
   parameter PULP_CLUSTER        =  1,
   parameter FPU                 =  0,
   parameter Zfinx               =  0,
@@ -129,6 +128,7 @@ module riscv_core
   localparam N_HWLP      = 2;
   localparam N_HWLP_BITS = $clog2(N_HWLP);
   localparam APU         = ((SHARED_DSP_MULT==1) | (SHARED_INT_DIV==1) | (FPU==1)) ? 1 : 0;
+  localparam USE_QNT     = 0;
 
   // IF/ID signals
   logic              is_hwlp_id;
@@ -149,6 +149,8 @@ module riscv_core
   logic              trap_addr_mux;
   logic              lsu_load_err;
   logic              lsu_store_err;
+  logic [2:0]        lsu_tosprw_ex;  //RNN_EXT
+  logic [1:0]        lsu_tospra_ex; //RNN_EXT
 
   // ID performance counter signals
   logic        is_decoding;
@@ -205,7 +207,7 @@ module riscv_core
   logic        mult_is_clpx_ex_o;
   logic [ 1:0] mult_clpx_shift_ex;
   logic        mult_clpx_img_ex;
-
+`ifdef USE_QNT
   // quantization unit control
   logic        qnt_en_ex;
   logic [2:0] qnt_vecmode_ex;
@@ -213,7 +215,7 @@ module riscv_core
   logic [31:0] qnt_op_b_ex;
   logic      threshold_request_ex;
   logic [31:0] threshold_address_ex;
-
+`endif
   // FPU
   logic [C_PC-1:0]            fprec_csr;
   logic [C_RM-1:0]            frm_csr;
@@ -246,11 +248,12 @@ module riscv_core
   // Register Write Control
   logic [5:0]  regfile_waddr_ex;
   logic        regfile_we_ex;
-  logic [5:0]  regfile_waddr_fw_wb_o;        // From WB to ID
+  logic [5:0]  regfile_waddr_fw_wb;        // From WB to ID RNN_EXT prev fw_wb_o
   logic        regfile_we_wb;
   logic [31:0] regfile_wdata;
 
   logic [5:0]  regfile_alu_waddr_ex;
+  logic [5:0]  regfile_alu_waddr2_ex; //RNN_EXT
   logic        regfile_alu_we_ex;
 
   logic [5:0]  regfile_alu_waddr_fw;
@@ -289,9 +292,11 @@ module riscv_core
 
 
 
-
+`ifdef USE_QNT
   logic       data_req_qnt_ex;  // multiplexed signal to lsu
+`endif
 
+ logic        loadComputeVLIW_ex; //RNN_EXT
   // stall control
   logic        halt_if;
   logic        id_ready;
@@ -480,7 +485,7 @@ module riscv_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  riscv_if_stage
+  riscv_nn_if_stage
   #(
     .N_HWLP              ( N_HWLP            ),
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH ),
@@ -562,7 +567,7 @@ module riscv_core
   //  |___|____/  |____/ |_/_/   \_\____|_____|  //
   //                                             //
   /////////////////////////////////////////////////
-  riscv_id_stage
+  riscv_nn_id_stage
   #(
     .N_HWLP                       ( N_HWLP               ),
     .PULP_SECURE                  ( PULP_SECURE          ),
@@ -653,6 +658,7 @@ module riscv_core
 
     .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
     .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
+    .regfile_alu_waddr2_ex_o       ( regfile_alu_waddr2_ex ), //RNN_EXT
 
     // MUL
     .mult_operator_ex_o           ( mult_operator_ex     ), // from ID to EX stage
@@ -676,12 +682,13 @@ module riscv_core
     .mult_is_clpx_ex_o            ( mult_is_clpx_ex      ), // from ID to EX stage
     .mult_clpx_shift_ex_o         ( mult_clpx_shift_ex   ), // from ID to EX stage
     .mult_clpx_img_ex_o           ( mult_clpx_img_ex     ), // from ID to EX stage
-
+    .dot_spr_operand_ex_o         ( dot_spr_operand_ex   ),
+`ifdef USE_QNT
     .qnt_en_ex_o                  ( qnt_en_ex            ),
     .qnt_vecmode_ex_o             ( qnt_vecmode_ex       ),
     .qnt_op_a_ex_o                ( qnt_op_a_ex          ),
     .qnt_op_b_ex_o                ( qnt_op_b_ex          ),
-
+`endif
     // FPU
     .frm_i                        ( frm_csr                 ),
 
@@ -743,6 +750,11 @@ module riscv_core
     .data_misaligned_i            ( data_misaligned      ),
     .data_err_i                   ( data_err_pmp         ),
     .data_err_ack_o               ( data_err_ack         ),
+
+    .lsu_tosprw_ex_o              (lsu_tosprw_ex          ), //RNN_EXT
+    .lsu_tospra_ex_o              (lsu_tospra_ex         ), //RNN_EXT
+    .loadComputeVLIW_ex_i         (loadComputeVLIW_ex    ), //RNN_EXT
+
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
     .irq_sec_i                    ( (PULP_SECURE) ? irq_sec_i : 1'b0 ),
@@ -762,7 +774,7 @@ module riscv_core
     .debug_ebreaku_i              ( debug_ebreaku        ),
 
     // Forward Signals
-    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o),  // Write address ex-wb pipeline
+    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb  ),  // Write address ex-wb pipeline //RNN_EXT prev fw_wb_o
     .regfile_we_wb_i              ( regfile_we_wb        ),  // write enable for the register file
     .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
 
@@ -789,7 +801,7 @@ module riscv_core
   //  |_____/_/\_\ |____/ |_/_/   \_\____|_____|     //
   //                                                 //
   /////////////////////////////////////////////////////
-  riscv_ex_stage
+  riscv_nn_ex_stage
   #(
    .USE_QNT          ( USE_QNT            ),
    .FPU              ( FPU                ),
@@ -844,15 +856,20 @@ module riscv_core
     .mult_is_clpx_i             ( mult_is_clpx_ex              ), // from ID/EX pipe registers
     .mult_clpx_shift_i          ( mult_clpx_shift_ex           ), // from ID/EX pipe registers
     .mult_clpx_img_i            ( mult_clpx_img_ex             ), // from ID/EX pipe registers
+    .dot_spr_operand_i          ( dot_spr_operand_ex           ),
 
     .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
+`ifdef USE_QNT
     .qnt_en_i                   ( qnt_en_ex                    ),
     .qnt_vecmode_i              ( qnt_vecmode_ex               ),
     .qnt_op_a_i                 ( qnt_op_a_ex                  ),
     .qnt_op_b_i                 ( qnt_op_b_ex                  ),
     .qnt_thresh_req_o           ( threshold_request_ex         ),
     .qnt_thresh_addr_o          ( threshold_address_ex         ),
+`endif
     .data_gnt_mem_i             ( data_gnt_pmp                 ),
+
+    .computeLoadVLIW_ex_o       (loadComputeVLIW_ex            ), //RNN_EXT
     // FPU
     .fpu_prec_i                 ( fprec_csr                    ),
     .fpu_fflags_o               ( fflags                       ),
@@ -890,10 +907,15 @@ module riscv_core
     // response channel
     .apu_master_valid_i         ( apu_master_valid_i           ),
     .apu_master_result_i        ( apu_master_result_i          ),
-
+`ifdef USE_QNT
     .lsu_en_i                   ( data_req_qnt_ex              ),
+`else 
+    .lsu_en_i                   ( data_req_ex                  ),
+`endif
     .lsu_rdata_i                ( lsu_rdata                    ),
     .data_rvalid_ex_i              ( data_rvalid_i               ),
+    .lsu_tosprw_ex_i            ( lsu_tosprw_ex                ), //RNN_EXT 
+    .lsu_tospra_ex_i            ( lsu_tospra_ex                ), //RNN_EXT
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),
@@ -902,13 +924,14 @@ module riscv_core
     // From ID Stage: Regfile control signals
     .branch_in_ex_i             ( branch_in_ex                 ),
     .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
+    .regfile_alu_waddr2_i       ( regfile_alu_waddr2_ex         ), //RNN_EXT
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
 
     .regfile_waddr_i            ( regfile_waddr_ex             ),
     .regfile_we_i               ( regfile_we_ex                ),
 
     // Output of ex stage pipeline
-    .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
+    .regfile_waddr_wb_o         ( regfile_waddr_fw_wb          ), //RNN_EXT, prev fw_wb_o
     .regfile_we_wb_o            ( regfile_we_wb                ),
     .regfile_wdata_wb_o         ( regfile_wdata                ),
 
@@ -922,6 +945,7 @@ module riscv_core
     .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         ),
 
     // stall control
+    .is_decoding_i              ( is_decoding                  ),
     .lsu_ready_ex_i             ( lsu_ready_ex                 ),
     .lsu_err_i                  ( data_err_pmp                 ),
 
@@ -930,11 +954,12 @@ module riscv_core
     .wb_ready_i                 ( lsu_ready_wb                 )
   );
 
-
+`ifdef USE_QNT
    assign data_req_qnt_ex = qnt_en_ex ? threshold_request_ex : data_req_ex;
    assign data_addr_lsu_a = qnt_en_ex ? threshold_address_ex : alu_operand_a_ex;
    assign data_type_lsu_ex = qnt_en_ex ? 2'b01  : data_type_ex;
    assign data_sign_ext_lsu_ex = qnt_en_ex ? 2'b01 : data_sign_ext_ex;
+`endif
   ////////////////////////////////////////////////////////////////////////////////////////
   //    _     ___    _    ____    ____ _____ ___  ____  _____   _   _ _   _ ___ _____   //
   //   | |   / _ \  / \  |  _ \  / ___|_   _/ _ \|  _ \| ____| | | | | \ | |_ _|_   _|  //
@@ -944,7 +969,7 @@ module riscv_core
   //                                                                                    //
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  riscv_load_store_unit  load_store_unit_i
+  riscv_nn_load_store_unit  load_store_unit_i
   (
     .clk                   ( clk                ),
     .rst_n                 ( rst_ni             ),
@@ -963,14 +988,26 @@ module riscv_core
 
     // signal from ex stage
     .data_we_ex_i          ( data_we_ex         ),
+`ifdef USE_QNT
     .data_type_ex_i        ( data_type_lsu_ex   ),
-    .data_wdata_ex_i       ( alu_operand_c_ex   ),
-    .data_reg_offset_ex_i  ( data_reg_offset_ex ),
     .data_sign_ext_ex_i    ( data_sign_ext_lsu_ex),  // sign extension
+`else 
+    .data_type_ex_i        ( data_type_ex       ),
+    .data_sign_ext_ex_i    ( data_sign_ext_ex),  // sign extension
+`endif
+    .data_wdata_ex_i       ( alu_operand_c_ex   ),
+    .data_reg_offset_ex_i  ( data_reg_offset_ex   ),
+    
 
     .data_rdata_ex_o       ( lsu_rdata          ),
+`ifdef USE_QNT
     .data_req_ex_i         ( data_req_qnt_ex    ),
     .operand_a_ex_i        ( data_addr_lsu_a    ),
+`else 
+    .data_req_ex_i         ( data_req_ex        ),
+    .operand_a_ex_i        ( alu_operand_a_ex   ),
+`endif
+    
     .operand_b_ex_i        ( alu_operand_b_ex   ),
     .addr_useincr_ex_i     ( useincr_addr_ex    ),
 
@@ -982,9 +1019,11 @@ module riscv_core
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
 
     .ex_valid_i            ( ex_valid           ),
-    .busy_o                ( lsu_busy           ),
-
+    .busy_o                ( lsu_busy           )
+`ifdef USE_QNT
+    ,
     .qnt_en_ex_i           (  qnt_en_ex         )
+`endif
   );
 
   assign wb_valid = lsu_ready_wb & apu_ready_wb;
@@ -1000,7 +1039,7 @@ module riscv_core
   //   Control and Status Registers   //
   //////////////////////////////////////
 
-  riscv_cs_registers
+  riscv_nn_cs_registers
   #(
     .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   ),
     .FPU             ( FPU                   ),
@@ -1125,7 +1164,7 @@ module riscv_core
 
   generate
   if(PULP_SECURE && USE_PMP) begin : RISCY_PMP
-  riscv_pmp
+  riscv_nn_pmp
   #(
      .N_PMP_ENTRIES(N_PMP_ENTRIES)
   )
@@ -1180,7 +1219,7 @@ module riscv_core
   logic tracer_clk;
   assign #1 tracer_clk = clk_i;
 
-  riscv_tracer riscv_tracer_i
+  riscv_nn_tracer riscv_nn_tracer_i
   (
     .clk            ( tracer_clk                           ), // always-running clock for tracing
     .rst_n          ( rst_ni                               ),
@@ -1224,7 +1263,7 @@ module riscv_core
     .wb_bypass      ( ex_stage_i.branch_in_ex_i            ),
 
     .wb_valid       ( wb_valid                             ),
-    .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
+    .wb_reg_addr    ( regfile_waddr_fw_wb                  ),
     .wb_reg_we      ( regfile_we_wb                        ),
     .wb_reg_wdata   ( regfile_wdata                        ),
 

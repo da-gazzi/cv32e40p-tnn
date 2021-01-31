@@ -32,7 +32,7 @@
 // ADDRESS 0 is NOT WRITABLE !!!!!!!!!!!!!!!!!!!!
 //
 
-module register_file_test_wrap
+module register_file_nn_test_wrap
 #(
    parameter ADDR_WIDTH    = 5,
    parameter DATA_WIDTH    = 32,
@@ -129,14 +129,14 @@ module register_file_test_wrap
    end
 
 
-   riscv_register_file
+   riscv_nn_register_file
    #(
       .ADDR_WIDTH ( ADDR_WIDTH          ),
       .DATA_WIDTH ( DATA_WIDTH          ),
       .FPU        ( FPU                 ),
       .Zfinx      ( Zfinx               )
    )
-   riscv_register_file_i
+   riscv_nn_register_file_i
    (
       .clk        ( clk                 ),
       .rst_n      ( rst_n               ),

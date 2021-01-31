@@ -26,9 +26,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_alu
+module riscv_nn_alu
 #(
   parameter SHARED_INT_DIV = 0,
   parameter FPU            = 0
@@ -114,7 +114,7 @@ module riscv_alu
   assign adder_op_a = (operator_i == ALU_ABS) ? operand_a_neg : ( is_subrot_i ? {operand_b_i[15:0], operand_a_i[31:16]} : operand_a_i );
 
   // prepare operand b
-  assign adder_op_b = adder_op_b_negate ? ( is_subrot_i ? ~{operand_a_i[15:0], operand_b_i[31:16]} : operand_b_neg ) : operand_b_i;
+  assign adder_op_b = (operator_i == ALU_ADD4) ? 'h4 :  adder_op_b_negate ? ( is_subrot_i ? ~{operand_a_i[15:0], operand_b_i[31:16]} : operand_b_neg ) : operand_b_i;
 
   // prepare carry
   always_comb
@@ -401,13 +401,13 @@ module riscv_alu
                       (operator_i == ALU_REM) || (operator_i == ALU_REMU) ||
                       (operator_i == ALU_BREV);
 
-  assign shift_use_round = (operator_i == ALU_ADD)   || (operator_i == ALU_SUB)   ||
+  assign shift_use_round = (operator_i == ALU_ADD)   || (operator_i == ALU_SUB || operator_i == ALU_ADD4)   ||
                            (operator_i == ALU_ADDR)  || (operator_i == ALU_SUBR)  ||
                            (operator_i == ALU_ADDU)  || (operator_i == ALU_SUBU)  ||
                            (operator_i == ALU_ADDUR) || (operator_i == ALU_SUBUR);
 
   assign shift_arithmetic = (operator_i == ALU_SRA)  || (operator_i == ALU_BEXT) ||
-                            (operator_i == ALU_ADD)  || (operator_i == ALU_SUB)  ||
+                            (operator_i == ALU_ADD)  || (operator_i == ALU_SUB || operator_i == ALU_ADD4)  ||
                             (operator_i == ALU_ADDR) || (operator_i == ALU_SUBR);
 
   // choose the bit reversed or the normal input for shift operand a
@@ -1304,7 +1304,7 @@ module riscv_alu
 
 
       // inputs A and B are swapped
-      riscv_alu_div div_i
+      riscv_nn_alu_div div_i
         (
          .Clk_CI       ( clk               ),
          .Rst_RBI      ( rst_n             ),
@@ -1347,7 +1347,7 @@ module riscv_alu
       ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
 
       // Shift Operations
-      ALU_ADD, ALU_ADDR, ALU_ADDU, ALU_ADDUR,
+      ALU_ADD, ALU_ADDR, ALU_ADDU, ALU_ADDUR,  ALU_ADD4,
       ALU_SUB, ALU_SUBR, ALU_SUBU, ALU_SUBUR,
       ALU_SLL,
       ALU_SRL, ALU_SRA,

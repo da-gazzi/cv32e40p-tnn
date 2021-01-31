@@ -34,5 +34,7 @@
 `define TRACE_EXECUTION
 `endif
 
+//`define  USE_QNT
+
 // to store traces of FPU/APU operations
 //`define APU_TRACE

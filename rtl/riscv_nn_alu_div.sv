@@ -23,7 +23,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-module riscv_alu_div
+module riscv_nn_alu_div
 #(
    parameter C_WIDTH     = 32,
    parameter C_LOG_WIDTH = 6

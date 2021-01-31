@@ -27,9 +27,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_controller
+module riscv_nn_controller
 #(
   parameter FPU               = 0
 )
@@ -84,6 +84,8 @@ module riscv_controller
   input  logic        data_load_event_i,
   input  logic        data_err_i,
   output logic        data_err_ack_o,
+
+  input logic         computeLoadVLIW_i,         // RNN_EXT
 
   // from ALU
   input  logic        mult_multicycle_i,          // multiplier is taken multiple cycles and uses op c as storage
@@ -142,6 +144,7 @@ module riscv_controller
   // Regfile target
   input  logic        regfile_we_id_i,            // currently decoded we enable
   input  logic [5:0]  regfile_alu_waddr_id_i,     // currently decoded target address
+  input logic [5:0]   regfile_alu_waddr2_id_i,   //RNN_EXT
 
   // Forwarding signals from regfile
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
@@ -213,8 +216,8 @@ module riscv_controller
   begin
     // print warning in case of decoding errors
     if (is_decoding_o && illegal_insn_i) begin
-      $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i,
-               riscv_id_stage.pc_id_i);
+      $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_nn_core.core_id_i,
+               riscv_nn_id_stage.pc_id_i);
     end
   end
   // synopsys translate_on
@@ -1002,9 +1005,11 @@ module riscv_controller
     if (
           ( (data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) ||
            (wb_ready_i == 1'b0) && (regfile_we_wb_i == 1'b1)
-          ) &&
-          ( (reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1) ||
-            (is_decoding_o && regfile_we_id_i && (regfile_waddr_ex_i == regfile_alu_waddr_id_i)) )
+          )
+          &&
+
+          ( ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1) ||
+            (is_decoding_o && regfile_we_id_i && (regfile_waddr_ex_i == regfile_alu_waddr_id_i))) && (computeLoadVLIW_i == 1'b0)) // TODO stall control for RNN_EXT
        )
     begin
       deassert_we_o   = 1'b1;

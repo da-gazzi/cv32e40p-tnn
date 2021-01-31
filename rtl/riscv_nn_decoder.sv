@@ -26,10 +26,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "apu_macros.sv"
+`include "riscv_nn_config.sv"
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
-module riscv_decoder
+module riscv_nn_decoder
 #(
   parameter FPU               = 0,
   parameter FP_DIVSQRT        = 0,
@@ -107,10 +108,12 @@ module riscv_decoder
   output logic                        mult_sel_subword_o, // Select subwords for 16x16 bit of multiplier
   output logic [1:0]                  mult_signed_mode_o, // Multiplication in signed mode
   output logic [1:0]                  mult_dot_signed_o, // Dot product in signed mode
+  output logic                        dot_spr_operand_o, // dot product with operand in SPR
 
+`ifdef USE_QNT
   output logic                        qnt_enable_o, // Enable the quantization unit
   output logic [2:0]                  qnt_vecmode_o,
-
+`endif
   // FPU
   input logic [C_RM-1:0]              frm_i, // Rounding mode from float CSR
 
@@ -146,6 +149,8 @@ module riscv_decoder
   output logic [1:0]                  data_sign_extension_o, // sign extension on read data from data memory / NaN boxing
   output logic [1:0]                  data_reg_offset_o, // offset in byte inside register for stores
   output logic                        data_load_event_o, // data request is in the special event range
+  output logic [2:0]                  lsu_tosprw_o, // ls to weight spr (RNN extension) RNN_EXT
+  output logic [1:0]                  lsu_tospra_o, // ls to activation spr (RNN extension) RNN_EXT
 
   // hwloop signals
   output logic [2:0]                  hwloop_we_o, // write enable for hwloop regs
@@ -177,7 +182,7 @@ module riscv_decoder
                                  ((SHARED_FP_DIVSQRT==2)  ? ((SHARED_FP==1) ? APUTYPE_FP+4 : APUTYPE_FP+1) : 0);
   localparam APUTYPE_SQRT       = (SHARED_FP_DIVSQRT==1)  ? ((SHARED_FP==1) ? APUTYPE_FP+5 : APUTYPE_FP)   :
                                  ((SHARED_FP_DIVSQRT==2)  ? ((SHARED_FP==1) ? APUTYPE_FP+4 : APUTYPE_FP+1) : 0);
-
+     
   // write enable/request control
   logic       regfile_mem_we;
   logic       regfile_alu_we;
@@ -192,10 +197,10 @@ module riscv_decoder
   logic       mult_dot_en;
   logic       apu_en;
 
-
+`ifdef USE_QNT
   //quant Unit
-
   logic       qnt_en;
+`endif
   // this instruction needs floating-point rounding-mode verification
   logic check_fprm;
 
@@ -204,6 +209,7 @@ module riscv_decoder
   logic                      fpu_vec_op; // fpu vectorial operation
   // unittypes for latencies to help us decode for APU
   enum logic[1:0] {ADDMUL, DIVSQRT, NONCOMP, CONV} fp_op_group;
+  logic myfancyinstrucion; // RNN_EXT (DEBUG)
 
 
   /////////////////////////////////////////////
@@ -217,6 +223,7 @@ module riscv_decoder
 
   always_comb
   begin
+    myfancyinstrucion = 1'b0; // RNN_EXT (DEBUG)
     jump_in_id                  = BRANCH_NONE;
     jump_target_mux_sel_o       = JT_JAL;
 
@@ -239,10 +246,11 @@ module riscv_decoder
     mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 1'b0;
     mult_dot_signed_o           = 2'b00;
-
+    dot_spr_operand_o           = 1'b0;
+`ifdef USE_QNT
     qnt_en                      = 1'b0;
     qnt_vecmode_o               = VEC_MODE4;
-    
+`endif
     apu_en                      = 1'b0;
     apu_type_o                  = '0;
     apu_op_o                    = '0;
@@ -284,6 +292,8 @@ module riscv_decoder
     data_reg_offset_o           = 2'b00;
     data_req                    = 1'b0;
     data_load_event_o           = 1'b0;
+    lsu_tosprw_o                = 3'b0; // RNN_EXT
+    lsu_tospra_o                = 2'b0; // RNN_EXT
 
     illegal_insn_o              = 1'b0;
     ebrk_insn_o                 = 1'b0;
@@ -498,6 +508,128 @@ module riscv_decoder
         end
       end
 
+      //////////////////////////////////////////////////////////////////////
+      //  ____  _   _ _   _   _____      _                 _              //
+      // |  _ \| \ | | \ | | | ____|_  _| |_ ___ _ __  ___(_) ___  _ __   //
+      // | |_) |  \| |  \| | |  _| \ \/ / __/ _ \ '_ \/ __| |/ _ \| '_ \  //
+      // |  _ <| |\  | |\  | | |___ >  <| ||  __/ | | \__ \ | (_) | | | | //
+      // |_| \_\_| \_|_| \_| |_____/_/\_\\__\___|_| |_|___/_|\___/|_| |_| //
+      //////////////////////////////////////////////////////////////////////
+
+      
+
+// `ifdef RNN_EXTENSION
+      OPCODE_MAC_LOAD: begin // RNN Extension RNN_EXT
+
+        // alu_op_b_mux_sel_o = OP_B_IMM; --> to be included in v3
+        //       imm_b_mux_sel_o    = IMMB_MACL; --> to be included in v3
+
+        myfancyinstrucion       = 1'b1; // just for debugging :)
+        
+        rega_used_o             = 1'b1;
+        regb_used_o             = 1'b1;
+
+        regc_used_o             = 1'b1;
+        regc_mux_o              = REGC_RD;
+
+        dot_spr_operand_o       = 1'b1; // 1 if using dotp unit with SPR operand
+
+        // check if load part is issued
+        // i24 and i23 cannot be both high --> illegal insn control
+        // if i24 is high --> update weight
+        // if i23 is high --> update activation
+        // if both are low --> only MAC insn
+        if (instr_rdata_i[24] & instr_rdata_i[23])
+          illegal_insn_o          = 1'b1;
+        else if (instr_rdata_i[24] ) begin
+          lsu_tosprw_o          = { instr_rdata_i[22:21], 1'b1};
+          lsu_tospra_o          = { instr_rdata_i[20], 1'b0};
+          alu_en_o                = 1'b1; // ALU for lwincrement part
+          regfile_alu_we          = 1'b1;
+          data_req                = 1'b1;    // date req enabled for load part
+          data_type_o             = 2'b00;   // probably WORD
+        end else if (instr_rdata_i[23]) begin
+          lsu_tosprw_o          = { instr_rdata_i[22:21], 1'b0};
+          lsu_tospra_o          = { instr_rdata_i[20], 1'b1};
+          alu_en_o                = 1'b1; // ALU for lwincrement part
+          regfile_alu_we          = 1'b1;
+          data_req                = 1'b1;    // date req enabled for load part
+          data_type_o             = 2'b00;   // probably WORD
+        end else begin
+          lsu_tosprw_o          = { instr_rdata_i[22:21], 1'b0};
+          lsu_tospra_o          = { instr_rdata_i[20], 1'b0}; 
+          alu_en_o                = 1'b0; // ALU for lwincrement part
+          regfile_alu_we          = 1'b0;
+          data_req                = 1'b0;    // date req enabled for load part
+          data_type_o             = 2'b00;   // probably WORD
+        end
+
+        // if (instr_rdata_i[26]) begin
+        // lsu_tospr_o             = {1'b0, instr_rdata_i[25], 1'b1};  // 01 SPR[0] // 11 SPR[1]
+        // alu_en_o                = 1'b1; // ALU for lwincrement part
+        // regfile_alu_we          = 1'b1;
+        // data_req                = 1'b1;    // date req enabled for load part
+        // data_type_o             = 2'b00;   // probably WORD
+        // end else begin
+        // lsu_tospr_o             = {1'b0, instr_rdata_i[25], 1'b0};  // 01 SPR[0] // 11 SPR[1]
+        // alu_en_o                = 1'b0; // ALU for lwincrement part
+        // regfile_alu_we          = 1'b0;
+        // data_req                = 1'b0;    // date req enabled for load part
+        // data_type_o             = 2'b00;   // probably WORD
+        // end
+
+        
+
+        alu_operator_o          = ALU_ADD4; // increment size for load part (WORD)
+        prepost_useincr_o       = 1'b0; // enable post-access load
+        regfile_alu_waddr_sel_o = 1'b0; // alu waddr
+        regfile_mem_we          = 1'b1;   
+
+        //data_sign_extension_o = {1'b0,~instr_rdata_i[14]}; // is this necessary?
+
+        alu_op_b_mux_sel_o      = OP_B_REGB_OR_FWD; // --> no more valid for v3. Operand b for the MAC fetched from SPRs
+        
+        case (instr_rdata_i[31:25])
+        7'b1111100: begin //M&L SDOTP S-S
+          mult_dot_en             = 1'b1;   // enable dotp unit
+          mult_dot_signed_o       = 2'b11; // set for signed-signed interpretation of operands
+          end
+        7'b1110100: begin //M&L SDOTP U-S
+          mult_dot_en             = 1'b1;   // enable dotp unit
+          mult_dot_signed_o       = 2'b01;  // set for unsigned-signed interpretation of operands
+          end
+        7'b1110000: begin //M&L SDOTP U-U
+          mult_dot_en             = 1'b1;   // enable dotp unit
+          mult_dot_signed_o       = 2'b00;  // set for unsigned-unsigned interpretation of operands
+          end
+        7'b1101100: begin //M&L SDOTP S-U
+          mult_dot_en             = 1'b1;   // enable dotp unit
+          mult_dot_signed_o       = 2'b10;  // set for signed-unsigned interpretation of operands
+        end
+        default : begin
+          illegal_insn_o          = 1'b1;
+          end
+        endcase
+
+
+        case (instr_rdata_i[14:12])
+        3'b000: begin // 16-b precision
+          mult_operator_o         = MUL_DOT16; // set for 16-bit SIMD sum-dot-product
+          end
+        3'b001: begin // 8-bit precision
+          mult_operator_o         = MUL_DOT8; // set for 8-bit SIMD sum-dot-product
+          end
+        3'b010: begin
+          mult_operator_o         = MUL_DOT4;
+          end
+        3'b011: begin
+          mult_operator_o         = MUL_DOT2;
+        end
+        default: begin //default condition
+          illegal_insn_o          = 1'b1;
+          end
+        endcase
+      end  
 
       //////////////////////////
       //     _    _    _   _  //
@@ -1057,19 +1189,19 @@ module riscv_decoder
                 // ADDMUL has format dependent latency
                 ADDMUL : begin
                   unique case (fpu_dst_fmt_o)
-                    fpnew_pkg::FP32    : apu_lat_o = (C_LAT_FP32<2)    ? C_LAT_FP32+1    : 2'h3;
-                    fpnew_pkg::FP16    : apu_lat_o = (C_LAT_FP16<2)    ? C_LAT_FP16+1    : 2'h3;
-                    fpnew_pkg::FP16ALT : apu_lat_o = (C_LAT_FP16ALT<2) ? C_LAT_FP16ALT+1 : 2'h3;
-                    fpnew_pkg::FP8     : apu_lat_o = (C_LAT_FP8<2)     ? C_LAT_FP8+1     : 2'h3;
+                    fpnew_pkg::FP32    : apu_lat_o = (C_LAT_FP32<3)    ? C_LAT_FP32+1    : 2'h0;
+                    fpnew_pkg::FP16    : apu_lat_o = (C_LAT_FP16<3)    ? C_LAT_FP16+1    : 2'h0;
+                    fpnew_pkg::FP16ALT : apu_lat_o = (C_LAT_FP16ALT<3) ? C_LAT_FP16ALT+1 : 2'h0;
+                    fpnew_pkg::FP8     : apu_lat_o = (C_LAT_FP8<3)     ? C_LAT_FP8+1     : 2'h0;
                     default : ;
                   endcase
                 end
                 // DIVSQRT is iterative and takes more than 2 cycles
-                DIVSQRT : apu_lat_o = 2'h3;
+                DIVSQRT : apu_lat_o = 2'h0;
                 // NONCOMP uses the same latency for all formats
-                NONCOMP : apu_lat_o = (C_LAT_NONCOMP<2) ? C_LAT_NONCOMP+1 : 2'h3;
+                NONCOMP : apu_lat_o = (C_LAT_NONCOMP<3) ? C_LAT_NONCOMP+1 : 2'h0;
                 // CONV uses the same latency for all formats
-                CONV    : apu_lat_o = (C_LAT_CONV<2) ? C_LAT_CONV+1 : 2'h3;
+                CONV    : apu_lat_o = (C_LAT_CONV<3) ? C_LAT_CONV+1 : 2'h0;
               endcase
 
               // Set FPnew OP and OPMOD as the APU op
@@ -1722,20 +1854,20 @@ module riscv_decoder
               // ADDMUL has format dependent latency
               ADDMUL : begin
                 unique case (fpu_dst_fmt_o)
-                  fpnew_pkg::FP32    : apu_lat_o = (C_LAT_FP32<2)    ? C_LAT_FP32+1    : 2'h3;
-                  fpnew_pkg::FP64    : apu_lat_o = (C_LAT_FP64<2)    ? C_LAT_FP64+1    : 2'h3;
-                  fpnew_pkg::FP16    : apu_lat_o = (C_LAT_FP16<2)    ? C_LAT_FP16+1    : 2'h3;
-                  fpnew_pkg::FP16ALT : apu_lat_o = (C_LAT_FP16ALT<2) ? C_LAT_FP16ALT+1 : 2'h3;
-                  fpnew_pkg::FP8     : apu_lat_o = (C_LAT_FP8<2)     ? C_LAT_FP8+1     : 2'h3;
+                  fpnew_pkg::FP32    : apu_lat_o = (C_LAT_FP32<3)    ? C_LAT_FP32+1    : 2'h0;
+                  fpnew_pkg::FP64    : apu_lat_o = (C_LAT_FP64<3)    ? C_LAT_FP64+1    : 2'h0;
+                  fpnew_pkg::FP16    : apu_lat_o = (C_LAT_FP16<3)    ? C_LAT_FP16+1    : 2'h0;
+                  fpnew_pkg::FP16ALT : apu_lat_o = (C_LAT_FP16ALT<3) ? C_LAT_FP16ALT+1 : 2'h0;
+                  fpnew_pkg::FP8     : apu_lat_o = (C_LAT_FP8<3)     ? C_LAT_FP8+1     : 2'h0;
                   default : ;
                 endcase
               end
               // DIVSQRT is iterative and takes more than 2 cycles
-              DIVSQRT : apu_lat_o = 2'h3;
+              DIVSQRT : apu_lat_o = 2'h0;
               // NONCOMP uses the same latency for all formats
-              NONCOMP : apu_lat_o = (C_LAT_NONCOMP<2) ? C_LAT_NONCOMP+1 : 2'h3;
+              NONCOMP : apu_lat_o = (C_LAT_NONCOMP<3) ? C_LAT_NONCOMP+1 : 2'h0;
               // CONV uses the same latency for all formats
-              CONV    : apu_lat_o = (C_LAT_CONV<2) ? C_LAT_CONV+1 : 2'h3;
+              CONV    : apu_lat_o = (C_LAT_CONV<3) ? C_LAT_CONV+1 : 2'h0;
             endcase
           end
 
@@ -1853,11 +1985,11 @@ module riscv_decoder
           if (SHARED_FP!=1) begin
             // format dependent latency
             unique case (fpu_dst_fmt_o)
-              fpnew_pkg::FP32    : apu_lat_o = (C_LAT_FP32<2)    ? C_LAT_FP32+1    : 2'h3;
-              fpnew_pkg::FP64    : apu_lat_o = (C_LAT_FP64<2)    ? C_LAT_FP64+1    : 2'h3;
-              fpnew_pkg::FP16    : apu_lat_o = (C_LAT_FP16<2)    ? C_LAT_FP16+1    : 2'h3;
-              fpnew_pkg::FP16ALT : apu_lat_o = (C_LAT_FP16ALT<2) ? C_LAT_FP16ALT+1 : 2'h3;
-              fpnew_pkg::FP8     : apu_lat_o = (C_LAT_FP8<2)     ? C_LAT_FP8+1     : 2'h3;
+              fpnew_pkg::FP32    : apu_lat_o = (C_LAT_FP32<3)    ? C_LAT_FP32+1    : 2'h0;
+              fpnew_pkg::FP64    : apu_lat_o = (C_LAT_FP64<3)    ? C_LAT_FP64+1    : 2'h0;
+              fpnew_pkg::FP16    : apu_lat_o = (C_LAT_FP16<3)    ? C_LAT_FP16+1    : 2'h0;
+              fpnew_pkg::FP16ALT : apu_lat_o = (C_LAT_FP16ALT<3) ? C_LAT_FP16ALT+1 : 2'h0;
+              fpnew_pkg::FP8     : apu_lat_o = (C_LAT_FP8<3)     ? C_LAT_FP8+1     : 2'h0;
               default : ;
             endcase
           end
@@ -2089,11 +2221,15 @@ module riscv_decoder
                     if(instr_rdata_i[25]) begin
                       alu_vec_mode_o  = VEC_MODE2;
                       mult_operator_o = MUL_DOT2;
+`ifdef USE_QNT
                       qnt_vecmode_o   = VEC_MODE2;
+`endif
                     end else begin
                       alu_vec_mode_o = VEC_MODE4;
                       mult_operator_o = MUL_DOT4;
+`ifdef USE_QNT
                       qnt_vecmode_o   = VEC_MODE4;
+`endif
                     end
                   end
           3'b011: begin
@@ -2156,16 +2292,20 @@ module riscv_decoder
             regc_mux_o     = REGC_RD;
           end
           6'b11100_0: begin // pv.packlo
+`ifdef USE_QNT
              if(alu_vec_mode_o == VEC_MODE4 || alu_vec_mode_o == VEC_MODE2) begin
                 qnt_en = 1'b1;   // quantization unit //pv.qnt.n/c
                 prepost_useincr_o = 1'b0;
                 qnt_vecmode_o = alu_vec_mode_o;
              end else begin
+`endif
                 alu_operator_o = ALU_PCKLO;
                 regb_used_o    = 1'b1;
                 regc_used_o    = 1'b1;
                 regc_mux_o     = REGC_RD;
+`ifdef USE_QNT
              end
+`endif
           end
 
           6'b01111_0: begin // pv.extract
@@ -2522,7 +2662,9 @@ module riscv_decoder
   assign apu_en_o          = (deassert_we_i) ? 1'b0          : apu_en;
   assign mult_int_en_o     = (deassert_we_i) ? 1'b0          : mult_int_en;
   assign mult_dot_en_o     = (deassert_we_i) ? 1'b0          : mult_dot_en;
+`ifdef USE_QNT
   assign qnt_enable_o      = (deassert_we_i) ? 1'b0          : qnt_en;
+`endif
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;

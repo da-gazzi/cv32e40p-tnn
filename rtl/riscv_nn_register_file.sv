@@ -27,7 +27,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module riscv_register_file
+module riscv_nn_register_file
 #(
     parameter ADDR_WIDTH    = 5,
     parameter DATA_WIDTH    = 32,
@@ -161,7 +161,7 @@ module riscv_register_file
 
     end
 
-    if (FPU == 1) begin
+    if (FPU == 1 && Zfinx==0) begin
       // Floating point registers
       for(l = 0; l < NUM_FP_WORDS; l++) begin
         always_ff @(posedge clk, negedge rst_n)

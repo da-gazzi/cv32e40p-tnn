@@ -19,7 +19,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-package apu_core_package;
+package apu_core_nn_package;
 
    /////////////////////////////////////////////////////////////////////////////
    //  IMPORTANT!!                                                            //
@@ -66,5 +66,7 @@ package apu_core_package;
    parameter PIPE_REG_SQRT = 5;
 
    // iter divsqrt
+
+   parameter RNN_EXTENSIONS = 1;
 
 endpackage // apu_core_package

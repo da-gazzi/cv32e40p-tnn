@@ -23,7 +23,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-package riscv_defines;
+package riscv_nn_defines;
 
 ////////////////////////////////////////////////
 //    ___         ____          _             //
@@ -53,6 +53,8 @@ parameter OPCODE_OP_FNMSUB = 7'h4b;
 parameter OPCODE_STORE_FP  = 7'h27;
 parameter OPCODE_LOAD_FP   = 7'h07;
 
+
+
 // those opcodes are now used for PULP custom instructions
 // parameter OPCODE_CUST0     = 7'h0b
 // parameter OPCODE_CUST1     = 7'h2b
@@ -63,6 +65,10 @@ parameter OPCODE_STORE_POST = 7'h2b;
 parameter OPCODE_PULP_OP    = 7'h5b;
 parameter OPCODE_VECOP      = 7'h57;
 parameter OPCODE_HWLOOP     = 7'h7b;
+
+// RNN_EXTENSIONS (MAC&LOAD)
+
+parameter OPCODE_MAC_LOAD  = 7'h77;
 
 parameter REGC_S1   = 2'b10;
 parameter REGC_S4   = 2'b00;
@@ -89,6 +95,7 @@ parameter ALU_ADDR  = 7'b0011100;
 parameter ALU_SUBR  = 7'b0011101;
 parameter ALU_ADDUR = 7'b0011110;
 parameter ALU_SUBUR = 7'b0011111;
+parameter ALU_ADD4  = 7'b0100000; // RNN Extension for increment by 4
 
 parameter ALU_XOR   = 7'b0101111;
 parameter ALU_OR    = 7'b0101110;
@@ -270,6 +277,7 @@ parameter IMMB_VU     = 4'b0111;
 parameter IMMB_SHUF   = 4'b1000;
 parameter IMMB_CLIP   = 4'b1001;
 parameter IMMB_BI     = 4'b1011;
+parameter IMMB_MACL   = 4'b1100;
 
 // bit mask selection
 parameter BMASK_A_ZERO = 1'b0;
@@ -399,14 +407,14 @@ parameter C_FPNEW_FMTBITS  = fpnew_pkg::FP_FORMAT_BITS;
 parameter C_FPNEW_IFMTBITS = fpnew_pkg::INT_FORMAT_BITS;
 
 // Latency of FP operations: 0 = no pipe registers, 1 = 1 pipe register etc.
-parameter int unsigned C_LAT_FP64       = 'd0;
-parameter int unsigned C_LAT_FP32       = 'd1;
-parameter int unsigned C_LAT_FP16       = 'd0;
-parameter int unsigned C_LAT_FP16ALT    = 'd0;
-parameter int unsigned C_LAT_FP8        = 'd0;
-parameter int unsigned C_LAT_DIVSQRT    = 'd1; // divsqrt post-processing pipe
-parameter int unsigned C_LAT_CONV       = 'd1;
-parameter int unsigned C_LAT_NONCOMP    = 'd0;
+parameter int unsigned C_LAT_FP64       = 'd2;
+parameter int unsigned C_LAT_FP32       = 'd2;
+parameter int unsigned C_LAT_FP16       = 'd2;
+parameter int unsigned C_LAT_FP16ALT    = 'd2;
+parameter int unsigned C_LAT_FP8        = 'd2;
+parameter int unsigned C_LAT_DIVSQRT    = 'd2; // divsqrt post-processing pipe
+parameter int unsigned C_LAT_CONV       = 'd2;
+parameter int unsigned C_LAT_NONCOMP    = 'd2;
 
 // General FPU-specific defines
 

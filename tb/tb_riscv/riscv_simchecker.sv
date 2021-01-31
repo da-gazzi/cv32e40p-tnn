@@ -22,9 +22,9 @@
 //                                                                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////
 `ifndef VERILATOR
-`include "riscv_config.sv"
+`include "riscv_nn_config.sv"
 
-import riscv_defines::*;
+import riscv_nn_defines::*;
 
 // do not import anything if the simchecker is not used
 // this gets rid of warnings during simulation

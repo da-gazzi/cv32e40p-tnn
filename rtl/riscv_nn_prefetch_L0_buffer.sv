@@ -23,7 +23,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module riscv_prefetch_L0_buffer
+module riscv_nn_prefetch_L0_buffer
 #(
   parameter                                   RDATA_IN_WIDTH = 128
 )
@@ -98,7 +98,7 @@ module riscv_prefetch_L0_buffer
   logic                               hwlp_aligned_is_compressed, hwlp_unaligned_is_compressed;
 
 
-  riscv_L0_buffer
+  riscv_nn_L0_buffer
   #(
     .RDATA_IN_WIDTH ( RDATA_IN_WIDTH )
   )

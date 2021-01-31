@@ -24,7 +24,7 @@
 // clear_i clears the FIFO for the following cycle. in_addr_i can be sent in
 // this cycle already
 
-module riscv_prefetch_buffer
+module riscv_nn_prefetch_buffer
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -85,7 +85,7 @@ module riscv_prefetch_buffer
   // consumes addresses and rdata
   //////////////////////////////////////////////////////////////////////////////
 
-  riscv_fetch_fifo fifo_i
+  riscv_nn_fetch_fifo fifo_i
   (
     .clk                   ( clk               ),
     .rst_n                 ( rst_n             ),

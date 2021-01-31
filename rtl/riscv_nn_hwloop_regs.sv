@@ -22,7 +22,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module riscv_hwloop_regs
+module riscv_nn_hwloop_regs
 #(
   parameter N_REGS     = 2,
   parameter N_REG_BITS = $clog2(N_REGS)
