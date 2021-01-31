@@ -158,6 +158,7 @@ module riscv_nn_id_stage
     output logic                           mult_is_clpx_ex_o,
     output logic [ 1:0]                    mult_clpx_shift_ex_o,
     output logic                           mult_clpx_img_ex_o,
+    output logic                           dot_spr_operand_ex_o,
 `ifdef USE_QNT
     output logic                           qnt_en_ex_o,
     output logic [2:0]                     qnt_vecmode_ex_o,
@@ -225,7 +226,8 @@ module riscv_nn_id_stage
     output logic                           data_err_ack_o,
 
     //RNN_EXT
-    output logic [2:0]                     lsu_tospr_ex_o,
+    output logic [2:0]                     lsu_tosprw_ex_o,
+    output logic [1:0]                     lsu_tospra_ex_o,
     input logic                            loadComputeVLIW_ex_i,
 
     // Interrupt signals
@@ -317,6 +319,7 @@ module riscv_nn_id_stage
   logic [31:0] imm_shuffleh_type;
   logic [31:0] imm_shuffle_type;
   logic [31:0] imm_clip_type;
+  logic [31:0] imm_macload_type;
 
   logic [31:0] imm_a;       // contains the immediate for operand b
   logic [31:0] imm_b;       // contains the immediate for operand b
@@ -411,7 +414,8 @@ module riscv_nn_id_stage
   logic [1:0]  data_reg_offset_id;
   logic        data_req_id;
   logic        data_load_event_id;
-  logic [2:0]  lsu_tospr_id;   //RNN_EXT
+  logic [2:0]  lsu_tosprw_id;   //RNN_EXT
+  logic [1:0]  lsu_tospra_id;   //RNN_EXT
 
   // hwloop signals
   logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;
@@ -514,6 +518,10 @@ module riscv_nn_id_stage
   // TODO: check if this can be shared with the bit-manipulation unit
   assign imm_clip_type    = (32'h1 << instr[24:20]) - 1;
 
+  // MAC&LOAD Immediate. This selects which SPR to be used in current operation and,
+  // eventually, to be updated
+  assign imm_macload_type = {27'h0, instr[24:20]};
+
   //-----------------------------------------------------------------------------
   //-- FPU Register file enable:
   //-- Taken from Cluster Config Reg if FPU reg file exists, or always disabled
@@ -546,7 +554,7 @@ module riscv_nn_id_stage
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
                                 regfile_waddr_id : regfile_addr_ra_id;
-  assign regfile_alu_waddr2_id = lsu_tospr_id[0] ?  regfile_addr_ra_id : 'b0; 
+  assign regfile_alu_waddr2_id = (lsu_tosprw_id[0] | lsu_tospra_id[0]) ?  regfile_addr_ra_id : 'b0; 
 
   // Forwarding control signals
   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
@@ -710,6 +718,7 @@ module riscv_nn_id_stage
       IMMB_VU:     imm_b = imm_vu_type;
       IMMB_SHUF:   imm_b = imm_shuffle_type;
       IMMB_CLIP:   imm_b = {1'b0, imm_clip_type[31:1]};
+      IMMB_MACL:   imm_b = imm_macload_type;
       default:     imm_b = imm_i_type;
     endcase
   end
@@ -1149,6 +1158,7 @@ module riscv_nn_id_stage
     .mult_imm_mux_o                  ( mult_imm_mux              ),
     .mult_dot_en_o                   ( mult_dot_en               ),
     .mult_dot_signed_o               ( mult_dot_signed           ),
+    .dot_spr_operand_o               ( dot_spr_operand           ), 
 `ifdef USE_QNT
     // QNT signals
     .qnt_enable_o                    ( qnt_enable                ),
@@ -1186,7 +1196,8 @@ module riscv_nn_id_stage
     .data_sign_extension_o           ( data_sign_ext_id          ),
     .data_reg_offset_o               ( data_reg_offset_id        ),
     .data_load_event_o               ( data_load_event_id        ),
-    .lsu_tospr_o                     ( lsu_tospr_id              ), //RNN_EXT
+    .lsu_tosprw_o                    ( lsu_tosprw_id              ), //RNN_EXT
+    .lsu_tospra_o                    ( lsu_tospra_id              ), //RNN_EXT
 
     // hwloop signals
     .hwloop_we_o                     ( hwloop_we_int             ),
@@ -1502,6 +1513,7 @@ module riscv_nn_id_stage
       mult_is_clpx_ex_o           <= 1'b0;
       mult_clpx_shift_ex_o        <= 2'b0;
       mult_clpx_img_ex_o          <= 1'b0;
+      dot_spr_operand_ex_o        <= 1'b0;
 
 `ifdef USE_QNT
       qnt_en_ex_o                 <= 1'b0;
@@ -1537,7 +1549,8 @@ module riscv_nn_id_stage
       data_reg_offset_ex_o        <= 2'b0;
       data_req_ex_o               <= 1'b0;
       data_load_event_ex_o        <= 1'b0;
-      lsu_tospr_ex_o              <= 2'b0;
+      lsu_tosprw_ex_o             <= 3'b0;
+      lsu_tospra_ex_o             <= 2'b0;
 
       data_misaligned_ex_o        <= 1'b0;
 
@@ -1594,6 +1607,7 @@ module riscv_nn_id_stage
         end
 
         mult_en_ex_o                <= mult_en;
+        dot_spr_operand_ex_o        <= dot_spr_operand;
         if (mult_int_en) begin
           mult_operator_ex_o        <= mult_operator;
           mult_sel_subword_ex_o     <= mult_sel_subword;
@@ -1606,7 +1620,6 @@ module riscv_nn_id_stage
         if (mult_dot_en) begin
           mult_operator_ex_o        <= mult_operator;
           mult_dot_signed_ex_o      <= mult_dot_signed;
-
           case(mult_operator)
             MUL_DOT16: begin
               mult_dot_op_h_a_ex_o        <= alu_operand_a;
@@ -1635,6 +1648,7 @@ module riscv_nn_id_stage
           //else
             //mult_clpx_img_ex_o      <= '0;
         end
+        
 `ifdef USE_QNT
 
         qnt_en_ex_o                 <= qnt_enable;
@@ -1672,7 +1686,8 @@ module riscv_nn_id_stage
         csr_access_ex_o             <= csr_access;
         csr_op_ex_o                 <= csr_op;
 
-        lsu_tospr_ex_o              <= lsu_tospr_id;
+        lsu_tosprw_ex_o             <= lsu_tosprw_id;
+        lsu_tospra_ex_o             <= lsu_tospra_id;
         data_req_ex_o               <= data_req_id;
         if (data_req_id)
         begin // only needed for LSU when there is an active request
