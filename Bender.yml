@@ -9,38 +9,38 @@ sources:
   include_dirs:
     - rtl/include
   files:
-    - rtl/include/apu_core_package.sv
-    - rtl/include/riscv_defines.sv
-    - rtl/include/riscv_tracer_defines.sv
-    - rtl/register_file_test_wrap.sv
-    - rtl/riscv_alu.sv
-    - rtl/riscv_alu_basic.sv
-    - rtl/riscv_alu_div.sv
-    - rtl/riscv_compressed_decoder.sv
-    - rtl/riscv_controller.sv
-    - rtl/riscv_cs_registers.sv
-    - rtl/riscv_decoder.sv
-    - rtl/riscv_int_controller.sv
-    - rtl/riscv_ex_stage.sv
-    - rtl/riscv_hwloop_controller.sv
-    - rtl/riscv_hwloop_regs.sv
-    - rtl/riscv_id_stage.sv
-    - rtl/riscv_if_stage.sv
-    - rtl/riscv_load_store_unit.sv
-    - rtl/riscv_mult.sv
-    - rtl/riscv_pmp.sv
-    - rtl/riscv_prefetch_buffer.sv
-    - rtl/riscv_prefetch_L0_buffer.sv
-    - rtl/riscv_core.sv
-    - rtl/riscv_apu_disp.sv
-    - rtl/riscv_fetch_fifo.sv
-    - rtl/riscv_L0_buffer.sv
-    - target: asic
+    - rtl/include/apu_core_nn_package.sv
+    - rtl/include/riscv_nn_defines.sv
+    - rtl/include/riscv_nn_tracer_defines.sv
+    - rtl/register_file_nn_test_wrap.sv
+    - rtl/riscv_nn_alu.sv
+    - rtl/riscv_nn_alu_basic.sv
+    - rtl/riscv_nn_alu_div.sv
+    - rtl/riscv_nn_compressed_decoder.sv
+    - rtl/riscv_nn_controller.sv
+    - rtl/riscv_nn_cs_registers.sv
+    - rtl/riscv_nn_decoder.sv
+    - rtl/riscv_nn_int_controller.sv
+    - rtl/riscv_nn_ex_stage.sv
+    - rtl/riscv_nn_hwloop_controller.sv
+    - rtl/riscv_nn_hwloop_regs.sv
+    - rtl/riscv_nn_id_stage.sv
+    - rtl/riscv_nn_if_stage.sv
+    - rtl/riscv_nn_load_store_unit.sv
+    - rtl/riscv_nn_mult.sv
+    - rtl/riscv_nn_pmp.sv
+    - rtl/riscv_nn_prefetch_buffer.sv
+    - rtl/riscv_nn_prefetch_L0_buffer.sv
+    - rtl/riscv_nn_core.sv
+    - rtl/riscv_nn_apu_disp.sv
+    - rtl/riscv_nn_fetch_fifo.sv
+    - rtl/riscv_nn_L0_buffer.sv
+    - target: synthesis
       files:
-        - rtl/riscv_register_file_latch.sv
-    - target: not(asic)
+        - rtl/riscv_nn_register_file_latch.sv
+    - target: not(synthesis)
       files:
-        - rtl/riscv_register_file.sv
-    - target: rtl
+        - rtl/riscv_nn_register_file.sv
+    - target: test
       files:
-        - rtl/riscv_tracer.sv
+        - rtl/riscv_nn_tracer.sv

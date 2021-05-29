@@ -25,7 +25,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "apu_macros.sv"
+`include "apu_macros_nn.sv"
 `include "riscv_nn_config.sv"
 
 import riscv_nn_defines::*;
@@ -1279,7 +1279,7 @@ module riscv_nn_decoder
               rega_used_o        = 1'b0;
               alu_operator_o     = ALU_DIV;
               instr_multicycle_o = 1'b1;
-              `USE_APU_INT_DIV
+              `USE_APU_INT_DIV_NN
             end
             {6'b00_0001, 3'b101}: begin // divu
               alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
@@ -1290,7 +1290,7 @@ module riscv_nn_decoder
               rega_used_o        = 1'b0;
               alu_operator_o     = ALU_DIVU;
               instr_multicycle_o = 1'b1;
-              `USE_APU_INT_DIV
+              `USE_APU_INT_DIV_NN
             end
             {6'b00_0001, 3'b110}: begin // rem
               alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
@@ -1301,7 +1301,7 @@ module riscv_nn_decoder
               rega_used_o        = 1'b0;
               alu_operator_o     = ALU_REM;
               instr_multicycle_o = 1'b1;
-              `USE_APU_INT_DIV
+              `USE_APU_INT_DIV_NN
             end
             {6'b00_0001, 3'b111}: begin // remu
               alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
@@ -1312,7 +1312,7 @@ module riscv_nn_decoder
               rega_used_o        = 1'b0;
               alu_operator_o     = ALU_REMU;
               instr_multicycle_o = 1'b1;
-              `USE_APU_INT_DIV
+              `USE_APU_INT_DIV_NN
             end
 
             // PULP specific instructions

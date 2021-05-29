@@ -42,7 +42,7 @@ import apu_core_nn_package::*;
                             apu_lat_o       = 2'h1;\
                          end
 
-`define USE_APU_INT_DIV if (SHARED_INT_DIV) begin\
+`define USE_APU_INT_DIV_NN if (SHARED_INT_DIV) begin\
                            alu_en_o = 1'b0;\
                            apu_en = 1'b1;\
                            apu_type_o = APUTYPE_INT_DIV;\
