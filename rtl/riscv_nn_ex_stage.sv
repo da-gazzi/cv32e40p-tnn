@@ -32,7 +32,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "apu_macros.sv"
+`include "apu_macros_nn.sv"
 `include "riscv_nn_config.sv"
 
 import apu_core_nn_package::*;
