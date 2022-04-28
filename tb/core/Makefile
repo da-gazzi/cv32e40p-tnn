@@ -214,7 +214,7 @@ tb-clean:
 # This is an example for running a hello world in the testbench
 # We link with our custom crt0.s and syscalls.c against newlib so that we can
 # use the c standard library
-custom/hello_world.elf: custom/hello_world.c
+custom/hello_world.elf: custom/hello_world.S
 	$(RISCV_EXE_PREFIX)gcc -march=rv32imc -o $@ -w -Os -g -nostdlib \
 		-T custom/link.ld  \
 		-static \
