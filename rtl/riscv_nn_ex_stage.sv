@@ -87,6 +87,8 @@ module riscv_nn_ex_stage
   input logic [31:0]                     mult_dot_op_n_b_i,
   input logic [31:0]                     mult_dot_op_c_a_i,
   input logic [31:0]                     mult_dot_op_c_b_i,
+  input logic [31:0]                     mult_dot_op_t_a_i,
+  input logic [31:0]                     mult_dot_op_t_b_i,
   input logic [31:0]                     mult_dot_op_c_i,
   input logic [ 1:0]                     mult_dot_signed_i,
   input logic                            mult_is_clpx_i,
@@ -245,10 +247,12 @@ module riscv_nn_ex_stage
   logic [31:0]    mult_dot_op_b_a_ml;  //RNN_EXT
   logic [31:0]    mult_dot_op_n_a_ml; //RNN_EXT
   logic [31:0]    mult_dot_op_c_a_ml; //RNN_EXT
+  logic [31:0]    mult_dot_op_t_a_ml; //RNN_EXT
   logic [31:0]    mult_dot_op_h_b_ml; //RNN_EXT
   logic [31:0]    mult_dot_op_b_b_ml;  //RNN_EXT
   logic [31:0]    mult_dot_op_n_b_ml; //RNN_EXT
   logic [31:0]    mult_dot_op_c_b_ml; //RNN_EXT
+  logic [31:0]    mult_dot_op_t_b_ml; //RNN_EXT
   logic           loadComputeVLIW;  //RNN_EXT
 
   assign loadComputeVLIW = dot_spr_operand_i & mult_en_i; //alu_en_i & mult_en_i;
@@ -390,10 +394,12 @@ module riscv_nn_ex_stage
   assign mult_dot_op_b_a_ml = {32{(mult_operator_i == MUL_DOT8)}}  & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_b_a_i);
 	assign mult_dot_op_n_a_ml = {32{(mult_operator_i == MUL_DOT4)}}  & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_n_a_i);
   assign mult_dot_op_c_a_ml = {32{(mult_operator_i == MUL_DOT2)}}  & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_c_a_i);
+  assign mult_dot_op_t_a_ml = {32{(mult_operator_i == MUL_TDOT2)}} & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_t_a_i);
   assign mult_dot_op_h_b_ml = {32{(mult_operator_i == MUL_DOT16)}} & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_h_b_i); // previous was (lsu_tospr_ex_i[0])
   assign mult_dot_op_b_b_ml = {32{(mult_operator_i == MUL_DOT8)}}  & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_b_b_i);
 	assign mult_dot_op_n_b_ml = {32{(mult_operator_i == MUL_DOT4)}}  & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_n_b_i);
   assign mult_dot_op_c_b_ml = {32{(mult_operator_i == MUL_DOT2)}}  & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_c_b_i);
+  assign mult_dot_op_t_b_ml = {32{(mult_operator_i == MUL_TDOT2)}} & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_t_b_i);
 
   riscv_nn_mult
   #(
@@ -423,6 +429,8 @@ module riscv_nn_ex_stage
     .dot_op_n_b_i      ( mult_dot_op_n_b_ml      ),
     .dot_op_c_a_i      ( mult_dot_op_c_a_ml     ),
     .dot_op_c_b_i      ( mult_dot_op_c_b_ml      ),
+    .dot_op_t_a_i      ( mult_dot_op_t_a_ml     ),
+    .dot_op_t_b_i      ( mult_dot_op_t_b_ml     ),
     .dot_op_c_i      ( mult_dot_op_c_i      ),
     .dot_signed_i    ( mult_dot_signed_i    ),
     .is_clpx_i       ( mult_is_clpx_i       ),

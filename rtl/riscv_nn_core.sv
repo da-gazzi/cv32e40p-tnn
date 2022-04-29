@@ -202,6 +202,8 @@ module riscv_nn_core
   logic [31:0] mult_dot_op_n_b_ex;
   logic [31:0] mult_dot_op_c_a_ex;
   logic [31:0] mult_dot_op_c_b_ex;
+  logic [31:0] mult_dot_op_t_a_ex;
+  logic [31:0] mult_dot_op_t_b_ex;
   logic [31:0] mult_dot_op_c_ex;
   logic [ 1:0] mult_dot_signed_ex;
   logic        mult_is_clpx_ex_o;
@@ -677,6 +679,8 @@ module riscv_nn_core
     .mult_dot_op_n_b_ex_o           ( mult_dot_op_n_b_ex     ), // from ID to EX stage
     .mult_dot_op_c_a_ex_o           ( mult_dot_op_c_a_ex     ), // from ID to EX stage
     .mult_dot_op_c_b_ex_o           ( mult_dot_op_c_b_ex     ), // from ID to EX stage
+    .mult_dot_op_t_a_ex_o           ( mult_dot_op_t_a_ex    ), // from ID to EX stage
+    .mult_dot_op_t_b_ex_o           ( mult_dot_op_t_b_ex    ), // from ID to EX stage
     .mult_dot_op_c_ex_o           ( mult_dot_op_c_ex     ), // from ID to EX stage
     .mult_dot_signed_ex_o         ( mult_dot_signed_ex   ), // from ID to EX stage
     .mult_is_clpx_ex_o            ( mult_is_clpx_ex      ), // from ID to EX stage
@@ -851,6 +855,8 @@ module riscv_nn_core
     .mult_dot_op_n_b_i            ( mult_dot_op_n_b_ex             ), // from ID/EX pipe registers
     .mult_dot_op_c_a_i            ( mult_dot_op_c_a_ex             ), // from ID/EX pipe registers
     .mult_dot_op_c_b_i            ( mult_dot_op_c_b_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_t_a_i            ( mult_dot_op_t_a_ex             ), // from ID/EX pipe registers
+    .mult_dot_op_t_b_i            ( mult_dot_op_t_b_ex             ), // from ID/EX pipe registers
     .mult_dot_op_c_i            ( mult_dot_op_c_ex             ), // from ID/EX pipe registers
     .mult_dot_signed_i          ( mult_dot_signed_ex           ), // from ID/EX pipe registers
     .mult_is_clpx_i             ( mult_is_clpx_ex              ), // from ID/EX pipe registers
@@ -909,12 +915,12 @@ module riscv_nn_core
     .apu_master_result_i        ( apu_master_result_i          ),
 `ifdef USE_QNT
     .lsu_en_i                   ( data_req_qnt_ex              ),
-`else 
+`else
     .lsu_en_i                   ( data_req_ex                  ),
 `endif
     .lsu_rdata_i                ( lsu_rdata                    ),
     .data_rvalid_ex_i              ( data_rvalid_i               ),
-    .lsu_tosprw_ex_i            ( lsu_tosprw_ex                ), //RNN_EXT 
+    .lsu_tosprw_ex_i            ( lsu_tosprw_ex                ), //RNN_EXT
     .lsu_tospra_ex_i            ( lsu_tospra_ex                ), //RNN_EXT
 
     // interface with CSRs
@@ -991,23 +997,23 @@ module riscv_nn_core
 `ifdef USE_QNT
     .data_type_ex_i        ( data_type_lsu_ex   ),
     .data_sign_ext_ex_i    ( data_sign_ext_lsu_ex),  // sign extension
-`else 
+`else
     .data_type_ex_i        ( data_type_ex       ),
     .data_sign_ext_ex_i    ( data_sign_ext_ex),  // sign extension
 `endif
     .data_wdata_ex_i       ( alu_operand_c_ex   ),
     .data_reg_offset_ex_i  ( data_reg_offset_ex   ),
-    
+
 
     .data_rdata_ex_o       ( lsu_rdata          ),
 `ifdef USE_QNT
     .data_req_ex_i         ( data_req_qnt_ex    ),
     .operand_a_ex_i        ( data_addr_lsu_a    ),
-`else 
+`else
     .data_req_ex_i         ( data_req_ex        ),
     .operand_a_ex_i        ( alu_operand_a_ex   ),
 `endif
-    
+
     .operand_b_ex_i        ( alu_operand_b_ex   ),
     .addr_useincr_ex_i     ( useincr_addr_ex    ),
 

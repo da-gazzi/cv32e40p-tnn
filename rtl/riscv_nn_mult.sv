@@ -59,6 +59,8 @@ module riscv_nn_mult
   input  logic [31:0] dot_op_n_b_i,
   input  logic [31:0] dot_op_c_a_i,
   input  logic [31:0] dot_op_c_b_i,
+  input  logic [31:0] dot_op_t_a_i,
+  input  logic [31:0] dot_op_t_b_i,
   input  logic [31:0] dot_op_c_i,
   input  logic        is_clpx_i,
   input  logic [ 1:0] clpx_shift_i,

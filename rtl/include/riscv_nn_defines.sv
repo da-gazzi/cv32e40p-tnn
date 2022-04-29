@@ -190,6 +190,7 @@ parameter MUL_DOT16 = 4'b0101;
 parameter MUL_H     = 4'b0110;
 parameter MUL_DOT4  = 4'b1000;
 parameter MUL_DOT2  = 4'b1001;
+parameter MUL_TDOT2 = 4'b1010;
 
 // vector modes
 parameter VEC_MODE32 = 3'b000;

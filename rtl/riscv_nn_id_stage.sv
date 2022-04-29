@@ -153,6 +153,8 @@ module riscv_nn_id_stage
     output logic [31:0]                    mult_dot_op_n_b_ex_o,
     output logic [31:0]                    mult_dot_op_c_a_ex_o,
     output logic [31:0]                    mult_dot_op_c_b_ex_o,
+    output logic [31:0]                    mult_dot_op_t_a_ex_o,
+    output logic [31:0]                    mult_dot_op_t_b_ex_o,
     output logic [31:0]                    mult_dot_op_c_ex_o,
     output logic [ 1:0]                    mult_dot_signed_ex_o,
     output logic                           mult_is_clpx_ex_o,
@@ -554,7 +556,7 @@ module riscv_nn_id_stage
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
                                 regfile_waddr_id : regfile_addr_ra_id;
-  assign regfile_alu_waddr2_id = (lsu_tosprw_id[0] | lsu_tospra_id[0]) ?  regfile_addr_ra_id : 'b0; 
+  assign regfile_alu_waddr2_id = (lsu_tosprw_id[0] | lsu_tospra_id[0]) ?  regfile_addr_ra_id : 'b0;
 
   // Forwarding control signals
   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
@@ -1158,7 +1160,7 @@ module riscv_nn_id_stage
     .mult_imm_mux_o                  ( mult_imm_mux              ),
     .mult_dot_en_o                   ( mult_dot_en               ),
     .mult_dot_signed_o               ( mult_dot_signed           ),
-    .dot_spr_operand_o               ( dot_spr_operand           ), 
+    .dot_spr_operand_o               ( dot_spr_operand           ),
 `ifdef USE_QNT
     // QNT signals
     .qnt_enable_o                    ( qnt_enable                ),
@@ -1334,7 +1336,7 @@ module riscv_nn_id_stage
     // Write targets from ID
     .regfile_we_id_i                ( regfile_alu_we_dec_id  ),
     .regfile_alu_waddr_id_i         ( regfile_alu_waddr_id   ),
-    .regfile_alu_waddr2_id_i        ( regfile_alu_waddr2_id  ),   
+    .regfile_alu_waddr2_id_i        ( regfile_alu_waddr2_id  ),
 
     // Forwarding signals from regfile
     .regfile_we_ex_i                ( regfile_we_ex_o        ),
@@ -1508,6 +1510,8 @@ module riscv_nn_id_stage
       mult_dot_op_n_b_ex_o          <= '0;
       mult_dot_op_c_a_ex_o          <= '0;
       mult_dot_op_c_b_ex_o          <= '0;
+      mult_dot_op_t_a_ex_o          <= '0;
+      mult_dot_op_t_b_ex_o          <= '0;
       mult_dot_op_c_ex_o          <= '0;
       mult_dot_signed_ex_o        <= '0;
       mult_is_clpx_ex_o           <= 1'b0;
@@ -1639,16 +1643,20 @@ module riscv_nn_id_stage
               mult_dot_op_c_a_ex_o        <= alu_operand_a;
               mult_dot_op_c_b_ex_o        <= alu_operand_b;
             end
+            MUL_TDOT2: begin
+              mult_dot_op_t_a_ex_o        <= alu_operand_a;
+              mult_dot_op_t_b_ex_o        <= alu_operand_b;
+            end
           endcase
           mult_dot_op_c_ex_o        <= alu_operand_c;
           mult_is_clpx_ex_o         <= is_clpx;
           mult_clpx_shift_ex_o      <= instr[14:13];
-          //if (is_clpx) 
+          //if (is_clpx)
             //mult_clpx_img_ex_o        <= instr[25];
           //else
             //mult_clpx_img_ex_o      <= '0;
         end
-        
+
 `ifdef USE_QNT
 
         qnt_en_ex_o                 <= qnt_enable;
@@ -1678,7 +1686,7 @@ module riscv_nn_id_stage
         regfile_alu_we_ex_o         <= regfile_alu_we_id;
         if (regfile_alu_we_id) begin
           regfile_alu_waddr_ex_o    <= regfile_alu_waddr_id;
-          regfile_alu_waddr2_ex_o   <= regfile_alu_waddr2_id; 
+          regfile_alu_waddr2_ex_o   <= regfile_alu_waddr2_id;
         end
 
         prepost_useincr_ex_o        <= prepost_useincr;

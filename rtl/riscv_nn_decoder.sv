@@ -182,7 +182,7 @@ module riscv_nn_decoder
                                  ((SHARED_FP_DIVSQRT==2)  ? ((SHARED_FP==1) ? APUTYPE_FP+4 : APUTYPE_FP+1) : 0);
   localparam APUTYPE_SQRT       = (SHARED_FP_DIVSQRT==1)  ? ((SHARED_FP==1) ? APUTYPE_FP+5 : APUTYPE_FP)   :
                                  ((SHARED_FP_DIVSQRT==2)  ? ((SHARED_FP==1) ? APUTYPE_FP+4 : APUTYPE_FP+1) : 0);
-     
+
   // write enable/request control
   logic       regfile_mem_we;
   logic       regfile_alu_we;
@@ -516,7 +516,7 @@ module riscv_nn_decoder
       // |_| \_\_| \_|_| \_| |_____/_/\_\\__\___|_| |_|___/_|\___/|_| |_| //
       //////////////////////////////////////////////////////////////////////
 
-      
+
 
 // `ifdef RNN_EXTENSION
       OPCODE_MAC_LOAD: begin // RNN Extension RNN_EXT
@@ -525,7 +525,7 @@ module riscv_nn_decoder
         //       imm_b_mux_sel_o    = IMMB_MACL; --> to be included in v3
 
         myfancyinstrucion       = 1'b1; // just for debugging :)
-        
+
         rega_used_o             = 1'b1;
         regb_used_o             = 1'b1;
 
@@ -557,7 +557,7 @@ module riscv_nn_decoder
           data_type_o             = 2'b00;   // probably WORD
         end else begin
           lsu_tosprw_o          = { instr_rdata_i[22:21], 1'b0};
-          lsu_tospra_o          = { instr_rdata_i[20], 1'b0}; 
+          lsu_tospra_o          = { instr_rdata_i[20], 1'b0};
           alu_en_o                = 1'b0; // ALU for lwincrement part
           regfile_alu_we          = 1'b0;
           data_req                = 1'b0;    // date req enabled for load part
@@ -578,17 +578,17 @@ module riscv_nn_decoder
         // data_type_o             = 2'b00;   // probably WORD
         // end
 
-        
+
 
         alu_operator_o          = ALU_ADD4; // increment size for load part (WORD)
         prepost_useincr_o       = 1'b0; // enable post-access load
         regfile_alu_waddr_sel_o = 1'b0; // alu waddr
-        regfile_mem_we          = 1'b1;   
+        regfile_mem_we          = 1'b1;
 
         //data_sign_extension_o = {1'b0,~instr_rdata_i[14]}; // is this necessary?
 
         alu_op_b_mux_sel_o      = OP_B_REGB_OR_FWD; // --> no more valid for v3. Operand b for the MAC fetched from SPRs
-        
+
         case (instr_rdata_i[31:25])
         7'b1111100: begin //M&L SDOTP S-S
           mult_dot_en             = 1'b1;   // enable dotp unit
@@ -625,11 +625,15 @@ module riscv_nn_decoder
         3'b011: begin
           mult_operator_o         = MUL_DOT2;
         end
+        3'b100: begin
+          mult_operator_o         = MUL_TDOT2; // set for compressed 2-bit SIMD sum-dot-product;
+          $display("%0t: Compressed MAC instruction received", $time);
+        end
         default: begin //default condition
           illegal_insn_o          = 1'b1;
           end
         endcase
-      end  
+      end
 
       //////////////////////////
       //     _    _    _   _  //
@@ -2188,33 +2192,33 @@ module riscv_nn_decoder
         unique case( instr_rdata_i[14:12])
           3'b000: begin alu_vec_mode_o = VEC_MODE16; mult_operator_o = MUL_DOT16; regb_used_o = 1'b1; end
           3'b100: begin
-                    alu_vec_mode_o = VEC_MODE16; 
-                    mult_operator_o = MUL_DOT16; 
-                    scalar_replication_o = 1'b1; 
-                    regb_used_o = 1'b1; 
-                  end
-          3'b110: begin 
-                    alu_vec_mode_o = VEC_MODE16; 
-                    mult_operator_o = MUL_DOT16; 
-                    scalar_replication_o = 1'b1; 
-                    alu_op_b_mux_sel_o = OP_B_IMM; 
-                  end
-          3'b001: begin 
-                    alu_vec_mode_o = VEC_MODE8;  
-                    mult_operator_o = MUL_DOT8; 
-                    regb_used_o = 1'b1; 
-                  end
-          3'b101: begin
-                    alu_vec_mode_o = VEC_MODE8;  
-                    mult_operator_o = MUL_DOT8; 
-                    scalar_replication_o = 1'b1; 
+                    alu_vec_mode_o = VEC_MODE16;
+                    mult_operator_o = MUL_DOT16;
+                    scalar_replication_o = 1'b1;
                     regb_used_o = 1'b1;
                   end
-          3'b111: begin 
-                    alu_vec_mode_o = VEC_MODE8;  
-                    mult_operator_o = MUL_DOT8; 
-                    scalar_replication_o = 1'b1; 
-                    alu_op_b_mux_sel_o = OP_B_IMM; 
+          3'b110: begin
+                    alu_vec_mode_o = VEC_MODE16;
+                    mult_operator_o = MUL_DOT16;
+                    scalar_replication_o = 1'b1;
+                    alu_op_b_mux_sel_o = OP_B_IMM;
+                  end
+          3'b001: begin
+                    alu_vec_mode_o = VEC_MODE8;
+                    mult_operator_o = MUL_DOT8;
+                    regb_used_o = 1'b1;
+                  end
+          3'b101: begin
+                    alu_vec_mode_o = VEC_MODE8;
+                    mult_operator_o = MUL_DOT8;
+                    scalar_replication_o = 1'b1;
+                    regb_used_o = 1'b1;
+                  end
+          3'b111: begin
+                    alu_vec_mode_o = VEC_MODE8;
+                    mult_operator_o = MUL_DOT8;
+                    scalar_replication_o = 1'b1;
+                    alu_op_b_mux_sel_o = OP_B_IMM;
                   end
           3'b010: begin
                     regb_used_o = 1'b1;
@@ -2372,7 +2376,7 @@ module riscv_nn_decoder
             alu_en_o             = 1'b0;
             mult_dot_en          = 1'b1;
             mult_dot_signed_o    = 2'b11;
-            alu_vec_mode_o       = VEC_MODE16; 
+            alu_vec_mode_o       = VEC_MODE16;
             mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             regc_used_o          = 1'b1;
@@ -2385,7 +2389,7 @@ module riscv_nn_decoder
 
           6'b01101_1: begin // pv.subrotmj.h.{/,div2,div4,div8}
             alu_operator_o       = ALU_SUB;
-            alu_vec_mode_o       = VEC_MODE16; 
+            alu_vec_mode_o       = VEC_MODE16;
             mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
@@ -2396,7 +2400,7 @@ module riscv_nn_decoder
 
           6'b01011_1: begin // pv.cplxconj.h
             alu_operator_o       = ALU_ABS;
-            alu_vec_mode_o       = VEC_MODE16; 
+            alu_vec_mode_o       = VEC_MODE16;
             mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
@@ -2405,7 +2409,7 @@ module riscv_nn_decoder
 
           6'b01110_1: begin // pv.add.h.{div2,div4,div8}
             alu_operator_o       = ALU_ADD;
-            alu_vec_mode_o       = VEC_MODE16; 
+            alu_vec_mode_o       = VEC_MODE16;
             mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
@@ -2415,7 +2419,7 @@ module riscv_nn_decoder
 
           6'b01100_1: begin // pv.sub.h.{div2,div4,div8}
             alu_operator_o       = ALU_SUB;
-            alu_vec_mode_o       = VEC_MODE16; 
+            alu_vec_mode_o       = VEC_MODE16;
             mult_operator_o      = MUL_DOT16;
             is_clpx_o            = 1'b1;
             scalar_replication_o = 1'b0;
