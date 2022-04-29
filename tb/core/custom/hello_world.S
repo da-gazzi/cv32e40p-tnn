@@ -1,9 +1,3 @@
-	.global example_add
-	.text
-example_add:
-	add a0, a0, a1
-	ret
-
 	.global main
 	.text
 main:
@@ -11,18 +5,12 @@ main:
 	addi sp, sp, -4
 	sw   ra, 0(sp)
 
-	li   a0, 5
-	li   a1, 10
-	call example_add
-
-	la a0, message /* a0 is first (and only) argument to puts */
-	jal puts /* hello world */
+	li   t0, 0x64c821a0
+	li   t1, 0xa10c5477
+	.word 0xe80342f7
 
 	/* epilogue */
 	lw ra, 0(sp)
 	addi sp, sp, 4
 	li a0, 0 /* a0 is return value (RISC-V standard ABI) */
 	ret
-
-message:
-	.ascii "hello world assembly\n"
