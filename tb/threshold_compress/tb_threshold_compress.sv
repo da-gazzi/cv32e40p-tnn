@@ -11,7 +11,6 @@ module tb_threshold_compress;
   localparam int OUTPUT_WIDTH = 8;
   localparam int COMPREG_WIDTH = int'(OUTPUT_WIDTH * 1.25);
 
-  localparam int    N_STIMULI      = 100;           // number of stimuli from stimuli.txt
   localparam string STIMULI_FILE   = "./stimuli/stimuli.txt";
   localparam string RESPONSE_FILE  = "./stimuli/exp_responses.txt";
 
@@ -70,9 +69,9 @@ module tb_threshold_compress;
     end
     rst_n = 1'b0;
     //Apply the stimuli
-    for (int i=0; i<N_STIMULI && !$feof(stim_fd); i++) begin
+    while(!$feof(stim_fd)) begin
       ret_code = $fscanf(stim_fd, "%32b\n", thresholds_tmp);
-      for (int j=0; j<COMPREG_WIDTH/2 && !$feof(stim_fd); j++) begin
+      for (int i=0; i<COMPREG_WIDTH/2 && !$feof(stim_fd); i++) begin
         //Wait for one clock cycle
         @(posedge clk);
         rst_n = 1'b1;
