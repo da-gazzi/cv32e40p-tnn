@@ -6,7 +6,7 @@ module tb_threshold_compress;
   localparam time T_CLK_LO   = 5ns;                 // set clock low time
   localparam time T_CLK      = T_CLK_HI + T_CLK_LO; // calculate clock period
   localparam time T_APPL_DEL = 2ns;                 // set stimuli application delay
-  localparam time T_ACQ_DEL  = 8ns;                 // set response aquisition delay
+  localparam time T_ACQ_DEL  = 2ns;                 // set response aquisition delay
 
   localparam int OUTPUT_WIDTH = 8;
   localparam int COMPREG_WIDTH = int'(OUTPUT_WIDTH * 1.25);
@@ -85,6 +85,7 @@ module tb_threshold_compress;
     $fclose(stim_fd);
     //Wait one additional cycle for response acquisition to finish
     @(posedge clk);
+
     //Terminate simulation by stoping the clock
     EndOfSim_S = 1;
   end // initial begin
@@ -100,15 +101,13 @@ module tb_threshold_compress;
     end
     error_counter = 0;
     total_counter = 0;
-    //Wait for one clock cycle
-    @(posedge clk);
 
     //Compare responses in each cycle
     while (!$feof(exp_fd)) begin
-      //Wait for one clock cycle
+      //Wait for two clock cycles
       @(posedge clk);
-
-      if (ready) begin
+      @(posedge clk);
+      wait (ready) begin
         //Delay response acquistion by the stimuli acquistion delay
         #T_ACQ_DEL;
 

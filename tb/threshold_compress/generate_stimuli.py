@@ -37,6 +37,7 @@ if __name__=='__main__':
         thresholds_bin = getbinary(threshold_lo, 16) + getbinary(threshold_hi, 16)
 
         activations = [-1 if preact < threshold_lo else (0 if preact < threshold_hi else 1) for preact in preactivations]
+        activations.reverse()
         activations_bin = ''.join([getbinary(activation, 2) for activation in activations])
         activations_bin_compr = encoding_map[activations_bin]
 
