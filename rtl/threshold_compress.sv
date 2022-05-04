@@ -23,15 +23,26 @@ module threshold_compress
   logic [2:0]                      cnt_d, cnt_q;
   logic [COMPREG_WIDTH/2-1:0][1:0] compreg_d, compreg_q;
 
-  // TODO: do I need to silence the inputs when enable_i = 0?
-  assign threshold_lo = threshold_i[15:0];
-  assign threshold_hi = threshold_i[31:16];
-  assign activation   = (data_i < threshold_lo) ? -2'd1 : ((data_i < threshold_hi) ? 2'd0 : 2'd1);
+  logic [OUTPUT_WIDTH-1:0]         encoder_out;
 
-  assign cnt_d = (cnt_q < COUNTER_MAX-1) ? cnt_q + 1 : '0;
+  always_comb begin
+    activation = '0;
+    data_o = '0;
+    ready_o = 1'b0;
+    cnt_d = '0;
+    ready_d = '0;
 
-  assign ready_d = (cnt_q == COUNTER_MAX-1) ? 1 : 0;
-  assign ready_o = ready_q;
+    threshold_hi = threshold_i[15:0];
+    threshold_lo = threshold_i[31:16];
+
+    if (enable_i) begin
+      activation = (data_i < threshold_lo) ? -2'd1 : ((data_i < threshold_hi) ? 2'd0 : 2'd1);
+      data_o = encoder_out;
+      ready_o = ready_q;
+      cnt_d = (cnt_q < COUNTER_MAX-1) ? cnt_q + 1 : '0;
+      ready_d = (cnt_q == COUNTER_MAX-1) ? 1'b1 : 1'b0;
+    end
+  end
 
   always_comb begin
     for (int i=0; i<COMPREG_WIDTH/2; i++) begin
@@ -46,8 +57,8 @@ module threshold_compress
     for (genvar i=0; i<OUTPUT_WIDTH/8; i++) begin
       ternary_encoder i_ternary_encoder
       (
-        .encoder_i (compreg_q [5*i +: 5]),
-        .encoder_o (data_o    [8*i +: 8])
+        .encoder_i (compreg_q  [5*i +: 5]),
+        .encoder_o (encoder_out[8*i +: 8])
       );
     end
   endgenerate
