@@ -37,13 +37,13 @@ module tb_threshold_compress;
   )
   i_mut
   (
-    .data_i      (preactivation),
-    .threshold_i (thresholds   ),
-    .enable_i    (enable       ),
-    .rst_ni      (rst_n        ),
-    .clk_i       (clk          ),
-    .data_o      (data_out     ),
-    .ready_o     (ready        )
+    .data_i       (preactivation),
+    .thresholds_i (thresholds   ),
+    .enable_i     (enable       ),
+    .rst_ni       (rst_n        ),
+    .clk_i        (clk          ),
+    .data_o       (data_out     ),
+    .ready_o      (ready        )
   );
 
   //------------------ Generate clock signal ------------------

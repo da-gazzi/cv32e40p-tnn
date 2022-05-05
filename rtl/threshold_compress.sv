@@ -4,7 +4,7 @@ module threshold_compress
 )
 (
   input  logic [31:0]             data_i,
-  input  logic [31:0]             threshold_i,
+  input  logic [31:0]             thresholds_i,
   input  logic                    enable_i,
   input  logic                    rst_ni,
   input  logic                    clk_i,
@@ -32,8 +32,8 @@ module threshold_compress
     cnt_d = '0;
     ready_d = '0;
 
-    threshold_hi = threshold_i[15:0];
-    threshold_lo = threshold_i[31:16];
+    threshold_hi = thresholds_i[15:0];
+    threshold_lo = thresholds_i[31:16];
 
     if (enable_i) begin
       activation = (data_i < threshold_lo) ? -2'd1 : ((data_i < threshold_hi) ? 2'd0 : 2'd1);
