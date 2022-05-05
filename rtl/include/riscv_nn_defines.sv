@@ -84,7 +84,7 @@ parameter REGC_ZERO = 2'b11;
 //  /_/   \_\_____\___/   \___/| .__/ \___|_|  \__,_|\__|_|\___/|_| |_|___/ //
 //                             |_|                                          //
 //////////////////////////////////////////////////////////////////////////////
-//TODO: Define new ALU operation for Threshold&Compress
+
 parameter ALU_OP_WIDTH = 7;
 
 parameter ALU_ADD   = 7'b0011000;
@@ -180,6 +180,8 @@ parameter ALU_FMAX    = 7'b1000110;
 parameter ALU_FMIN    = 7'b1000111;
 parameter ALU_FCLASS  = 7'b1001000;
 
+// threshold&compress
+parameter ALU_THRC    = 7'b1010101; // TODO: this is just a provisional value
 
 parameter MUL_MAC32 = 4'b0000;
 parameter MUL_MSU32 = 4'b0001;

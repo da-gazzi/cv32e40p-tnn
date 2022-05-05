@@ -92,6 +92,8 @@ module riscv_nn_alu
   logic        div_valid;
   logic [31:0] bmask;
 
+  logic        thrc_valid;
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //   ____            _   _ _   _                      _      _       _     _            //
   //  |  _ \ __ _ _ __| |_(_) |_(_) ___  _ __   ___  __| |    / \   __| | __| | ___ _ __  //
@@ -1302,6 +1304,7 @@ module riscv_nn_alu
       assign div_valid = enable_i & ((operator_i == ALU_DIV) || (operator_i == ALU_DIVU) ||
                          (operator_i == ALU_REM) || (operator_i == ALU_REMU));
 
+      assign thrc_valid = enable_i && (operator_i == ALU_THRC);
 
       // inputs A and B are swapped
       riscv_nn_alu_div div_i
@@ -1326,6 +1329,26 @@ module riscv_nn_alu
          .OutVld_SO    ( div_ready         )
          );
    end
+
+  // Threshold&Compress
+  logic [7:0] thrc_result;
+  logic [2:0] thrc_counter;
+
+  threshold_compress
+  #(
+    .OUTPUT_WIDTH   ( 8               )
+  )
+  threshold_compress_i
+  (
+    .data_i         ( operand_a_i     ),
+    .thresholds_i   ( operand_b_i     ),
+    .enable_i       ( thrc_valid      ),
+    .rst_ni         ( rst_n           ),
+    .clk_i          ( clk             ),
+    .data_o         ( thrc_result     ),
+    .counter_o      ( thrc_counter    ),
+    .compreg_full_o ( /*Unconnected*/ )
+  );
 
   ////////////////////////////////////////////////////////
   //   ____                 _ _     __  __              //
@@ -1413,6 +1436,9 @@ module riscv_nn_alu
       // float sign injection
       ALU_FSGNJ, ALU_FSGNJN,
       ALU_FSGNJX, ALU_FKEEP: result_o = f_sign_inject_result;
+
+      // threshold&compress
+      ALU_THRC: result_o = {thrc_counter, 21'h0, thrc_result};
 
       default: ; // default case to suppress unique warning
     endcase
