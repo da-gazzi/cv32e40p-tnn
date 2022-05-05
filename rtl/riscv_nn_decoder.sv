@@ -1378,6 +1378,16 @@ module riscv_nn_decoder
               regb_used_o        = 1'b1;
             end
 
+            {6'b00_1010, 3'b111}: begin // p.thrc
+              $display("%0t: Threshold&Compress instruction received", $time);
+              alu_operator_o     = ALU_THRC;
+              regb_used_o        = 1'b1; // rs2 is used by current instruction
+              // alu_en_o           = 1'b1;
+              // alu_op_a_mux_sel_o = OP_A_REGA_OR_FWD;
+              // alu_op_b_mux_sel_o = OP_B_REGB_OR_FWD;
+              // alu_op_c_mux_sel_o = OP_C_REGC_OR_FWD;
+            end
+
             default: begin
               illegal_insn_o = 1'b1;
             end
