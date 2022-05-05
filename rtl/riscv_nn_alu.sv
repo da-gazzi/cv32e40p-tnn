@@ -57,7 +57,7 @@ module riscv_nn_alu
   output logic                     ready_o,
   input  logic                     ex_ready_i
 );
-
+  // TODO: Add Threshold&Compress module here
 
   logic [31:0] operand_a_rev;
   logic [31:0] operand_a_neg;
@@ -329,7 +329,7 @@ module riscv_nn_alu
   logic [31:0] shift_left_result;
   logic [15:0] clpx_shift_ex;
 
-  
+
   logic [31:0] bmask_b_norm;
 
   // shifter is also used for preparing operand for division

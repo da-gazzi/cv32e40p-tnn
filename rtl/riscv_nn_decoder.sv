@@ -693,7 +693,7 @@ module riscv_nn_decoder
 
         endcase
       end
-
+      // TODO: For Threshold&Compress, need to make modifications here
       OPCODE_OP: begin  // Register-Register ALU operation
 
         // PREFIX 11

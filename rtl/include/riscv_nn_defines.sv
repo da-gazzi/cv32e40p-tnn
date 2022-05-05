@@ -84,7 +84,7 @@ parameter REGC_ZERO = 2'b11;
 //  /_/   \_\_____\___/   \___/| .__/ \___|_|  \__,_|\__|_|\___/|_| |_|___/ //
 //                             |_|                                          //
 //////////////////////////////////////////////////////////////////////////////
-
+//TODO: Define new ALU operation for Threshold&Compress
 parameter ALU_OP_WIDTH = 7;
 
 parameter ALU_ADD   = 7'b0011000;
