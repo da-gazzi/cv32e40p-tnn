@@ -215,7 +215,7 @@ tb-clean:
 # We link with our custom crt0.s and syscalls.c against newlib so that we can
 # use the c standard library
 custom/hello_world.elf: custom/hello_world.S
-	$(RISCV_EXE_PREFIX)gcc -march=rv32imc -o $@ -w -Os -g -nostdlib \
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulpnn -o $@ -w -Os -g -nostdlib \
 		-T custom/link.ld  \
 		-static \
 		custom/crt0.S \

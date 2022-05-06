@@ -7,7 +7,8 @@ main:
 
 	li   t0, 0x64c821a0
 	li   t1, 0xa10c5477
-	.word 0xe80342f7
+	/*.word 0xe80342f7*/
+	pv.mlsdotusp.t.0 t0, t1, t2
 
 	/* epilogue */
 	lw ra, 0(sp)
