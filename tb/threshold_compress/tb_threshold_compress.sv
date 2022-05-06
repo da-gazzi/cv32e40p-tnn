@@ -28,7 +28,7 @@ module tb_threshold_compress;
   logic [OUTPUT_WIDTH-1:0]  data_out;
   logic [31:0]              preactivation;
   logic [31:0]              thresholds;
-  logic                     enable, rst_n, ready;
+  logic                     enable, rst_n, ready, compreg_full;
 
   //--------------------- Instantiate MUT ---------------------
   threshold_compress
@@ -37,13 +37,14 @@ module tb_threshold_compress;
   )
   i_mut
   (
-    .data_i       (preactivation),
-    .thresholds_i (thresholds   ),
-    .enable_i     (enable       ),
-    .rst_ni       (rst_n        ),
-    .clk_i        (clk          ),
-    .data_o       (data_out     ),
-    .ready_o      (ready        )
+    .data_i         (preactivation),
+    .thresholds_i   (thresholds   ),
+    .enable_i       (enable       ),
+    .rst_ni         (rst_n        ),
+    .clk_i          (clk          ),
+    .data_o         (data_out     ),
+    .ready_o        (ready        ),
+    .compreg_full_o (compreg_full )
   );
 
   //------------------ Generate clock signal ------------------
@@ -74,16 +75,21 @@ module tb_threshold_compress;
       for (int i=0; i<COMPREG_WIDTH/2 && !$feof(stim_fd); i++) begin
         //Wait for one clock cycle
         @(posedge clk);
-        rst_n = 1'b1;
-        enable = 1'b1;
+        rst_n = 1'b1; // always 1
         #T_APPL_DEL;
+        enable = 1'b1;
         thresholds = thresholds_tmp;
         ret_code = $fscanf(stim_fd, "%32b\n", preactivation);
+        // Wait for another clock cycle to store the activation in the compression reg
+        @(posedge clk);
+        enable = 1'b0;
       end
     end
-    $fclose(stim_fd);
+    enable = 1'b1;
     //Wait one additional cycle for response acquisition to finish
     @(posedge clk);
+    $fclose(stim_fd);
+    enable = 1'b0;
 
     //Terminate simulation by stoping the clock
     EndOfSim_S = 1;
@@ -106,7 +112,7 @@ module tb_threshold_compress;
       //Wait for two clock cycles
       @(posedge clk);
       @(posedge clk);
-      wait (ready) begin
+      wait (compreg_full) begin
         //Delay response acquistion by the stimuli acquistion delay
         #T_ACQ_DEL;
 
