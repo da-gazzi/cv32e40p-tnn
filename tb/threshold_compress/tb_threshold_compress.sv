@@ -85,11 +85,13 @@ module tb_threshold_compress;
         enable = 1'b0;
       end
     end
+    //Wait one additional cycle for response acquisition to finish
+    @(posedge clk);
     enable = 1'b1;
     //Wait one additional cycle for response acquisition to finish
     @(posedge clk);
-    $fclose(stim_fd);
     enable = 1'b0;
+    $fclose(stim_fd);
 
     //Terminate simulation by stoping the clock
     EndOfSim_S = 1;
