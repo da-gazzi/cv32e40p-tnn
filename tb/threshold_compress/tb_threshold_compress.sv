@@ -6,10 +6,12 @@ module tb_threshold_compress;
   localparam time T_CLK_LO   = 5ns;                 // set clock low time
   localparam time T_CLK      = T_CLK_HI + T_CLK_LO; // calculate clock period
   localparam time T_APPL_DEL = 2ns;                 // set stimuli application delay
-  localparam time T_ACQ_DEL  = 2ns;                 // set response aquisition delay
+  localparam time T_ACQ_DEL  = 8ns;                 // set response aquisition delay
 
   localparam int OUTPUT_WIDTH = 8;
   localparam int COMPREG_WIDTH = int'(OUTPUT_WIDTH * 1.25);
+  localparam int COUNTER_MAX = COMPREG_WIDTH / 2;
+  localparam int COUNTER_WIDTH = $clog2(COUNTER_MAX);
 
   localparam string STIMULI_FILE   = "./stimuli/stimuli.txt";
   localparam string RESPONSE_FILE  = "./stimuli/exp_responses.txt";
@@ -28,7 +30,8 @@ module tb_threshold_compress;
   logic [OUTPUT_WIDTH-1:0]  data_out;
   logic [31:0]              preactivation;
   logic [31:0]              thresholds;
-  logic                     enable, rst_n, ready, compreg_full;
+  logic                     enable, rst_n, compreg_full;
+  logic [COUNTER_WIDTH-1:0] mut_counter;
 
   //--------------------- Instantiate MUT ---------------------
   threshold_compress
@@ -43,7 +46,7 @@ module tb_threshold_compress;
     .rst_ni         (rst_n        ),
     .clk_i          (clk          ),
     .data_o         (data_out     ),
-    .ready_o        (ready        ),
+    .counter_o      (mut_counter  ),
     .compreg_full_o (compreg_full )
   );
 
@@ -63,34 +66,27 @@ module tb_threshold_compress;
     preactivation = '0;
     thresholds = '0;
     enable = 1'b0;
+    rst_n = 1'b0;
     //Read stimuli from file
     stim_fd = $fopen(STIMULI_FILE, "r");
     if (stim_fd == 0) begin
       $fatal("Could not open stimuli file!");
     end
-    rst_n = 1'b0;
+    //Wait for one clock cycle
+    @(posedge clk);
+    rst_n = 1'b1;
+    enable = 1'b1;
     //Apply the stimuli
     while(!$feof(stim_fd)) begin
       ret_code = $fscanf(stim_fd, "%32b\n", thresholds_tmp);
       for (int i=0; i<COMPREG_WIDTH/2 && !$feof(stim_fd); i++) begin
-        //Wait for one clock cycle
-        @(posedge clk);
-        rst_n = 1'b1; // always 1
         #T_APPL_DEL;
-        enable = 1'b1;
         thresholds = thresholds_tmp;
         ret_code = $fscanf(stim_fd, "%32b\n", preactivation);
-        // Wait for another clock cycle to store the activation in the compression reg
+        //Wait for one clock cycle
         @(posedge clk);
-        enable = 1'b0;
       end
     end
-    //Wait one additional cycle for response acquisition to finish
-    @(posedge clk);
-    enable = 1'b1;
-    //Wait one additional cycle for response acquisition to finish
-    @(posedge clk);
-    enable = 1'b0;
     $fclose(stim_fd);
 
     //Terminate simulation by stoping the clock
@@ -114,7 +110,7 @@ module tb_threshold_compress;
       //Wait for two clock cycles
       @(posedge clk);
       @(posedge clk);
-      wait (compreg_full) begin
+      wait (mut_counter == COUNTER_MAX-1) begin // for COMPREG_WIDTH=10, acquire output every 5 cycles
         //Delay response acquistion by the stimuli acquistion delay
         #T_ACQ_DEL;
 
