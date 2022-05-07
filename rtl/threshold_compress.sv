@@ -34,7 +34,7 @@ module threshold_compress
     ready_o = 1'b0;
     compreg_full_o = 1'b0;
 
-    cnt_d = '0;
+    cnt_d = cnt_q;
     ready_d = 1'b0;
     compreg_full_d = 1'b0;
 
