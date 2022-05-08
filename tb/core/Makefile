@@ -416,10 +416,39 @@ csmith-loop: riscv-fesvr/build.ok riscv-isa-sim/build.ok
 			echo OK; ! ((j++)); \
 	done
 
+# Compressed MAC test program
+compmac/test.elf: compmac/test.c
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulpnn -o $@ -w -Os -g -nostdlib \
+		-T compmac/link.ld  \
+		-static \
+		compmac/crt0.S \
+		$^ compmac/syscalls.c compmac/vectors.S \
+		-I $(RISCV)/riscv32-unknown-elf/include \
+		-L $(RISCV)/riscv32-unknown-elf/lib \
+		-lc -lm -lgcc
+compmac-clean:
+	rm -rf compmac/test.elf compmac/test.hex
+
+.PHONY: compmac-vsim-run
+compmac-vsim-run: vsim-all compmac/test.hex
+compmac-vsim-run: ALL_VSIM_FLAGS += "+firmware=compmac/test.hex"
+compmac-vsim-run: vsim-run
+
+.PHONY: compmac-vsim-run-gui
+compmac-vsim-run-gui: vsim-all compmac/test.hex
+compmac-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=compmac/test.hex"
+compmac-vsim-run-gui: vsim-run-gui
+
+
+.PHONY: compmac-veri-run
+compmac-veri-run: verilate compmac/test.hex
+	./testbench_verilator $(VERI_FLAGS) \
+		"+firmware=compmac/test.hex"
+
 
 # general targets
 .PHONY: clean
-clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean
+clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean
 
 .PHONY: distclean
 distclean: clean
