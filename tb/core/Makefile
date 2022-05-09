@@ -423,7 +423,7 @@ compmac/test.elf: compmac/test.c
 		-static \
 		compmac/crt0.S \
 		$^ compmac/syscalls.c compmac/vectors.S \
-		-I $(RISCV)/riscv32-unknown-elf/include \
+		-I $(RISCV)/riscv32-unknown-elf/include -I compmac\
 		-L $(RISCV)/riscv32-unknown-elf/lib \
 		-lc -lm -lgcc
 compmac-clean:
