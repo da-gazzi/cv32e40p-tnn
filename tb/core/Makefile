@@ -418,7 +418,7 @@ csmith-loop: riscv-fesvr/build.ok riscv-isa-sim/build.ok
 
 # Compressed MAC test program
 compmac/test.elf: compmac/test.c
-	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulpnn -o $@ -w -Os -g -nostdlib \
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulptnn -o $@ -w -Os -g -nostdlib \
 		-T compmac/link.ld  \
 		-static \
 		compmac/crt0.S \

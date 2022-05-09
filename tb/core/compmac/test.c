@@ -5,17 +5,29 @@
 
 int main(int argc, char *argv[])
 {
-    uint32_t op1, op2, res;
-
+    int n_mismatches=0;
+    int32_t res, *aw, *ax;
+    aw = compr_w;
+    ax = compr_x;
     for (int i=0; i<N_STIMULI; i++){
+      //printf("aw = %x, &compr_w[i] = %x\n", aw, &compr_w[i]);
+      //printf("ax = %x, &compr_x[i] = %x\n", ax, &compr_x[i]);
       asm volatile(
-        "lw %[op1], 0x(%[data1_addr]);"
-        "lw %[op2], 0x(%[data2_addr]);"
-        "pv.mlsdotusp.t.0 %[res], %[op1], %[op2];"
-                : [op1] "+r" (op1), [op2] "+r" (op2), [res] "=r" (res)
-                : [data1_addr] "r" (&data1[0]), [data2_addr] "r" (&data2[0]));
-      printf("x=0x%x (@0x%x)\ty=0x%x (@0x%x)\t res=0x%x\n", data1[i], &data1[i], data2[i], &data2[i], res);
+        "add %[res], x0, x0;"
+        "pv.smlsdotsp.t x0, %[aw], 0b10000;"
+        "pv.smlsdotsp.t x0, %[ax], 0b01000;"
+        "nop;"
+        "pv.smlsdotsp.t %[res], x0, 0b00000;"
+                : [aw] "+r" (aw), [ax] "+r" (ax), [res] "=r" (res));
+      if (res != exp_responses[i]){
+        printf("***Mismatch found at iteration %d: Expected: %d, got: %d\n", i, exp_responses[i], res);
+        n_mismatches++;
+      }
     }
+    if (n_mismatches == 0)
+      printf("All %d tests passed successfully! :)\n", N_STIMULI);
+    else
+      printf("******Test FAILED with %d mismatches out of %d******\n", n_mismatches, N_STIMULI);
 
     return EXIT_SUCCESS;
 }
