@@ -445,10 +445,38 @@ compmac-veri-run: verilate compmac/test.hex
 	./testbench_verilator $(VERI_FLAGS) \
 		"+firmware=compmac/test.hex"
 
+# Threshold&Compress test
+thrc/test.elf: thrc/test.S
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulpnn -o $@ -w -Os -g -nostdlib \
+		-T thrc/link.ld  \
+		-static \
+		thrc/crt0.S \
+		$^ thrc/syscalls.c thrc/vectors.S \
+		-I $(RISCV)/riscv32-unknown-elf/include \
+		-L $(RISCV)/riscv32-unknown-elf/lib \
+		-lc -lm -lgcc
+thrc-clean:
+	rm -rf thrc/test.elf thrc/test.hex
+
+.PHONY: thrc-vsim-run
+thrc-vsim-run: vsim-all thrc/test.hex
+thrc-vsim-run: ALL_VSIM_FLAGS += "+firmware=thrc/test.hex"
+thrc-vsim-run: vsim-run
+
+.PHONY: thrc-vsim-run-gui
+thrc-vsim-run-gui: vsim-all thrc/test.hex
+thrc-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=thrc/test.hex"
+thrc-vsim-run-gui: vsim-run-gui
+
+.PHONY: thrc-veri-run
+thrc-veri-run: verilate thrc/test.hex
+	./testbench_verilator $(VERI_FLAGS) \
+		"+firmware=thrc/test.hex"
+
 
 # general targets
 .PHONY: clean
-clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean
+clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean thrc-clean
 
 .PHONY: distclean
 distclean: clean
