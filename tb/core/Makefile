@@ -446,13 +446,13 @@ compmac-veri-run: verilate compmac/test.hex
 		"+firmware=compmac/test.hex"
 
 # Threshold&Compress test
-thrc/test.elf: thrc/test.S
+thrc/test.elf: thrc/test.c
 	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulptnn -o $@ -w -Os -g -nostdlib \
 		-T thrc/link.ld  \
 		-static \
 		thrc/crt0.S \
 		$^ thrc/syscalls.c thrc/vectors.S \
-		-I $(RISCV)/riscv32-unknown-elf/include \
+		-I $(RISCV)/riscv32-unknown-elf/include -I thrc\
 		-L $(RISCV)/riscv32-unknown-elf/lib \
 		-lc -lm -lgcc
 thrc-clean:

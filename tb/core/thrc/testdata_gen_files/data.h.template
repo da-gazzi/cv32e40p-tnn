@@ -1,0 +1,25 @@
+#ifndef ${data_h_incguard}
+#define ${data_h_incguard}
+#define N_STIMULI ${num_stimuli}
+
+// this file is generated automatically by the python script `generate_testdata.py`
+
+uint32_t ${thresholds_varname} [N_STIMULI] = {
+% for i, d in enumerate(thresholds):
+${f"0x{d:08x}"+("," if i != num_stimuli-1 else "")}
+% endfor
+};
+
+int32_t ${preactivations_varname} [5*N_STIMULI] = {
+% for i, d in enumerate(preactivations):
+${f"{d:#x}"+("," if i != 5*num_stimuli-1 else "")}
+% endfor
+};
+
+uint8_t ${exp_resp_varname} [N_STIMULI] = {
+% for i, d in enumerate(exp_resp):
+${f"0x{d:02x}"+("," if i != num_stimuli-1 else "")}
+% endfor
+};
+
+#endif
