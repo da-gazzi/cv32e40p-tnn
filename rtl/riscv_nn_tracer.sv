@@ -585,50 +585,114 @@ module riscv_nn_tracer (
       begin
         unique case (instr[31:27])
 
-        5'b10111: begin
-          if (instr[12] == 1'b0) begin
-            mnemonic = "pv.mlsdotsp.h";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
-          end else begin
-            mnemonic = "pv.mlsdotsp.b";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+          5'b11111: begin
+            unique case (instr[14:12])
+              3'b000: begin
+                mnemonic = "pv.smlsdotsp.h";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b001: begin
+                mnemonic = "pv.smlsdotsp.b";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b010: begin
+                mnemonic = "pv.smlsdotsp.n";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b011: begin
+                mnemonic = "pv.smlsdotsp.c";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              default: ;
+            endcase
           end
-        end
-        5'b10101: begin
-          if (instr[12] == 1'b0) begin
-            mnemonic = "pv.mlsdotusp.h";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
-          end else begin
-            mnemonic = "pv.mlsdotusp.b";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+
+          5'b11101: begin
+            unique case (instr[14:12])
+              3'b000: begin
+                mnemonic = "pv.smlsdotusp.h";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b001: begin
+                mnemonic = "pv.smlsdotusp.b";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b010: begin
+                mnemonic = "pv.smlsdotusp.n";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b011: begin
+                mnemonic = "pv.smlsdotusp.c";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              default: ;
+            endcase
           end
-        end
-        5'b10100: begin
-          if (instr[12] == 1'b0) begin
-            mnemonic = "pv.mlsdotup.h";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
-          end else begin
-            mnemonic = "pv.mlsdotup.b";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+
+          5'b11100: begin
+            unique case (instr[14:12])
+              3'b000: begin
+                mnemonic = "pv.smlsdotup.h";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b001: begin
+                mnemonic = "pv.smlsdotup.b";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b010: begin
+                mnemonic = "pv.smlsdotup.n";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b011: begin
+                mnemonic = "pv.smlsdotup.c";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              default: ;
+            endcase
           end
-        end
-        5'b10011: begin
-          if (instr[12] == 1'b0) begin
-            mnemonic = "pv.mlsdotsup.h";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
-          end else begin
-            mnemonic = "pv.mlsdotsup.b";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
+
+          5'b11011: begin
+            unique case (instr[14:12])
+              3'b000: begin
+                mnemonic = "pv.smlsdotsup.h";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b001: begin
+                mnemonic = "pv.smlsdotsup.b";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b010: begin
+                mnemonic = "pv.smlsdotsup.n";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b011: begin
+                mnemonic = "pv.smlsdotsup.c";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              default: ;
+            endcase
           end
-        end
-        default: begin
-          if (instr[12] == 1'b0) begin
-            mnemonic = "pv.mlsdotsup.h";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
-          end else begin
-            mnemonic = "pv.mlsdotsup.b";
-            str = $sformatf("%-16s.%b 0x%0d, x%0d, x%0d", mnemonic, rnn_sr, rd, rs1, rs2);
-          end
+
+          default: begin
+            unique case (instr[14:12])
+              3'b000: begin
+                mnemonic = "pv.smlsdotsup.h";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b001: begin
+                mnemonic = "pv.smlsdotsup.b";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b010: begin
+                mnemonic = "pv.smlsdotsup.n";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b011: begin
+                mnemonic = "pv.smlsdotsup.c";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              default: ;
+            endcase
           end
         endcase
       end
