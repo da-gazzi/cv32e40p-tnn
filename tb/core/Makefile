@@ -447,7 +447,7 @@ compmac-veri-run: verilate compmac/test.hex
 
 # Threshold&Compress test
 thrc/test.elf: thrc/test.S
-	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulpnn -o $@ -w -Os -g -nostdlib \
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulptnn -o $@ -w -Os -g -nostdlib \
 		-T thrc/link.ld  \
 		-static \
 		thrc/crt0.S \
