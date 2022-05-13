@@ -94,6 +94,7 @@ parameter INSTR_PMINU    =  { 7'b0000010, 10'b?, 3'b101, 5'b?, OPCODE_OP }; // p
 parameter INSTR_PMAX     =  { 7'b0000010, 10'b?, 3'b110, 5'b?, OPCODE_OP }; // pulp specific
 parameter INSTR_PMAXU    =  { 7'b0000010, 10'b?, 3'b111, 5'b?, OPCODE_OP }; // pulp specific
 parameter INSTR_ROR      =  { 7'b0000100, 10'b?, 3'b101, 5'b?, OPCODE_OP }; // pulp specific
+parameter INSTR_THRC     =  { 7'b0000100, 10'b?, 3'b110, 5'b?, OPCODE_OP }; // pulp specific
 
 parameter INSTR_PBEXT    =  { 2'b11, 5'b?, 5'b?, 5'b?, 3'b000, 5'b?, OPCODE_OP }; // pulp specific
 parameter INSTR_PBEXTU   =  { 2'b11, 5'b?, 5'b?, 5'b?, 3'b001, 5'b?, OPCODE_OP }; // pulp specific

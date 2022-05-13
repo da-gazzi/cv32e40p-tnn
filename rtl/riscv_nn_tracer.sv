@@ -1073,6 +1073,7 @@ module riscv_nn_tracer (
         INSTR_CLB:        trace.printR1Instr("p.clb");
         INSTR_CNT:        trace.printR1Instr("p.cnt");
         INSTR_ROR:        trace.printRInstr("p.ror");
+        INSTR_THRC:       trace.printRInstr("pv.thrc");
 
         // FENCE
         INSTR_FENCE:      trace.printMnemonic("fence");
