@@ -603,6 +603,10 @@ module riscv_nn_tracer (
                 mnemonic = "pv.smlsdotsp.c";
                 str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
               end
+              3'b100: begin
+                mnemonic = "pv.smlsdotsp.t";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
               default: ;
             endcase
           end
@@ -623,6 +627,10 @@ module riscv_nn_tracer (
               end
               3'b011: begin
                 mnemonic = "pv.smlsdotusp.c";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b100: begin
+                mnemonic = "pv.smlsdotusp.t";
                 str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
               end
               default: ;
@@ -647,6 +655,10 @@ module riscv_nn_tracer (
                 mnemonic = "pv.smlsdotup.c";
                 str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
               end
+              3'b100: begin
+                mnemonic = "pv.smlsdotup.t";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
               default: ;
             endcase
           end
@@ -669,6 +681,10 @@ module riscv_nn_tracer (
                 mnemonic = "pv.smlsdotsup.c";
                 str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
               end
+              3'b100: begin
+                mnemonic = "pv.smlsdotsup.t";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
               default: ;
             endcase
           end
@@ -689,6 +705,10 @@ module riscv_nn_tracer (
               end
               3'b011: begin
                 mnemonic = "pv.smlsdotsup.c";
+                str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
+              end
+              3'b100: begin
+                mnemonic = "pv.smlsdotsup.t";
                 str = $sformatf("%-16s x%0d, x%0d, %5b", mnemonic, rd, rs1, rs2);
               end
               default: ;
