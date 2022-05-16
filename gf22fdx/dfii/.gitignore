@@ -1,0 +1,10 @@
+.cdsinit
+.init
+.cadence
+.calibreviewsetup
+.simrc
+.tech
+.tmp_*
+start_dfii
+si.env
+*.cdslck*

@@ -1,0 +1,32 @@
+#! /bin/tcsh -f
+
+# Example script for compiling RTL sourcecode
+
+set VER=2019.3
+set LIB=rtl
+
+
+if (-e $LIB) then
+  rm -rf $LIB 
+endif
+
+questa-${VER} vlib $LIB
+
+# compile VHDL sourcecode
+questa-$VER vcom  -work ${LIB} -check_synthesis ../sourcecode/a.vhd
+questa-$VER vcom  -work ${LIB} -check_synthesis ../sourcecode/b.vhd
+
+# compile SystemVerilog sourcecode
+questa-$VER vlog  -work ${LIB} -check_synthesis -sv ../sourcecode/c.sv
+questa-$VER vlog  -work ${LIB} -check_synthesis -sv ../sourcecode/d.sv
+
+# compile testbench
+questa-$VER vlog  -work ${LIB} -sv ../sourcecode/d_tb.sv
+
+# optimize the design
+questa-$VER vopt  -work ${LIB} +acc=p -o d_tb_opt t_tb 
+
+# the options are explained in the "README" Notes
+echo "\n-------GUI SIMULATION COMMAND------\n  questa-$VER vsim -t 1ps -lib ${LIB} d_tb_opt &"
+
+# See http://eda.ee.ethz.ch/index.php/Modelsim for more examples

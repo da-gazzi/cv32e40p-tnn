@@ -1,0 +1,19 @@
+#userOutputFolderPath = userOutput
+userOutputFolderPath = .
+templateFolderPath =/usr/pack/gf-22-kgf/dz/dz_tools/bdiagrams_ordinator
+defaultTemplate = monster_cave-qfn56-2.5x2
+editModeEnabled = true
+vccCoreColor = #FF4040
+vccPadColor = #FF8080
+gndCoreColor = #4040FF
+gndPadColor = #8080FF
+dataPadColor = #DCDCDC
+packagePinColor = #FFD700
+connectionColor = #191970
+gpConnectionColor = #191970
+groundPlaneColor = #FFFACD
+
+
+
+
+

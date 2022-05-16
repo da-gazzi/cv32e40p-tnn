@@ -1,0 +1,25 @@
+#! /bin/tcsh -f
+
+# example file to compile GATE-LEVEL sourcecode
+
+
+set VER=2019.3
+set LIB=gate
+
+
+if (-e ${LIB}) then
+  rm -rf ${LIB}
+endif
+
+questa-$VER vlib ${LIB}
+
+# compile gate-level netlist
+questa-$VER vlog  -work ${LIB} ../innovus/out/final.v
+
+# compile testbench
+questa-$VER vlog  -work ${LIB} -sv ../sourcecode/chip_tb.sv
+
+# optimize the design
+questa-$VER vopt  -work ${LIB}  -o chip_tb_opt chip_tb 
+
+# run with the sim_postlayout.csh script

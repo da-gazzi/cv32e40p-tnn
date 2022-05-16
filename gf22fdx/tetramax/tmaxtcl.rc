@@ -1,0 +1,6 @@
+# Startup file for tetramax
+# v0.1 kgf, Wed Oct 15 12:46:31 CEST 2008
+
+  set_messages -log tmax.log -replace
+  #  set_messages -log tmax.log -append -double_slash -level expert
+

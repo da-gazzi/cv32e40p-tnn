@@ -1,0 +1,14 @@
+cockpit.log
+.llamaconfig
+tmp
+calibre
+docs
+technology
+.setPDK.csh
+.svn_setup*
+.gen_gitignore*
+*.20[0-9]*-[0-9]*-[0-9]*-[0-9]*:[0-9]*:[0-9]*
+*.log
+*.log[0-9]
+*.log[0-9][0-9]
+synopsys/alib/alib-52
