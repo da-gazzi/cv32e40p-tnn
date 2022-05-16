@@ -27,28 +27,46 @@ module tb_threshold_compress;
   integer                   total_counter;
 
   //---------------- Signals connecting to MUT ----------------
-  logic [OUTPUT_WIDTH-1:0]  data_out;
+  logic [COUNTER_WIDTH-1:0] mut_counter_d, mut_counter_q;
+  logic [COMPREG_WIDTH-1:0] precompressed_d, precompressed_q;
+  logic [OUTPUT_WIDTH-1:0]  compressed_d, compressed_q;
   logic [31:0]              preactivation;
   logic [31:0]              thresholds;
   logic                     enable, rst_n, compreg_full;
-  logic [COUNTER_WIDTH-1:0] mut_counter;
 
   //--------------------- Instantiate MUT ---------------------
   threshold_compress
   #(
-    .OUTPUT_WIDTH(OUTPUT_WIDTH)
+    .OUTPUT_WIDTH    (OUTPUT_WIDTH)
   )
   i_mut
   (
-    .data_i         (preactivation),
-    .thresholds_i   (thresholds   ),
-    .enable_i       (enable       ),
-    .rst_ni         (rst_n        ),
-    .clk_i          (clk          ),
-    .data_o         (data_out     ),
-    .counter_o      (mut_counter  ),
-    .compreg_full_o (compreg_full )
+    .preactivation_i ( preactivation   ),
+    .thresholds_i    ( thresholds      ),
+    .counter_i       ( mut_counter_q   ),
+    .precompressed_i ( precompressed_q ),
+    .compressed_i    ( compressed_q    ),
+    .enable_i        ( enable          ),
+    .rst_ni          ( rst_n           ),
+    .clk_i           ( clk             ),
+    .counter_o       ( mut_counter_d   ),
+    .precompressed_o ( precompressed_d ),
+    .compressed_o    ( compressed_d    ),
+    .compreg_full_o  ( compreg_full    )
   );
+
+  //------------------ Models the src/dst GPR ------------------
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
+      mut_counter_q   <= '0;
+      precompressed_q <= '0;
+      compressed_q    <= '0;
+    end else if (enable) begin
+      mut_counter_q   <= mut_counter_d;
+      precompressed_q <= precompressed_d;
+      compressed_q    <= compressed_d;
+    end
+  end
 
   //------------------ Generate clock signal ------------------
   initial begin
@@ -110,12 +128,12 @@ module tb_threshold_compress;
       //Wait for two clock cycles
       @(posedge clk);
       @(posedge clk);
-      wait (mut_counter == COUNTER_MAX-1) begin // for COMPREG_WIDTH=10, acquire output every 5 cycles
+      wait (mut_counter_q == COUNTER_MAX-1) begin // for COMPREG_WIDTH=10, acquire output every 5 cycles
         //Delay response acquistion by the stimuli acquistion delay
         #T_ACQ_DEL;
 
         //Sample the output of the MUT
-        acq_response = data_out;
+        acq_response = compressed_d;
         ret_code = $fscanf(exp_fd, "%8b\n", exp_response); // Todo: '8' in the format specifier is hard-coded. Parametrize using OUTPUT_WIDTH
 
         // Compare results
