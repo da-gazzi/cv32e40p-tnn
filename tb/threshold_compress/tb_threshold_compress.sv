@@ -41,18 +41,19 @@ module tb_threshold_compress;
   )
   i_mut
   (
-    .preactivation_i ( preactivation   ),
-    .thresholds_i    ( thresholds      ),
-    .counter_i       ( mut_counter_q   ),
-    .precompressed_i ( precompressed_q ),
-    .compressed_i    ( compressed_q    ),
-    .enable_i        ( enable          ),
-    .rst_ni          ( rst_n           ),
-    .clk_i           ( clk             ),
-    .counter_o       ( mut_counter_d   ),
-    .precompressed_o ( precompressed_d ),
-    .compressed_o    ( compressed_d    ),
-    .compreg_full_o  ( compreg_full    )
+    .preactivation_i ( preactivation     ),
+    .threshold_lo_i  ( thresholds[31:16] ),
+    .threshold_hi_i  ( thresholds[15:0]  ),
+    .counter_i       ( mut_counter_q     ),
+    .precompressed_i ( precompressed_q   ),
+    .compressed_i    ( compressed_q      ),
+    .enable_i        ( enable            ),
+    .rst_ni          ( rst_n             ),
+    .clk_i           ( clk               ),
+    .counter_o       ( mut_counter_d     ),
+    .precompressed_o ( precompressed_d   ),
+    .compressed_o    ( compressed_d      ),
+    .compreg_full_o  ( compreg_full      )
   );
 
   //------------------ Models the src/dst GPR ------------------

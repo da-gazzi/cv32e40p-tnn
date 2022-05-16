@@ -8,7 +8,9 @@ module threshold_compress
 )
 (
   input  logic signed [31:0]              preactivation_i,
-  input  logic        [31:0]              thresholds_i,
+  input  logic        [15:0]              threshold_lo_i,
+  input  logic        [15:0]              threshold_hi_i,
+
   input  logic        [COUNTER_WIDTH-1:0] counter_i,        // previous counter state
   input  logic        [COMPREG_WIDTH-1:0] precompressed_i,  // previously computed activations
   input  logic        [OUTPUT_WIDTH-1:0]  compressed_i,     // previously compressed activations
@@ -23,7 +25,6 @@ module threshold_compress
   output logic                            compreg_full_o    // signalizes the compression register is full
 );
 
-  logic signed [15:0]              threshold_lo, threshold_hi;
   logic signed [1:0]               activation;
 
   logic [COMPREG_WIDTH/2-1:0][1:0] encoder_in;
@@ -38,13 +39,10 @@ module threshold_compress
     compreg_full_o = 1'b0;
     compressed_o = '0;
 
-    threshold_hi = thresholds_i[15:0];
-    threshold_lo = thresholds_i[31:16];
-
     if (enable_i) begin
-      if (preactivation_i < threshold_lo) begin
+      if (preactivation_i < threshold_lo_i) begin
         activation = -2'd1;
-      end else if (preactivation_i >= threshold_hi) begin
+      end else if (preactivation_i >= threshold_hi_i) begin
         activation = 2'd1;
       end
 

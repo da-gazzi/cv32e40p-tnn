@@ -6,7 +6,7 @@ MAX_PREACTIVATION = 1152 # kernel_height*kernel_width*input_channels*2
 MIN_PREACTIVATION = -MAX_PREACTIVATION
 MAX_THRESHOLD = MAX_PREACTIVATION
 MIN_THRESHOLD = -MAX_THRESHOLD
-NUM_STIMULI = 100
+NUM_STIMULI = 20000
 
 def getbinary(x, n):
     # get n-bit binary representation of x

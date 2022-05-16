@@ -1344,7 +1344,7 @@ module riscv_nn_decoder
             {6'b00_0010, 3'b111}: begin alu_operator_o = ALU_MAXU;  end // Max Unsigned
             {6'b00_0100, 3'b101}: begin alu_operator_o = ALU_ROR;   end // Rotate Right
             {6'b00_0100, 3'b110}: begin // Threshold&Compress pv.thrc (note: the decoding value is provisory)
-              $display("%0t: Threshold&Compress instruction received", $time);
+              //$display("%0t: Threshold&Compress instruction received", $time);
               alu_operator_o     = ALU_THRC;
               // regb_used_o        = 1'b1; // rs2 is used by current instruction
               // alu_en_o           = 1'b1;
