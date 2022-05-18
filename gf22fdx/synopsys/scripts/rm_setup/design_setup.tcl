@@ -43,7 +43,7 @@ set search_path [ join "$IPS_PATH/axi/per2axi
                         $search_path"
                 ]
 
-define_design_lib work -path ./work
+define_design_lib work -path ./WORK
 
 
 echo " design_setup has been sourced \n"

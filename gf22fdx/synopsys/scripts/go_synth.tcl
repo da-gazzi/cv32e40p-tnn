@@ -5,7 +5,6 @@ source scripts/rm_setup/design_setup.tcl
 
 #SYNTHESIS SCRIPT
 source scripts/utils/colors.tcl
-source scripts/utils/print_logo.tcl
 source scripts/utils/area_report.tcl
 
 # ENVIRONMET SETUP
@@ -21,24 +20,24 @@ set timing_enable_through_paths true
 # This valiable replaces -timing_high_effort_script option in compile ultra which is ignored.
 set compile_timing_high_effort true
 
-set reAnalyzeRTL "TRUE"
-
-set DESIGN_NAME  "pulp_soc"
+set DESIGN_NAME  "ri5cy_tnn"
 
 sh mkdir -p unmapped
 
-# ANALIZE THE RTL CODE or Read the GTECH
-if { $reAnalyzeRTL == "TRUE" } {
-    file delete -force -- ./work
-    source -echo -verbose ./scripts/analyze_auto/ips_add_files.tcl
-    source -echo -verbose ./scripts/analyze_auto/rtl_add_files.tcl
-    elaborate pulp_soc
+# ------------------------------------------------------------------------------
+# Analyze Design
+# ------------------------------------------------------------------------------
+remove_design -design
+sh rm -rf WORK/*
+source -echo -verbose ./scripts/analyze_auto/analyze.tcl
 
-    write -format verilog -hier -o ./unmapped/pulp_soc_unmapped.v
-    write -format ddc -hier -o ./unmapped/pulp_soc_unmapped.ddc pulpissimo
-} else {
-     read_file  -format ddc  ./unmapped/pulp_soc_unmapped.ddc
-}
+# ------------------------------------------------------------------------------
+# Elaborate Design
+# ------------------------------------------------------------------------------
+elaborate ri5cy_tnn
+
+write -hierarchy -format verilog  -output ./unmapped/ri5cy_tnn.v
+
 
 current_design pulp_soc
 link

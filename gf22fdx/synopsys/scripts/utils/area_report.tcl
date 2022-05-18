@@ -13,7 +13,7 @@
 
 ## Main proc starts
 proc area_report { args } {
-   
+
     set ::char  { }
     set ::level 1
     set   crlvl 0
@@ -24,11 +24,11 @@ proc area_report { args } {
     if {[info exists options(-levels)]} {
         set ::level $options(-levels)
     }
-    
+
     echo ""
     echo "*************************************"
     echo " Report  : Area                      "
-    echo " Design  : [current_design_name]     "  
+    echo " Design  : [current_design_name]     "
     echo " Version : $::sh_product_version     "
     echo " Date    : [date]                    "
     echo "*************************************"
@@ -61,7 +61,7 @@ proc area_report { args } {
 
     echo "[format " %-*s %*s %*s %*s %*s %*s %*s " [expr ${maxlen}+4] "Reference Name" 10 "Cell Count" 10 "Comb." 10 "Seq." 15 "Area" 12 "Comb." 12 "Seq."]"
     echo "[format " %-*s   %*s %*s %*s %*s %*s %*s " ${maxlen} [string repeat {-} ${maxlen}] 0 "" 0 "" 32 [string repeat {-} 32] 0 "" 0 "" 39 [string repeat {-} 39] ]"
-    
+
     foreach name $::har() {
         set  tot_count [format %.0f [lindex $::har($name) 0]]
         set comb_count [format %.0f [lindex $::har($name) 1]]
@@ -74,7 +74,7 @@ proc area_report { args } {
     echo ""
     return 1
 }
-    	 
+
 proc instance_stat { inst crlvl } {
     redirect /dev/null {set orig [current_instance .]}
     redirect /dev/null {current_instance $inst}
@@ -97,12 +97,12 @@ proc instance_stat { inst crlvl } {
         }
     }
     redirect /dev/null {current_instance $orig}
-}   
-    
+}
+
 define_proc_attributes area_report  \
       -info "Generate an hierarchical area report" \
       -hide_body \
-      -define_arg { \
+      -define_args { \
       { -levels   "Levels of hierarchy to be parsed when generating area report (default: 1)" "Integer" int optional }
                   }
 
