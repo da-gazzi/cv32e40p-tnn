@@ -1331,8 +1331,9 @@ module riscv_nn_alu
    end
 
   // Threshold&Compress
-  logic [7:0] thrc_result;
   logic [2:0] thrc_counter;
+  logic [9:0] thrc_precompressed;
+  logic [7:0] thrc_compressed;
 
   threshold_compress
   #(
@@ -1340,14 +1341,16 @@ module riscv_nn_alu
   )
   threshold_compress_i
   (
-    .data_i         ( operand_a_i     ),
-    .thresholds_i   ( operand_b_i     ),
-    .enable_i       ( thrc_valid      ),
-    .rst_ni         ( rst_n           ),
-    .clk_i          ( clk             ),
-    .data_o         ( thrc_result     ),
-    .counter_o      ( thrc_counter    ),
-    .compreg_full_o ( /*Unconnected*/ )
+    .preactivation_i ( operand_a_i        ),
+    .threshold_lo_i  ( operand_b_i[31:16] ),
+    .threshold_hi_i  ( operand_b_i[15:0]  ),
+    .counter_i       ( operand_c_i[31:29] ),
+    .precompressed_i ( operand_c_i[25:16] ),
+    .compressed_i    ( operand_c_i[7:0]   ),
+    .counter_o       ( thrc_counter       ),
+    .precompressed_o ( thrc_precompressed ),
+    .compressed_o    ( thrc_compressed    ),
+    .compreg_full_o  ( /*Unconnected*/    )
   );
 
   ////////////////////////////////////////////////////////
@@ -1438,7 +1441,7 @@ module riscv_nn_alu
       ALU_FSGNJX, ALU_FKEEP: result_o = f_sign_inject_result;
 
       // threshold&compress
-      ALU_THRC: result_o = {thrc_counter, 21'h0, thrc_result};
+      ALU_THRC: result_o = {thrc_counter, 3'd0, thrc_precompressed, 8'd0, thrc_compressed};
 
       default: ; // default case to suppress unique warning
     endcase

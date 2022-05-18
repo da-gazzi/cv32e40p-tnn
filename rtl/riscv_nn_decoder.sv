@@ -1345,12 +1345,8 @@ module riscv_nn_decoder
             {6'b00_0100, 3'b101}: begin alu_operator_o = ALU_ROR;   end // Rotate Right
             {6'b00_0100, 3'b110}: begin // Threshold&Compress pv.thrc (note: the decoding value is provisory)
               //$display("%0t: Threshold&Compress instruction received", $time);
-              alu_operator_o     = ALU_THRC;
-              // regb_used_o        = 1'b1; // rs2 is used by current instruction
-              // alu_en_o           = 1'b1;
-              // alu_op_a_mux_sel_o = OP_A_REGA_OR_FWD;
-              // alu_op_b_mux_sel_o = OP_B_REGB_OR_FWD;
-              // alu_op_c_mux_sel_o = OP_C_REGC_OR_FWD;
+              alu_operator_o = ALU_THRC;
+              regc_mux_o     = REGC_RD;
             end
 
             // PULP specific instructions using only one source register
