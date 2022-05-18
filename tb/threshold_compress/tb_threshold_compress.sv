@@ -21,7 +21,7 @@ module tb_threshold_compress;
   logic [31:0]              thresholds_tmp;
   logic [OUTPUT_WIDTH-1:0]  exp_response;
   logic [OUTPUT_WIDTH-1:0]  acq_response;
-  logic                     clk;
+  logic                     clk, enable, rst_n;
 
   integer                   error_counter;
   integer                   total_counter;
@@ -32,7 +32,7 @@ module tb_threshold_compress;
   logic [OUTPUT_WIDTH-1:0]  compressed_d, compressed_q;
   logic [31:0]              preactivation;
   logic [31:0]              thresholds;
-  logic                     enable, rst_n, compreg_full;
+  logic                     compreg_full;
 
   //--------------------- Instantiate MUT ---------------------
   threshold_compress
@@ -47,9 +47,6 @@ module tb_threshold_compress;
     .counter_i       ( mut_counter_q     ),
     .precompressed_i ( precompressed_q   ),
     .compressed_i    ( compressed_q      ),
-    .enable_i        ( enable            ),
-    .rst_ni          ( rst_n             ),
-    .clk_i           ( clk               ),
     .counter_o       ( mut_counter_d     ),
     .precompressed_o ( precompressed_d   ),
     .compressed_o    ( compressed_d      ),
