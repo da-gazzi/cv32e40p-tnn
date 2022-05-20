@@ -38,6 +38,9 @@ sources:
     - rtl/riscv_nn_apu_disp.sv
     - rtl/riscv_nn_fetch_fifo.sv
     - rtl/riscv_nn_L0_buffer.sv
+    - rtl/ternary_decoder.sv
+    - rtl/ternary_encoder.sv
+    - rtl/threshold_compress.sv
     - target: synthesis
       files:
         - rtl/riscv_nn_register_file_latch.sv
