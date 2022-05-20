@@ -2,6 +2,7 @@ WORK
 alib
 DDC
 reports
+netlists
 default.svf
 filenames*.log
 command.log
