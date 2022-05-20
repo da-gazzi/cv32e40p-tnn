@@ -6,10 +6,10 @@
 
 [library]
   # Setup files will be generated for these libraries.
-  # 
+  #
   # - only libraries that can be found in the "kit.ascii" database
   #   can be used (see cockpit.log for the full unix path)
-  # - use "-update" or "-rewrite" for the changes to take effect  
+  # - use "-update" or "-rewrite" for the changes to take effect
   #
   # The following libraries are available:
   #   technology    : 22FDX
@@ -36,28 +36,28 @@
   #   designkit     : 9M_2Mx_3Cx_2Bx_1Ix_1Ox_LB__EXT-V1.0_3.1   (#20 -  9 Metals)
 
 
-  # For a comparison list see: 
-  # 
+  # For a comparison list see:
+  #
   #   http://eda.ee.ethz.ch/index.php/
-  # 
+  #
   #   libraries     : SuperLow VT (fastfast)                            Low VT (fast)
   #     8 track       GF22FDX_SC8T_104CPP_BASE_CSC20SL_V02.R20          GF22FDX_SC8T_104CPP_BASE_CSC20L_V02.R20  ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_BASE_CSC24SL_V02.R20          GF22FDX_SC8T_104CPP_BASE_CSC24L_V02.R20  ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_BASE_CSC28SL_V02.R20          GF22FDX_SC8T_104CPP_BASE_CSC28L_V02.R20  ++ OBSOLETE ++
-  #                     
+  #
   #     8 track       GF22FDX_SC8T_104CPP_BASE_CSC20SL_V04R00           GF22FDX_SC8T_104CPP_BASE_CSC20L_V04R00   ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_BASE_CSC24SL_V04R00           GF22FDX_SC8T_104CPP_BASE_CSC24L_V04R00   ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_BASE_CSC28SL_V04R00           GF22FDX_SC8T_104CPP_BASE_CSC28L_V04R00   ++ OBSOLETE ++
-  #                     
+  #
   #     8 track       GF22FDX_SC8T_104CPP_BASE_CSC20SL_V05R00           GF22FDX_SC8T_104CPP_BASE_CSC20L_V05R00   ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_BASE_CSC24SL_V05R00           GF22FDX_SC8T_104CPP_BASE_CSC24L_V05R00   ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_BASE_CSC28SL_V05R00           GF22FDX_SC8T_104CPP_BASE_CSC28L_V05R00   ++ OBSOLETE ++
-  #                     
+  #
   #                   GF22FDX_SC8T_104CPP_LPK_CSSL_V02R00               GF22FDX_SC8T_104CPP_LPK_CSL_V02R00       ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_SHIFT_CSSL_V02R00             GF22FDX_SC8T_104CPP_SHIFT_CSL_V02R00     ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_HPK_CSSL_V02R00               GF22FDX_SC8T_104CPP_HPK_CSL_V02R00       ++ OBSOLETE ++
   #                   GF22FDX_SC8T_104CPP_ECO_CSSL_V02R00               GF22FDX_SC8T_104CPP_ECO_CSL_V02R00       ++ OBSOLETE ++
-  #                     
+  #
   #     8 track       GF22FDX_SC8T_104CPP_BASE_CSC20SL_V06R40           GF22FDX_SC8T_104CPP_BASE_CSC20L_V06R40
   #                   GF22FDX_SC8T_104CPP_BASE_CSC24SL_V06R40           GF22FDX_SC8T_104CPP_BASE_CSC24L_V06R40
   #                   GF22FDX_SC8T_104CPP_BASE_CSC28SL_V06R40           GF22FDX_SC8T_104CPP_BASE_CSC28L_V06R40
@@ -68,17 +68,17 @@
   #                                                                     GF22FDX_SC8T_104CPP_HPKCUSTOM_CSL_V00R50
   #                   GF22FDX_SC8T_104CPP_HPK_CSSL_V03R40               GF22FDX_SC8T_104CPP_HPK_CSL_V03R40
   #                   GF22FDX_SC8T_104CPP_ECO_CSSL_V04R30               GF22FDX_SC8T_104CPP_ECO_CSL_V04R30
-  #                   
+  #
   #     7.5 track     GF22FDX_SC7P5TLV_116CPP_BASE_CSC28SL_V01R10       GF22FDX_SC7P5TLV_116CPP_BASE_CSC28L_V01R10 ++ NOT UP TO DATE ++
   #       Ultra-Low   GF22FDX_SC7P5TLV_116CPP_BASE_CSC32SL_V01R10       GF22FDX_SC7P5TLV_116CPP_BASE_CSC32L_V01R10 ++ NOT UP TO DATE ++
   #       Voltage     GF22FDX_SC7P5TLV_116CPP_BASE_CSC36SL_V01R10       GF22FDX_SC7P5TLV_116CPP_BASE_CSC36L_V01R10 ++ NOT UP TO DATE ++
-  #                     
+  #
   #                   GF22FDX_SC7P5TLV_116CPP_ECO_CSSL_V01R10                                                      ++ NOT UP TO DATE ++
   #                                                                     GF22FDX_SC7P5TLV_116CPP_LPK_CSL_V01R10     ++ NOT UP TO DATE ++
-  #                   GF22FDX_SC7P5TLV_116CPP_SHIFT_CSSL_V01R11                                                    ++ NOT UP TO DATE ++                                       
-  #                   
+  #                   GF22FDX_SC7P5TLV_116CPP_SHIFT_CSSL_V01R11                                                    ++ NOT UP TO DATE ++
+  #
   #                                            GF22FDX_SC7P5TLV_116CPP_CUSTOM_CS_V01R10                            ++ NOT UP TO DATE ++
-  #                   
+  #
   #     8 track       Ultra high VT
   #       Ultra-Low   GF22FDX_SC8T_116CPP_BASE_DDC28UH_V04R00
   #       Leakage     GF22FDX_SC8T_116CPP_BASE_DDC32UH_V04R00
@@ -91,10 +91,10 @@
   #     12 track      GF22FDX_SC12T_104CPP_BASE_CSC20H_V04R20           GF22FDX_SC12T_104CPP_BASE_CSC20R_V04R30
   #       Regular     GF22FDX_SC12T_104CPP_BASE_CSC24H_V04R20           GF22FDX_SC12T_104CPP_BASE_CSC24R_V04R30
   #       Well        GF22FDX_SC12T_104CPP_BASE_CSC28H_V04R20           GF22FDX_SC12T_104CPP_BASE_CSC28R_V04R30
-  #                   GF22FDX_SC12T_104CPP_LPK_CSH_V02R20               GF22FDX_SC12T_104CPP_LPK_CSR_V02R30    
-  #                   GF22FDX_SC12T_104CPP_HPK_CSH_V02R20               GF22FDX_SC12T_104CPP_HPK_CSR_V02R30    
-  #                   GF22FDX_SC12T_104CPP_ECO_CSH_V03R31               GF22FDX_SC12T_104CPP_ECO_CSR_V03R31    
-  #     
+  #                   GF22FDX_SC12T_104CPP_LPK_CSH_V02R20               GF22FDX_SC12T_104CPP_LPK_CSR_V02R30
+  #                   GF22FDX_SC12T_104CPP_HPK_CSH_V02R20               GF22FDX_SC12T_104CPP_HPK_CSR_V02R30
+  #                   GF22FDX_SC12T_104CPP_ECO_CSH_V03R31               GF22FDX_SC12T_104CPP_ECO_CSR_V03R31
+  #
   #                   SuperLow VT (fastfast)                            Low VT (fast)
   #       Flip        GF22FDX_SC12T_104CPP_BASE_CSC20SL_V05R30          GF22FDX_SC12T_104CPP_BASE_CSC20L_V05R30
   #       Well        GF22FDX_SC12T_104CPP_BASE_CSC24SL_V05R30          GF22FDX_SC12T_104CPP_BASE_CSC24L_V05R30
@@ -102,7 +102,7 @@
   #                   GF22FDX_SC12T_104CPP_LPK_CSSL_V03R30              GF22FDX_SC12T_104CPP_LPK_CSL_V03R30
   #                   GF22FDX_SC12T_104CPP_HPK_CSSL_V03R30              GF22FDX_SC12T_104CPP_HPK_CSL_V03R30
   #                   GF22FDX_SC12T_104CPP_ECO_CSSL_V04R31              GF22FDX_SC12T_104CPP_ECO_CSL_V04R31
-  #                   
+  #
   #   pad-libraries : GF22FDX_GPIO18_10M30PSG_V03.R10     ++ OBSOLETE ++
   #                   IN22FDX_GPIO18_10M30P_V0410         ++ OBSOLETE ++
   #                   IN22FDX_GPIO18_10M3S30P_V0430       ++ OBSOLETE ++
@@ -111,7 +111,7 @@
   #                   IN22FDX_GPIO18_10M3S40PI_V02R02SZ   for 10M_2Mx_6Cx_2Ix_LB          (#3)
   #                   IN22FDX_GPIO18_10M19S40PI_V02R02SZ  for 10M_2Mx_5Cx_1Jx_2Qx_LB      (#19)
   #                   IN22FDX_GPIO18_9M20S40PI_V02R02SZ   for 9M_2Mx_3Cx_2Bx_1Ix_1Ox_LB   (#20)
-  #                   
+  #
   #   ip blocks     : IN22FDX_PMON_0100_V02R02            ++ OBSOLETE ++
   #                   IN22FDX_BBGENP_V01R02               ++ OBSOLETE ++
   #                   IN22FDX_BBGENN_V01R02               ++ OBSOLETE ++
@@ -137,18 +137,18 @@
   #                   gf22memory_R2PV_V03R00              ++ OBSOLETE ++
   #                   gf22memory_R2PV_V03R01              ++ OBSOLETE ++
   #                   gf22memory_R2PV_V04R20SZ
-  #                   
+  #
   #   mem compiler  : gf22memory_R1PL_V01R00              ++ OBSOLETE ++
   #       Ultra-Low   gf22memory_R1PL_V01R10              ++ OBSOLETE ++
   #       Voltage     gf22memory_R1PL_V02R22SZ
   #                   gf22memory_R2PL_V01R00              ++ OBSOLETE ++
   #                   gf22memory_R2PL_V01R10              ++ OBSOLETE ++
   #                   gf22memory_R2PL_V02R21SZ
-  #                   
+  #
   #   rom compiler    gf22memory_ROMI_V02R51              ++ OBSOLETE ++
   #                   gf22memory_ROMI_V03R00              ++ OBSOLETE ++
   #                   gf22memory_ROMI_V03R01              ++ OBSOLETE ++
-  #                   gf22memory_ROMI_V04R22SZ  
+  #                   gf22memory_ROMI_V04R22SZ
 
   libs    = 22FDX 10M_2Mx_6Cx_2Ix_LB__EXT-V1.0_3.1 \
             GF22FDX_SC8T_104CPP_BASE_CSC20SL_V06R40 GF22FDX_SC8T_104CPP_BASE_CSC20L_V06R40 \
@@ -158,26 +158,26 @@
 
   # see /usr/pack/gf-22-kgf/dz/mem/<prefix>/<version>/gds to see which macros have already been generated
   # enter the name WITHOUT '.gds' in the list below, contact us <dz@ee.ethz.ch>
-  
-  macros  = 
-  
+
+  macros  =
+
 [version]
-  # Setup files will be generated for these software versions. 
+  # Setup files will be generated for these software versions.
   # - only versions that can be found in the "kit.ascii" database
   #   can be used (see cockpit.log for the full unix path)
   # - if you change a version you might need to adjust some
-  #   startups in the [command] section too... 
-  # - use "-update" or "-rewrite" for the changes to take effect  
+  #   startups in the [command] section too...
+  # - use "-update" or "-rewrite" for the changes to take effect
 
   # WARNING: The primary purpose is to keep version settings within each
   # project. Fiddling around will most likely result in an unsupported
   # combinations and perl errors. Better update this file as a whole
-  # with '-updaterc'. 
+  # with '-updaterc'.
 
   #modelsim  =  modelsim-10.6b
   #### modelsim  =  questa-2019.3  # not working because in the 'get_tool_values_regexp' the tool name will be get out of it.
   modelsim  =  modelsim-2019.3
-  synopsys  =  synopsys-2022.03
+  synopsys  =  synopsys-2021.06
   tetramax  =  tetramax-2022.03
   innovus   =  innovus-21
   dfii      =  ic-20
@@ -186,15 +186,15 @@
 [command]
   # Startup commands available through the GUI buttons.
   # - startup commands can be modified but need to be compatible with the
-  #   setup file versions selected in the [version] section 
+  #   setup file versions selected in the [version] section
   # - to add more modelsim/synopsys startups to the GUI just put your own entries
-  #   of the form "(modelsim|synopsys):<label> = <command>" there 
+  #   of the form "(modelsim|synopsys):<label> = <command>" there
   # - changes will take effect the next time you start
 
 #  emacs                        =  emacs -f vhdl-mode
   modelsim                     =  questa-2021.3 vsim
-  synopsys:DC Shell            =  xterm -g 120x40 -T synopsys-2022.03 -e "sh -c 'synopsys-2022.03 dc_shell -64bit | tee view_command.log'"
-  synopsys:DesignVision        =  xterm -g 120x40 -T synopsys-2022.03 -e "sh -c 'synopsys-2022.03 design_vision -64bit -xg_mode | tee view_command.log'"
+  synopsys:DC Shell            =  xterm -g 120x40 -T synopsys-2021.06 -e "sh -c 'synopsys-2021.06 dc_shell -64bit | tee view_command.log'"
+  synopsys:DesignVision        =  xterm -g 120x40 -T synopsys-2021.06 -e "sh -c 'synopsys-2021.06 design_vision -64bit -xg_mode | tee view_command.log'"
   tetramax                     =  synopsys-2022.03 tmax
   innovus                      =  xterm -g 136x40 -T innovus-21.13 -e "cds_innovus-21.13.000 innovus"
   calibre                      =  xterm -g 120x40 -T calibredrv -e "./start_calibre"

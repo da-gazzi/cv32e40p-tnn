@@ -210,6 +210,9 @@ if {[catch {analyze -format sv \
         "$ROOT/rtl/riscv_nn_apu_disp.sv" \
         "$ROOT/rtl/riscv_nn_fetch_fifo.sv" \
         "$ROOT/rtl/riscv_nn_L0_buffer.sv" \
+        "$ROOT/rtl/ternary_decoder.sv" \
+        "$ROOT/rtl/ternary_encoder.sv" \
+        "$ROOT/rtl/threshold_compress.sv" \
     ]
 }]} {return 1}
 
