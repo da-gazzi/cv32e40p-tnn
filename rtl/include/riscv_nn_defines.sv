@@ -181,7 +181,7 @@ parameter ALU_FMIN    = 7'b1000111;
 parameter ALU_FCLASS  = 7'b1001000;
 
 // threshold&compress
-parameter ALU_THRC    = 7'b1010101; // TODO: this is just a provisional value
+parameter ALU_THRC    = 7'b1010101;
 
 parameter MUL_MAC32 = 4'b0000;
 parameter MUL_MSU32 = 4'b0001;

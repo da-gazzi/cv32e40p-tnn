@@ -627,7 +627,6 @@ module riscv_nn_decoder
         end
         3'b100: begin
           mult_operator_o         = MUL_TDOT2; // set for compressed 2-bit SIMD sum-dot-product;
-          $display("%0t: Compressed MAC instruction received", $time);
         end
         default: begin //default condition
           illegal_insn_o          = 1'b1;
@@ -693,7 +692,7 @@ module riscv_nn_decoder
 
         endcase
       end
-      // TODO: For Threshold&Compress, need to make modifications here
+
       OPCODE_OP: begin  // Register-Register ALU operation
 
         // PREFIX 11
@@ -1343,8 +1342,7 @@ module riscv_nn_decoder
             {6'b00_0010, 3'b110}: begin alu_operator_o = ALU_MAX;   end // Max
             {6'b00_0010, 3'b111}: begin alu_operator_o = ALU_MAXU;  end // Max Unsigned
             {6'b00_0100, 3'b101}: begin alu_operator_o = ALU_ROR;   end // Rotate Right
-            {6'b00_0100, 3'b110}: begin // Threshold&Compress pv.thrc (note: the decoding value is provisory)
-              //$display("%0t: Threshold&Compress instruction received", $time);
+            {6'b00_0100, 3'b110}: begin // Threshold&Compress pv.thrc
               alu_operator_o = ALU_THRC;
               regc_mux_o     = REGC_RD;
             end

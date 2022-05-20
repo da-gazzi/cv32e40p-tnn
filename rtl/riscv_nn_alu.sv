@@ -57,7 +57,7 @@ module riscv_nn_alu
   output logic                     ready_o,
   input  logic                     ex_ready_i
 );
-  // TODO: Add Threshold&Compress module here
+
 
   logic [31:0] operand_a_rev;
   logic [31:0] operand_a_neg;
