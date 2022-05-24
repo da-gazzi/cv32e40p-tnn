@@ -62,7 +62,8 @@ module riscv_wrapper
     riscv_nn_core
         #(.INSTR_RDATA_WIDTH (INSTR_RDATA_WIDTH),
           .PULP_SECURE(PULP_SECURE),
-          .FPU(0))
+          .FPU(0),
+          .TNN_EXTENSION(1))
     riscv_nn_core_i
         (
          .clk_i                  ( clk_i                 ),

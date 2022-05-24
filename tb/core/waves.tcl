@@ -57,9 +57,11 @@ if {$rvcores ne ""} {
   add wave -group "Hwloop Regs"                              $rvcores/id_stage_i/hwloop_regs_i/*
   add wave -group "EX Stage" -group "ALU"                    $rvcores/ex_stage_i/alu_i/*
   add wave -group "EX Stage" -group "ALU_DIV"                $rvcores/ex_stage_i/alu_i/int_div/div_i/*
-  add wave -group "EX Stage" -group "ALU_THRC"               $rvcores/ex_stage_i/alu_i/threshold_compress_i/*
+  add wave -group "EX Stage" -group "ALU_THRC"               $rvcores/ex_stage_i/alu_i/threshold_compress/threshold_compress_i/*
   add wave -group "EX Stage" -group "MUL"                    $rvcores/ex_stage_i/mult_i/*
   add wave -group "EX Stage" -group "MUL"                    $rvcores/ex_stage_i/mult_i/genblk1/*
+  add wave -group "EX Stage" -group "MUL"                    $rvcores/ex_stage_i/mult_i/genblk1/compressedMAC/*
+
   if {$fpuprivate ne ""} {
     add wave -group "EX Stage" -group "APU_DISP"             $rvcores/ex_stage_i/genblk1/apu_disp_i/*
     add wave -group "EX Stage" -group "FPU"                  $rvcores/ex_stage_i/genblk1/genblk1/fpu_i/*
@@ -68,7 +70,7 @@ if {$rvcores ne ""} {
   add wave -group "LSU"                                      $rvcores/load_store_unit_i/*
   add wave -group "CSR"                                      $rvcores/cs_registers_i/*
 }
-add wave -group "ALU_THRC"               $rvcores/ex_stage_i/alu_i/threshold_compress_i/*
+add wave -group "ALU_THRC"               $rvcores/ex_stage_i/alu_i/threshold_compress/threshold_compress_i/*
 
 configure wave -namecolwidth  250
 configure wave -valuecolwidth 100
