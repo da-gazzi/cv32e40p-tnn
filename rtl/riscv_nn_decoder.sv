@@ -41,7 +41,8 @@ module riscv_nn_decoder
   parameter SHARED_INT_DIV    = 0,
   parameter SHARED_FP_DIVSQRT = 0,
   parameter WAPUTYPE          = 0,
-  parameter APU_WOP_CPU       = 6
+  parameter APU_WOP_CPU       = 6,
+  parameter TNN_EXTENSION     = 1
 )
 (
   // singals running to/from controller
@@ -626,7 +627,11 @@ module riscv_nn_decoder
           mult_operator_o         = MUL_DOT2;
         end
         3'b100: begin
-          mult_operator_o         = MUL_TDOT2; // set for compressed 2-bit SIMD sum-dot-product;
+          if (TNN_EXTENSION == 1) begin
+            mult_operator_o       = MUL_TDOT2; // set for compressed 2-bit SIMD sum-dot-product;
+          end else begin
+            illegal_insn_o        = 1'b1;
+          end
         end
         default: begin //default condition
           illegal_insn_o          = 1'b1;
@@ -1343,8 +1348,12 @@ module riscv_nn_decoder
             {6'b00_0010, 3'b111}: begin alu_operator_o = ALU_MAXU;  end // Max Unsigned
             {6'b00_0100, 3'b101}: begin alu_operator_o = ALU_ROR;   end // Rotate Right
             {6'b00_0100, 3'b110}: begin // Threshold&Compress pv.thrc
-              alu_operator_o = ALU_THRC;
-              regc_mux_o     = REGC_RD;
+              if (TNN_EXTENSION == 1) begin
+                alu_operator_o = ALU_THRC;
+                regc_mux_o     = REGC_RD;
+              end else begin
+                illegal_insn_o = 1'b1;
+              end
             end
 
             // PULP specific instructions using only one source register

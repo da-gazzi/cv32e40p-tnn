@@ -57,7 +57,8 @@ module riscv_nn_id_stage
   parameter APU_NARGS_CPU     =  3,
   parameter APU_WOP_CPU       =  6,
   parameter APU_NDSFLAGS_CPU  = 15,
-  parameter APU_NUSFLAGS_CPU  =  5
+  parameter APU_NUSFLAGS_CPU  =  5,
+  parameter TNN_EXTENSION     =  0
 )
 (
     input logic                            clk,
@@ -1093,7 +1094,8 @@ module riscv_nn_id_stage
       .SHARED_INT_DIV      ( SHARED_INT_DIV       ),
       .SHARED_FP_DIVSQRT   ( SHARED_FP_DIVSQRT    ),
       .WAPUTYPE            ( WAPUTYPE             ),
-      .APU_WOP_CPU         ( APU_WOP_CPU          )
+      .APU_WOP_CPU         ( APU_WOP_CPU          ),
+      .TNN_EXTENSION       ( TNN_EXTENSION        )
       )
   decoder_i
   (
@@ -1644,8 +1646,10 @@ module riscv_nn_id_stage
               mult_dot_op_c_b_ex_o        <= alu_operand_b;
             end
             MUL_TDOT2: begin
-              mult_dot_op_t_a_ex_o        <= alu_operand_a;
-              mult_dot_op_t_b_ex_o        <= alu_operand_b;
+              if (TNN_EXTENSION == 1) begin
+                mult_dot_op_t_a_ex_o        <= alu_operand_a;
+                mult_dot_op_t_b_ex_o        <= alu_operand_b;
+              end
             end
           endcase
           mult_dot_op_c_ex_o        <= alu_operand_c;

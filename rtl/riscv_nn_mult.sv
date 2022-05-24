@@ -29,7 +29,8 @@ import riscv_nn_defines::*;
 
 module riscv_nn_mult
 #(
-  parameter SHARED_DSP_MULT = 1
+  parameter SHARED_DSP_MULT = 1,
+  parameter TNN_EXTENSION   = 0
   )
 (
   input  logic        clk,
@@ -271,12 +272,6 @@ module riscv_nn_mult
         logic [15:0][2:0] dot_crumble_op_b;
         logic [15:0][5:0] dot_crumble_mul;
 
-        logic [39:0]      dot_op_t_decoded_a;
-        logic [39:0]      dot_op_t_decoded_b;
-        logic [19:0][2:0] dot_ternary_op_a;
-        logic [19:0][2:0] dot_ternary_op_b;
-        logic [19:0][5:0] dot_ternary_mul;
-
         logic [1:0][16:0] dot_short_op_a;
         logic [1:0][16:0] dot_short_op_b;
         logic [1:0][33:0] dot_short_mul;
@@ -399,95 +394,103 @@ module riscv_nn_mult
                                     $signed(dot_crumble_mul[14]) + $signed(dot_crumble_mul[15]) +
                                     $signed(dot_op_c_i);
 
-        /*ternary*/
-        for (genvar g=0; g<4; g++) begin: gen_decomp_logic
-          ternary_decoder i_ternary_decoder_a
-          (
-            .decoder_i(dot_op_t_a_i       [8*g  +: 8] ),
-            .decoder_o(dot_op_t_decoded_a [10*g +: 10])
-          );
+        if (TNN_EXTENSION == 1) begin : compressedMAC
+          logic [39:0]      dot_op_t_decoded_a;
+          logic [39:0]      dot_op_t_decoded_b;
+          logic [19:0][2:0] dot_ternary_op_a;
+          logic [19:0][2:0] dot_ternary_op_b;
+          logic [19:0][5:0] dot_ternary_mul;
 
-          ternary_decoder i_ternary_decoder_b
-          (
-            .decoder_i(dot_op_t_b_i       [8*g  +: 8] ),
-            .decoder_o(dot_op_t_decoded_b [10*g +: 10])
-          );
+          /*ternary*/
+          for (genvar g=0; g<4; g++) begin: gen_decomp_logic
+            ternary_decoder i_ternary_decoder_a
+            (
+              .decoder_i(dot_op_t_a_i       [8*g  +: 8] ),
+              .decoder_o(dot_op_t_decoded_a [10*g +: 10])
+            );
+
+            ternary_decoder i_ternary_decoder_b
+            (
+              .decoder_i(dot_op_t_b_i       [8*g  +: 8] ),
+              .decoder_o(dot_op_t_decoded_b [10*g +: 10])
+            );
+          end
+
+          assign dot_ternary_op_a[0]  = {dot_signed_i[1] & dot_op_t_decoded_a[1], dot_op_t_decoded_a[1:0]};
+          assign dot_ternary_op_a[1]  = {dot_signed_i[1] & dot_op_t_decoded_a[3], dot_op_t_decoded_a[3:2]};
+          assign dot_ternary_op_a[2]  = {dot_signed_i[1] & dot_op_t_decoded_a[5], dot_op_t_decoded_a[5:4]};
+          assign dot_ternary_op_a[3]  = {dot_signed_i[1] & dot_op_t_decoded_a[7], dot_op_t_decoded_a[7:6]};
+          assign dot_ternary_op_a[4]  = {dot_signed_i[1] & dot_op_t_decoded_a[9], dot_op_t_decoded_a[9:8]};
+          assign dot_ternary_op_a[5]  = {dot_signed_i[1] & dot_op_t_decoded_a[11], dot_op_t_decoded_a[11:10]};
+          assign dot_ternary_op_a[6]  = {dot_signed_i[1] & dot_op_t_decoded_a[13], dot_op_t_decoded_a[13:12]};
+          assign dot_ternary_op_a[7]  = {dot_signed_i[1] & dot_op_t_decoded_a[15], dot_op_t_decoded_a[15:14]};
+          assign dot_ternary_op_a[8]  = {dot_signed_i[1] & dot_op_t_decoded_a[17], dot_op_t_decoded_a[17:16]};
+          assign dot_ternary_op_a[9]  = {dot_signed_i[1] & dot_op_t_decoded_a[19], dot_op_t_decoded_a[19:18]};
+          assign dot_ternary_op_a[10] = {dot_signed_i[1] & dot_op_t_decoded_a[21], dot_op_t_decoded_a[21:20]};
+          assign dot_ternary_op_a[11] = {dot_signed_i[1] & dot_op_t_decoded_a[23], dot_op_t_decoded_a[23:22]};
+          assign dot_ternary_op_a[12] = {dot_signed_i[1] & dot_op_t_decoded_a[25], dot_op_t_decoded_a[25:24]};
+          assign dot_ternary_op_a[13] = {dot_signed_i[1] & dot_op_t_decoded_a[27], dot_op_t_decoded_a[27:26]};
+          assign dot_ternary_op_a[14] = {dot_signed_i[1] & dot_op_t_decoded_a[29], dot_op_t_decoded_a[29:28]};
+          assign dot_ternary_op_a[15] = {dot_signed_i[1] & dot_op_t_decoded_a[31], dot_op_t_decoded_a[31:30]};
+          assign dot_ternary_op_a[16] = {dot_signed_i[1] & dot_op_t_decoded_a[33], dot_op_t_decoded_a[33:32]};
+          assign dot_ternary_op_a[17] = {dot_signed_i[1] & dot_op_t_decoded_a[35], dot_op_t_decoded_a[35:34]};
+          assign dot_ternary_op_a[18] = {dot_signed_i[1] & dot_op_t_decoded_a[37], dot_op_t_decoded_a[37:36]};
+          assign dot_ternary_op_a[19] = {dot_signed_i[1] & dot_op_t_decoded_a[39], dot_op_t_decoded_a[39:38]};
+
+          assign dot_ternary_op_b[0]  = {dot_signed_i[0] & dot_op_t_decoded_b[1], dot_op_t_decoded_b[1:0]};
+          assign dot_ternary_op_b[1]  = {dot_signed_i[0] & dot_op_t_decoded_b[3], dot_op_t_decoded_b[3:2]};
+          assign dot_ternary_op_b[2]  = {dot_signed_i[0] & dot_op_t_decoded_b[5], dot_op_t_decoded_b[5:4]};
+          assign dot_ternary_op_b[3]  = {dot_signed_i[0] & dot_op_t_decoded_b[7], dot_op_t_decoded_b[7:6]};
+          assign dot_ternary_op_b[4]  = {dot_signed_i[0] & dot_op_t_decoded_b[9], dot_op_t_decoded_b[9:8]};
+          assign dot_ternary_op_b[5]  = {dot_signed_i[0] & dot_op_t_decoded_b[11], dot_op_t_decoded_b[11:10]};
+          assign dot_ternary_op_b[6]  = {dot_signed_i[0] & dot_op_t_decoded_b[13], dot_op_t_decoded_b[13:12]};
+          assign dot_ternary_op_b[7]  = {dot_signed_i[0] & dot_op_t_decoded_b[15], dot_op_t_decoded_b[15:14]};
+          assign dot_ternary_op_b[8]  = {dot_signed_i[0] & dot_op_t_decoded_b[17], dot_op_t_decoded_b[17:16]};
+          assign dot_ternary_op_b[9]  = {dot_signed_i[0] & dot_op_t_decoded_b[19], dot_op_t_decoded_b[19:18]};
+          assign dot_ternary_op_b[10] = {dot_signed_i[0] & dot_op_t_decoded_b[21], dot_op_t_decoded_b[21:20]};
+          assign dot_ternary_op_b[11] = {dot_signed_i[0] & dot_op_t_decoded_b[23], dot_op_t_decoded_b[23:22]};
+          assign dot_ternary_op_b[12] = {dot_signed_i[0] & dot_op_t_decoded_b[25], dot_op_t_decoded_b[25:24]};
+          assign dot_ternary_op_b[13] = {dot_signed_i[0] & dot_op_t_decoded_b[27], dot_op_t_decoded_b[27:26]};
+          assign dot_ternary_op_b[14] = {dot_signed_i[0] & dot_op_t_decoded_b[29], dot_op_t_decoded_b[29:28]};
+          assign dot_ternary_op_b[15] = {dot_signed_i[0] & dot_op_t_decoded_b[31], dot_op_t_decoded_b[31:30]};
+          assign dot_ternary_op_b[16] = {dot_signed_i[0] & dot_op_t_decoded_b[33], dot_op_t_decoded_b[33:32]};
+          assign dot_ternary_op_b[17] = {dot_signed_i[0] & dot_op_t_decoded_b[35], dot_op_t_decoded_b[35:34]};
+          assign dot_ternary_op_b[18] = {dot_signed_i[0] & dot_op_t_decoded_b[37], dot_op_t_decoded_b[37:36]};
+          assign dot_ternary_op_b[19] = {dot_signed_i[0] & dot_op_t_decoded_b[39], dot_op_t_decoded_b[39:38]};
+
+          assign dot_ternary_mul[0]  = $signed(dot_ternary_op_a[0]) * $signed(dot_ternary_op_b[0]);
+          assign dot_ternary_mul[1]  = $signed(dot_ternary_op_a[1]) * $signed(dot_ternary_op_b[1]);
+          assign dot_ternary_mul[2]  = $signed(dot_ternary_op_a[2]) * $signed(dot_ternary_op_b[2]);
+          assign dot_ternary_mul[3]  = $signed(dot_ternary_op_a[3]) * $signed(dot_ternary_op_b[3]);
+          assign dot_ternary_mul[4]  = $signed(dot_ternary_op_a[4]) * $signed(dot_ternary_op_b[4]);
+          assign dot_ternary_mul[5]  = $signed(dot_ternary_op_a[5]) * $signed(dot_ternary_op_b[5]);
+          assign dot_ternary_mul[6]  = $signed(dot_ternary_op_a[6]) * $signed(dot_ternary_op_b[6]);
+          assign dot_ternary_mul[7]  = $signed(dot_ternary_op_a[7]) * $signed(dot_ternary_op_b[7]);
+          assign dot_ternary_mul[8]  = $signed(dot_ternary_op_a[8]) * $signed(dot_ternary_op_b[8]);
+          assign dot_ternary_mul[9]  = $signed(dot_ternary_op_a[9]) * $signed(dot_ternary_op_b[9]);
+          assign dot_ternary_mul[10]  = $signed(dot_ternary_op_a[10]) * $signed(dot_ternary_op_b[10]);
+          assign dot_ternary_mul[11]  = $signed(dot_ternary_op_a[11]) * $signed(dot_ternary_op_b[11]);
+          assign dot_ternary_mul[12]  = $signed(dot_ternary_op_a[12]) * $signed(dot_ternary_op_b[12]);
+          assign dot_ternary_mul[13]  = $signed(dot_ternary_op_a[13]) * $signed(dot_ternary_op_b[13]);
+          assign dot_ternary_mul[14]  = $signed(dot_ternary_op_a[14]) * $signed(dot_ternary_op_b[14]);
+          assign dot_ternary_mul[15]  = $signed(dot_ternary_op_a[15]) * $signed(dot_ternary_op_b[15]);
+          assign dot_ternary_mul[16]  = $signed(dot_ternary_op_a[16]) * $signed(dot_ternary_op_b[16]);
+          assign dot_ternary_mul[17]  = $signed(dot_ternary_op_a[17]) * $signed(dot_ternary_op_b[17]);
+          assign dot_ternary_mul[18]  = $signed(dot_ternary_op_a[18]) * $signed(dot_ternary_op_b[18]);
+          assign dot_ternary_mul[19]  = $signed(dot_ternary_op_a[19]) * $signed(dot_ternary_op_b[19]);
+
+          assign dot_ternary_result = $signed(dot_ternary_mul[0]) + $signed(dot_ternary_mul[1]) +
+                                      $signed(dot_ternary_mul[2]) + $signed(dot_ternary_mul[3]) +
+                                      $signed(dot_ternary_mul[4]) + $signed(dot_ternary_mul[5]) +
+                                      $signed(dot_ternary_mul[6]) + $signed(dot_ternary_mul[7]) +
+                                      $signed(dot_ternary_mul[8]) + $signed(dot_ternary_mul[9]) +
+                                      $signed(dot_ternary_mul[10]) + $signed(dot_ternary_mul[11]) +
+                                      $signed(dot_ternary_mul[12]) + $signed(dot_ternary_mul[13]) +
+                                      $signed(dot_ternary_mul[14]) + $signed(dot_ternary_mul[15]) +
+                                      $signed(dot_ternary_mul[16]) + $signed(dot_ternary_mul[17]) +
+                                      $signed(dot_ternary_mul[18]) + $signed(dot_ternary_mul[19]) +
+                                      $signed(dot_op_c_i);
         end
-
-        assign dot_ternary_op_a[0]  = {dot_signed_i[1] & dot_op_t_decoded_a[1], dot_op_t_decoded_a[1:0]};
-        assign dot_ternary_op_a[1]  = {dot_signed_i[1] & dot_op_t_decoded_a[3], dot_op_t_decoded_a[3:2]};
-        assign dot_ternary_op_a[2]  = {dot_signed_i[1] & dot_op_t_decoded_a[5], dot_op_t_decoded_a[5:4]};
-        assign dot_ternary_op_a[3]  = {dot_signed_i[1] & dot_op_t_decoded_a[7], dot_op_t_decoded_a[7:6]};
-        assign dot_ternary_op_a[4]  = {dot_signed_i[1] & dot_op_t_decoded_a[9], dot_op_t_decoded_a[9:8]};
-        assign dot_ternary_op_a[5]  = {dot_signed_i[1] & dot_op_t_decoded_a[11], dot_op_t_decoded_a[11:10]};
-        assign dot_ternary_op_a[6]  = {dot_signed_i[1] & dot_op_t_decoded_a[13], dot_op_t_decoded_a[13:12]};
-        assign dot_ternary_op_a[7]  = {dot_signed_i[1] & dot_op_t_decoded_a[15], dot_op_t_decoded_a[15:14]};
-        assign dot_ternary_op_a[8]  = {dot_signed_i[1] & dot_op_t_decoded_a[17], dot_op_t_decoded_a[17:16]};
-        assign dot_ternary_op_a[9]  = {dot_signed_i[1] & dot_op_t_decoded_a[19], dot_op_t_decoded_a[19:18]};
-        assign dot_ternary_op_a[10] = {dot_signed_i[1] & dot_op_t_decoded_a[21], dot_op_t_decoded_a[21:20]};
-        assign dot_ternary_op_a[11] = {dot_signed_i[1] & dot_op_t_decoded_a[23], dot_op_t_decoded_a[23:22]};
-        assign dot_ternary_op_a[12] = {dot_signed_i[1] & dot_op_t_decoded_a[25], dot_op_t_decoded_a[25:24]};
-        assign dot_ternary_op_a[13] = {dot_signed_i[1] & dot_op_t_decoded_a[27], dot_op_t_decoded_a[27:26]};
-        assign dot_ternary_op_a[14] = {dot_signed_i[1] & dot_op_t_decoded_a[29], dot_op_t_decoded_a[29:28]};
-        assign dot_ternary_op_a[15] = {dot_signed_i[1] & dot_op_t_decoded_a[31], dot_op_t_decoded_a[31:30]};
-        assign dot_ternary_op_a[16] = {dot_signed_i[1] & dot_op_t_decoded_a[33], dot_op_t_decoded_a[33:32]};
-        assign dot_ternary_op_a[17] = {dot_signed_i[1] & dot_op_t_decoded_a[35], dot_op_t_decoded_a[35:34]};
-        assign dot_ternary_op_a[18] = {dot_signed_i[1] & dot_op_t_decoded_a[37], dot_op_t_decoded_a[37:36]};
-        assign dot_ternary_op_a[19] = {dot_signed_i[1] & dot_op_t_decoded_a[39], dot_op_t_decoded_a[39:38]};
-
-        assign dot_ternary_op_b[0]  = {dot_signed_i[0] & dot_op_t_decoded_b[1], dot_op_t_decoded_b[1:0]};
-        assign dot_ternary_op_b[1]  = {dot_signed_i[0] & dot_op_t_decoded_b[3], dot_op_t_decoded_b[3:2]};
-        assign dot_ternary_op_b[2]  = {dot_signed_i[0] & dot_op_t_decoded_b[5], dot_op_t_decoded_b[5:4]};
-        assign dot_ternary_op_b[3]  = {dot_signed_i[0] & dot_op_t_decoded_b[7], dot_op_t_decoded_b[7:6]};
-        assign dot_ternary_op_b[4]  = {dot_signed_i[0] & dot_op_t_decoded_b[9], dot_op_t_decoded_b[9:8]};
-        assign dot_ternary_op_b[5]  = {dot_signed_i[0] & dot_op_t_decoded_b[11], dot_op_t_decoded_b[11:10]};
-        assign dot_ternary_op_b[6]  = {dot_signed_i[0] & dot_op_t_decoded_b[13], dot_op_t_decoded_b[13:12]};
-        assign dot_ternary_op_b[7]  = {dot_signed_i[0] & dot_op_t_decoded_b[15], dot_op_t_decoded_b[15:14]};
-        assign dot_ternary_op_b[8]  = {dot_signed_i[0] & dot_op_t_decoded_b[17], dot_op_t_decoded_b[17:16]};
-        assign dot_ternary_op_b[9]  = {dot_signed_i[0] & dot_op_t_decoded_b[19], dot_op_t_decoded_b[19:18]};
-        assign dot_ternary_op_b[10] = {dot_signed_i[0] & dot_op_t_decoded_b[21], dot_op_t_decoded_b[21:20]};
-        assign dot_ternary_op_b[11] = {dot_signed_i[0] & dot_op_t_decoded_b[23], dot_op_t_decoded_b[23:22]};
-        assign dot_ternary_op_b[12] = {dot_signed_i[0] & dot_op_t_decoded_b[25], dot_op_t_decoded_b[25:24]};
-        assign dot_ternary_op_b[13] = {dot_signed_i[0] & dot_op_t_decoded_b[27], dot_op_t_decoded_b[27:26]};
-        assign dot_ternary_op_b[14] = {dot_signed_i[0] & dot_op_t_decoded_b[29], dot_op_t_decoded_b[29:28]};
-        assign dot_ternary_op_b[15] = {dot_signed_i[0] & dot_op_t_decoded_b[31], dot_op_t_decoded_b[31:30]};
-        assign dot_ternary_op_b[16] = {dot_signed_i[0] & dot_op_t_decoded_b[33], dot_op_t_decoded_b[33:32]};
-        assign dot_ternary_op_b[17] = {dot_signed_i[0] & dot_op_t_decoded_b[35], dot_op_t_decoded_b[35:34]};
-        assign dot_ternary_op_b[18] = {dot_signed_i[0] & dot_op_t_decoded_b[37], dot_op_t_decoded_b[37:36]};
-        assign dot_ternary_op_b[19] = {dot_signed_i[0] & dot_op_t_decoded_b[39], dot_op_t_decoded_b[39:38]};
-
-        assign dot_ternary_mul[0]  = $signed(dot_ternary_op_a[0]) * $signed(dot_ternary_op_b[0]);
-        assign dot_ternary_mul[1]  = $signed(dot_ternary_op_a[1]) * $signed(dot_ternary_op_b[1]);
-        assign dot_ternary_mul[2]  = $signed(dot_ternary_op_a[2]) * $signed(dot_ternary_op_b[2]);
-        assign dot_ternary_mul[3]  = $signed(dot_ternary_op_a[3]) * $signed(dot_ternary_op_b[3]);
-        assign dot_ternary_mul[4]  = $signed(dot_ternary_op_a[4]) * $signed(dot_ternary_op_b[4]);
-        assign dot_ternary_mul[5]  = $signed(dot_ternary_op_a[5]) * $signed(dot_ternary_op_b[5]);
-        assign dot_ternary_mul[6]  = $signed(dot_ternary_op_a[6]) * $signed(dot_ternary_op_b[6]);
-        assign dot_ternary_mul[7]  = $signed(dot_ternary_op_a[7]) * $signed(dot_ternary_op_b[7]);
-        assign dot_ternary_mul[8]  = $signed(dot_ternary_op_a[8]) * $signed(dot_ternary_op_b[8]);
-        assign dot_ternary_mul[9]  = $signed(dot_ternary_op_a[9]) * $signed(dot_ternary_op_b[9]);
-        assign dot_ternary_mul[10]  = $signed(dot_ternary_op_a[10]) * $signed(dot_ternary_op_b[10]);
-        assign dot_ternary_mul[11]  = $signed(dot_ternary_op_a[11]) * $signed(dot_ternary_op_b[11]);
-        assign dot_ternary_mul[12]  = $signed(dot_ternary_op_a[12]) * $signed(dot_ternary_op_b[12]);
-        assign dot_ternary_mul[13]  = $signed(dot_ternary_op_a[13]) * $signed(dot_ternary_op_b[13]);
-        assign dot_ternary_mul[14]  = $signed(dot_ternary_op_a[14]) * $signed(dot_ternary_op_b[14]);
-        assign dot_ternary_mul[15]  = $signed(dot_ternary_op_a[15]) * $signed(dot_ternary_op_b[15]);
-        assign dot_ternary_mul[16]  = $signed(dot_ternary_op_a[16]) * $signed(dot_ternary_op_b[16]);
-        assign dot_ternary_mul[17]  = $signed(dot_ternary_op_a[17]) * $signed(dot_ternary_op_b[17]);
-        assign dot_ternary_mul[18]  = $signed(dot_ternary_op_a[18]) * $signed(dot_ternary_op_b[18]);
-        assign dot_ternary_mul[19]  = $signed(dot_ternary_op_a[19]) * $signed(dot_ternary_op_b[19]);
-
-        assign dot_ternary_result = $signed(dot_ternary_mul[0]) + $signed(dot_ternary_mul[1]) +
-                                    $signed(dot_ternary_mul[2]) + $signed(dot_ternary_mul[3]) +
-                                    $signed(dot_ternary_mul[4]) + $signed(dot_ternary_mul[5]) +
-                                    $signed(dot_ternary_mul[6]) + $signed(dot_ternary_mul[7]) +
-                                    $signed(dot_ternary_mul[8]) + $signed(dot_ternary_mul[9]) +
-                                    $signed(dot_ternary_mul[10]) + $signed(dot_ternary_mul[11]) +
-                                    $signed(dot_ternary_mul[12]) + $signed(dot_ternary_mul[13]) +
-                                    $signed(dot_ternary_mul[14]) + $signed(dot_ternary_mul[15]) +
-                                    $signed(dot_ternary_mul[16]) + $signed(dot_ternary_mul[17]) +
-                                    $signed(dot_ternary_mul[18]) + $signed(dot_ternary_mul[19]) +
-                                    $signed(dot_op_c_i);
 
         assign dot_short_op_a[0]    = {dot_signed_i[1] & dot_op_h_a_i[15], dot_op_h_a_i[15: 0]};
         assign dot_short_op_a[1]    = {dot_signed_i[1] & dot_op_h_a_i[31], dot_op_h_a_i[31:16]};
@@ -535,7 +538,11 @@ module riscv_nn_mult
       MUL_DOT8:  result_o = dot_char_result[31:0];
       MUL_DOT4:  result_o = dot_nibble_result[31:0];
       MUL_DOT2:  result_o = dot_crumble_result[31:0];
-      MUL_TDOT2: result_o = dot_ternary_result[31:0];
+      MUL_TDOT2: begin
+        if (TNN_EXTENSION == 1) begin
+          result_o = dot_ternary_result[31:0];
+        end
+      end
       MUL_DOT16: begin
         if(is_clpx_i) begin
           if(clpx_img_i) begin

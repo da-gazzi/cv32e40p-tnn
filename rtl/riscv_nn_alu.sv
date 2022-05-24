@@ -31,7 +31,8 @@ import riscv_nn_defines::*;
 module riscv_nn_alu
 #(
   parameter SHARED_INT_DIV = 0,
-  parameter FPU            = 0
+  parameter FPU            = 0,
+  parameter TNN_EXTENSION  = 0
 )(
   input  logic                     clk,
   input  logic                     rst_n,
@@ -91,8 +92,6 @@ module riscv_nn_alu
   logic [5:0]  div_shift;
   logic        div_valid;
   logic [31:0] bmask;
-
-  logic        thrc_valid;
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //   ____            _   _ _   _                      _      _       _     _            //
@@ -1304,7 +1303,6 @@ module riscv_nn_alu
       assign div_valid = enable_i & ((operator_i == ALU_DIV) || (operator_i == ALU_DIVU) ||
                          (operator_i == ALU_REM) || (operator_i == ALU_REMU));
 
-      assign thrc_valid = enable_i && (operator_i == ALU_THRC);
 
       // inputs A and B are swapped
       riscv_nn_alu_div div_i
@@ -1335,23 +1333,31 @@ module riscv_nn_alu
   logic [9:0] thrc_precompressed;
   logic [7:0] thrc_compressed;
 
-  threshold_compress
-  #(
-    .OUTPUT_WIDTH   ( 8               )
-  )
-  threshold_compress_i
-  (
-    .preactivation_i ( operand_a_i        ),
-    .threshold_lo_i  ( operand_b_i[31:16] ),
-    .threshold_hi_i  ( operand_b_i[15:0]  ),
-    .counter_i       ( operand_c_i[31:29] ),
-    .precompressed_i ( operand_c_i[25:16] ),
-    .compressed_i    ( operand_c_i[7:0]   ),
-    .counter_o       ( thrc_counter       ),
-    .precompressed_o ( thrc_precompressed ),
-    .compressed_o    ( thrc_compressed    ),
-    .compreg_full_o  ( /*Unconnected*/    )
-  );
+  generate
+    if (TNN_EXTENSION == 1) begin: threshold_compress
+      logic       thrc_valid;
+
+      assign thrc_valid = enable_i && (operator_i == ALU_THRC);
+
+      threshold_compress
+      #(
+        .OUTPUT_WIDTH    ( 8                  )
+      )
+      threshold_compress_i
+      (
+        .preactivation_i ( operand_a_i        ),
+        .threshold_lo_i  ( operand_b_i[31:16] ),
+        .threshold_hi_i  ( operand_b_i[15:0]  ),
+        .counter_i       ( operand_c_i[31:29] ),
+        .precompressed_i ( operand_c_i[25:16] ),
+        .compressed_i    ( operand_c_i[7:0]   ),
+        .counter_o       ( thrc_counter       ),
+        .precompressed_o ( thrc_precompressed ),
+        .compressed_o    ( thrc_compressed    ),
+        .compreg_full_o  ( /*Unconnected*/    )
+      );
+    end
+  endgenerate
 
   ////////////////////////////////////////////////////////
   //   ____                 _ _     __  __              //
@@ -1441,8 +1447,11 @@ module riscv_nn_alu
       ALU_FSGNJX, ALU_FKEEP: result_o = f_sign_inject_result;
 
       // threshold&compress
-      ALU_THRC: result_o = {thrc_counter, 3'd0, thrc_precompressed, 8'd0, thrc_compressed};
-
+      ALU_THRC: begin
+        if (TNN_EXTENSION == 1) begin
+          result_o = {thrc_counter, 3'd0, thrc_precompressed, 8'd0, thrc_compressed};
+        end
+      end
       default: ; // default case to suppress unique warning
     endcase
   end

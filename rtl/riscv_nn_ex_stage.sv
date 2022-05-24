@@ -49,7 +49,8 @@ module riscv_nn_ex_stage
   parameter APU_NARGS_CPU    =  3,
   parameter APU_WOP_CPU      =  6,
   parameter APU_NDSFLAGS_CPU = 15,
-  parameter APU_NUSFLAGS_CPU =  5
+  parameter APU_NUSFLAGS_CPU =  5,
+  parameter TNN_EXTENSION    =  0
 )
 (
   input logic                            clk,
@@ -351,7 +352,8 @@ module riscv_nn_ex_stage
   riscv_nn_alu
   #(
     .SHARED_INT_DIV( SHARED_INT_DIV ),
-    .FPU           ( FPU            )
+    .FPU           ( FPU            ),
+    .TNN_EXTENSION ( TNN_EXTENSION  )
     )
    alu_i
   (
@@ -394,16 +396,24 @@ module riscv_nn_ex_stage
   assign mult_dot_op_b_a_ml = {32{(mult_operator_i == MUL_DOT8)}}  & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_b_a_i);
 	assign mult_dot_op_n_a_ml = {32{(mult_operator_i == MUL_DOT4)}}  & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_n_a_i);
   assign mult_dot_op_c_a_ml = {32{(mult_operator_i == MUL_DOT2)}}  & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_c_a_i);
-  assign mult_dot_op_t_a_ml = {32{(mult_operator_i == MUL_TDOT2)}} & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_t_a_i);
   assign mult_dot_op_h_b_ml = {32{(mult_operator_i == MUL_DOT16)}} & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_h_b_i); // previous was (lsu_tospr_ex_i[0])
   assign mult_dot_op_b_b_ml = {32{(mult_operator_i == MUL_DOT8)}}  & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_b_b_i);
 	assign mult_dot_op_n_b_ml = {32{(mult_operator_i == MUL_DOT4)}}  & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_n_b_i);
   assign mult_dot_op_c_b_ml = {32{(mult_operator_i == MUL_DOT2)}}  & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_c_b_i);
-  assign mult_dot_op_t_b_ml = {32{(mult_operator_i == MUL_TDOT2)}} & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_t_b_i);
+
+  always_comb begin
+    mult_dot_op_t_a_ml = '0;
+    mult_dot_op_t_b_ml = '0;
+    if (TNN_EXTENSION == 1) begin
+      mult_dot_op_t_a_ml = {32{(mult_operator_i == MUL_TDOT2)}} & (dot_spr_operand_i ? wspr_rnn[lsu_tosprw_ex_i[2:1]] : mult_dot_op_t_a_i);
+      mult_dot_op_t_b_ml = {32{(mult_operator_i == MUL_TDOT2)}} & (dot_spr_operand_i ? aspr_rnn[lsu_tospra_ex_i[1]] : mult_dot_op_t_b_i);
+    end
+  end
 
   riscv_nn_mult
   #(
-    .SHARED_DSP_MULT(SHARED_DSP_MULT)
+    .SHARED_DSP_MULT(SHARED_DSP_MULT),
+    .TNN_EXTENSION  (TNN_EXTENSION  )
    )
    mult_i
   (
