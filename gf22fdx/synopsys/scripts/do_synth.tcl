@@ -12,7 +12,7 @@ source scripts/analyze.tcl
 # ------------------------------------------------------------------------------
 # Elaborate design
 # ------------------------------------------------------------------------------
-elaborate riscv_nn_core -library WORK
+elaborate riscv_nn_core -library WORK -parameters "TNN_EXTENSION=>1"
 
 # write technology-independent netlist
 sh mkdir -p ./netlists
