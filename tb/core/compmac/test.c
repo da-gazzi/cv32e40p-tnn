@@ -14,10 +14,10 @@ int main(int argc, char *argv[])
       //printf("ax = %x, &compr_x[i] = %x\n", ax, &compr_x[i]);
       asm volatile(
         "add %[res], x0, x0;"
-        "pv.smlsdotsp.t x0, %[aw], 0b10000;"
-        "pv.smlsdotsp.t x0, %[ax], 0b01000;"
+        "pv.smlsdotp.t x0, %[aw], 0b10000;"
+        "pv.smlsdotp.t x0, %[ax], 0b01000;"
         "nop;"
-        "pv.smlsdotsp.t %[res], x0, 0b00000;"
+        "pv.smlsdotp.t %[res], x0, 0b00000;"
                 : [aw] "+r" (aw), [ax] "+r" (ax), [res] "=r" (res));
       if (res != exp_responses[i]){
         printf("***Mismatch found at iteration %d: Expected: %d, got: %d\n", i, exp_responses[i], res);
