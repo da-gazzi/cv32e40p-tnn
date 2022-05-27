@@ -45,7 +45,9 @@ compile_ultra -no_autoungroup -no_boundary_optimization -timing -gate_clock
 # Write netlist
 # ------------------------------------------------------------------------------
 sh mkdir -p ./netlists
+sh mkdir -p ./DDC
 write -format verilog -hier -o ./netlists/$DESIGN_NAME.v
+write -f ddc -h -o "./DDC/ddc_${DESIGN_NAME}.DDC"
 
 
 # ------------------------------------------------------------------------------
