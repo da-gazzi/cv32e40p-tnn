@@ -21,36 +21,30 @@
 #####                                                                          #
 ################################################################################
 
-## Name of the VHDL entity to be evaluated.
-set entity p_fma_top
+## Name of the SystemVerilog module to be evaluated.
+set module riscv_nn_core
 
 ## Name of the library to be used.
 set lib WORK
 
-## Maximum frequencies respectively maximum I/O delays in nanoseconds, for which
+## Maximum frequencies respectively maximum I/O delays in picoseconds, for which
 ## the design should be synthesized.
 set periods {
-9.5
-9.0
-8.5
-8.0
-7.5
-7.0
-6.5
-6.0
-5.5
-5.0
-4.5
-4.0
-3.5
-3.0
-2.5
-2.0
-1.5
-1.0
-0.5
+2000
+1333
+1000
+800
+667
+580
+500
 }
 
+## We want to run synthesis for all the clock frequencies above once without and
+## once with the TNN extensions
+set tnn_ext_parameters {
+0
+1
+}
 
 
 ## Directory to be used as root for all the runs.
@@ -78,11 +72,12 @@ file mkdir $runDir
 ## Compiler. This is equal to providing the log file during the startup of the
 ## Design Compiler using the '-output_log_file' parameter. Since by default the
 ## outputs get appended to the file, we remove it first.
-set synthOutputs "logs/AT_p_fma_top_synthesis_outputs.log"
+file mkdir logs
+set synthOutputs "logs/AT_riscv_nn_core_synthesis_outputs.log"
 set sh_output_log_file $synthOutputs
 
 ## File providing some information about the synthesis runs going on.
-set runLog [open "logs/AT_p_fma_top_synthesis_status.log" w]
+set runLog [open "logs/AT_riscv_nn_core_synthesis_status.log" w]
 
 ## Set the format of a date time
 set dateTimeFormat "%Y_%m_%d-%H_%M_%S"
@@ -101,7 +96,7 @@ set runs $pers
 puts $runLog "##"
 puts $runLog "## RUNNING SYNTHESIS INFORMATION"
 puts $runLog "##"
-puts $runLog "## Synthesized Entity:           $entity"
+puts $runLog "## Synthesized Entity:           $module"
 puts $runLog "## Number of Timing Constraints: $pers"
 puts $runLog "## Overall Synthesis Runs:       $runs"
 puts $runLog "## Number of CPU Cores Used:     $cpuCores"
@@ -111,15 +106,20 @@ flush $runLog
 
 ## Perform synthesis runs for all defined architectures/configurations and
 ## periods/max delays.
-foreach period $periods {
+foreach tnn_ext $tnn_ext_parameters {
+	foreach period $periods {
 
 		## Provide some information about the current run.
 		incr run
-		puts -nonewline $runLog "## Starting synthesis run number $run of $runs ($entity-${period}ns) ... "
+		puts -nonewline $runLog "## Starting synthesis run number $run of $runs ($module-${period}ps) ... "
 		flush $runLog
 
 		## Subdirectory for current run with a certain period.
-		set currRunDir "$runDir/${entity}_${period}ns"
+		if {$tnn_ext == 0} {
+			set currRunDir "$runDir/no_tnn/${module}_${period}ps"
+		} else {
+			set currRunDir "$runDir/tnn/${module}_${period}ps"
+		}
 
 		## Start time of the compilation run.
 		set startTime "[clock seconds]"
@@ -140,56 +140,31 @@ foreach period $periods {
 		sh rm -rf $lib/*
 
 		## Analyze the source files.
-		analyze -library $lib -format sverilog ../../fpnew/src/dependencies/common_cells/src/find_first_one.sv
-
-		analyze -library $lib -format vhdl { \
-			../../fpnew/src/pkg/fpnew_pkg.vhd                   \
-			../../fpnew/src/pkg/fpnew_fmts_pkg.vhd              \
-			../../fpnew/src/pkg/fpnew_pkg_constants.vhd         \
-			../../fpnew/src/pkg/fpnew_comps_pkg.vhd             \
-		                                                        \
-			../../fpnew/src/utils/fp_pipe.vhd                   \
-			../../fpnew/src/utils/p_rounding.vhd                \
-		        											    \
-			../../fpnew/src/ops/p_fma_core.vhd                  \
-			../../fpnew/src/ops/p_fma.vhd                       \
-			../../sim/hdl/p_fma/p_fma_top.vhd
-
-		}
+		source scripts/analyze.tcl
 
 		## Elaborate the current configuration.
-		elaborate $entity
+		elaborate $module -library WORK -parameters "TNN_EXTENSION=>${tnn_ext}"
 
 
 		##### Set the constraints.
 
 		## Set the clock period constraint.
-		create_clock Clk_CI -period $period
+		create_clock clk_i -period $period
 
-		#set_max_delay $period -from [all_inputs] -to [all_outputs]
+		## Exceptions
+		source -echo -verbose ./scripts/constraints/exceptions.sdc
 
-		## Set a rough input delay for all inputs except the clock and the reset.
-		set_input_delay 0.2 -clock Clk_CI [remove_from_collection [all_inputs] {Clk_CI Reset_RBI}]
+		## Input output delays
+		source -echo -verbose ./scripts/constraints/input_output_delay.sdc
 
-		## Set a rough output delay for all outputs.
-		set_output_delay 0.2 -clock Clk_CI [all_outputs]
-
-		## Let a two-input MUX drive all the data inputs.
-		set_driving_cell -library uk65lscllmvbbl_120c25_tc -lib_cell MXB2M1WA -pin Z [remove_from_collection [all_inputs] {Clk_CI Reset_RBI}]
-
-		## Let a (middle-sized) clock buffer drive the clock and the reset signal.
-		set_driving_cell -library uk65lscllmvbbl_120c25_tc -lib_cell CKBUFM4W -pin Z {Clk_CI Reset_RBI};
-
-    	## Use four times the load of a (middle-sized) buffer for all outputs.
-		set_load [expr 4 * [load_of uk65lscllmvbbl_120c25_tc/BUFM10W/A]] [all_output]
-
-		set_ideal_network Reset_RBI
+		# Insert clock gate
+		source -echo -verbose ./scripts/insert_clock_gating.tcl
 
 		## Start compilation.
 		compile_ultra
 
 		## Save compiled design.
-		write -f ddc -h -o $ddcDir/${entity}_compiled.ddc
+		write -f ddc -h -o $ddcDir/${module}_compiled.ddc
 
 		## Create some reports.
 		check_design                                                                              > $reportsDir/check_design-compiled.rpt
@@ -222,13 +197,14 @@ foreach period $periods {
 
 		echo "***** SYNTHESIS SUMMARY" > $sum
 		echo "" >> $sum
-		echo "Entity:            $entity"     >> $sum
+		echo "Entity:            $module"     >> $sum
 		echo "Clock Constraint:  ${period}ns" >> $sum
 		echo "" >> $sum
 		echo "Starttime:         [clock format ${startTime}]" >> $sum
 		echo "Endtime:           [clock format ${endTime}]" >> $sum
 		echo "Duration:          $hours hours, $minutes minutes, $seconds seconds" >> $sum
 		echo "" >> $sum;
+	}
 }
 
 ## Calculate the global duration of all synthesis runs.
