@@ -473,10 +473,37 @@ thrc-veri-run: verilate thrc/test.hex
 	./testbench_verilator $(VERI_FLAGS) \
 		"+firmware=thrc/test.hex"
 
+# Hotloop test
+hotloop/test.elf: hotloop/test.c
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulptnn -o $@ -w -Os -g -nostdlib \
+		-T hotloop/link.ld  \
+		-static \
+		hotloop/crt0.S \
+		$^ hotloop/syscalls.c hotloop/vectors.S \
+		-I $(RISCV)/riscv32-unknown-elf/include -I hotloop\
+		-L $(RISCV)/riscv32-unknown-elf/lib \
+		-lc -lm -lgcc
+hotloop-clean:
+	rm -rf hotloop/test.elf hotloop/test.hex
+
+.PHONY: hotloop-vsim-run
+hotloop-vsim-run: vsim-all hotloop/test.hex
+hotloop-vsim-run: ALL_VSIM_FLAGS += "+firmware=hotloop/test.hex"
+hotloop-vsim-run: vsim-run
+
+.PHONY: hotloop-vsim-run-gui
+hotloop-vsim-run-gui: vsim-all hotloop/test.hex
+hotloop-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=hotloop/test.hex"
+hotloop-vsim-run-gui: vsim-run-gui
+
+.PHONY: hotloop-veri-run
+hotloop-veri-run: verilate hotloop/test.hex
+	./testbench_verilator $(VERI_FLAGS) \
+		"+firmware=hotloop/test.hex"
 
 # general targets
 .PHONY: clean
-clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean thrc-clean
+clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean thrc-clean hotloop-clean
 
 .PHONY: distclean
 distclean: clean
