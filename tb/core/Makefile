@@ -501,9 +501,38 @@ hotloop-veri-run: verilate hotloop/test.hex
 	./testbench_verilator $(VERI_FLAGS) \
 		"+firmware=hotloop/test.hex"
 
+# Matmul kernel test
+matmul/test.elf: matmul/test.c
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulptnn -o $@ -w -Os -g -nostdlib \
+		-T matmul/link.ld  \
+		-static \
+		matmul/crt0.S \
+		$^ matmul/syscalls.c matmul/vectors.S \
+		-I $(RISCV)/riscv32-unknown-elf/include -I matmul\
+		-L $(RISCV)/riscv32-unknown-elf/lib \
+		-lc -lm -lgcc
+matmul-clean:
+	rm -rf matmul/test.elf matmul/test.hex
+
+.PHONY: matmul-vsim-run
+matmul-vsim-run: vsim-all matmul/test.hex
+matmul-vsim-run: ALL_VSIM_FLAGS += "+firmware=matmul/test.hex"
+matmul-vsim-run: vsim-run
+
+.PHONY: matmul-vsim-run-gui
+matmul-vsim-run-gui: vsim-all matmul/test.hex
+matmul-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=matmul/test.hex"
+matmul-vsim-run-gui: vsim-run-gui
+
+.PHONY: matmul-veri-run
+matmul-veri-run: verilate matmul/test.hex
+	./testbench_verilator $(VERI_FLAGS) \
+		"+firmware=matmul/test.hex"
+
+
 # general targets
 .PHONY: clean
-clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean thrc-clean hotloop-clean
+clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean thrc-clean hotloop-clean matmul-clean
 
 .PHONY: distclean
 distclean: clean
