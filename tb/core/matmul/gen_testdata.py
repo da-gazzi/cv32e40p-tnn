@@ -74,14 +74,14 @@ if __name__=='__main__':
     num_col_im2col_compressed = int(num_col_im2col * 0.8)
 
     weights = torch.randint(-1, 2, (MATMUL_A, num_col_im2col)).type(torch.float32)
-    acts = torch.randint(-1, 2, (num_col_im2col, MATMUL_B)).type(torch.float32)
+    acts = torch.randint(-1, 2, (MATMUL_B, num_col_im2col)).type(torch.float32)
 
     thr_max = k_x * k_y
     thr_min = -thr_max
     thresh_lo = torch.randint(thr_min, thr_max // 2, (MATMUL_A, 1))
     thresh_hi = thresh_lo + torch.randint(thr_max//2, thr_max, (MATMUL_A, 1))
 
-    out_preact = torch.matmul(weights, acts)
+    out_preact = torch.matmul(weights, acts.permute(1, 0))
 
     tc = TernaryConversion(
         enc_stimuli_path='./testdata_gen_files/encoder_stimuli.txt',
@@ -98,6 +98,15 @@ if __name__=='__main__':
     outp = (tmp1 + tmp2).to(torch.float32)
 
     outp_compressed = tc.compress_tensor(outp)
+
+    with open('./inputs.txt', 'w') as f:
+        print('pWeight:\n', weights, file=f)
+        print('pIn:\n', acts, file=f)
+        print('out_preact:\n', out_preact, file=f)
+        print('thresh_lo:\n', thresh_lo, file=f)
+        print('thresh_hi:\n', thresh_hi, file=f)
+        print('outp:\n', outp, file=f)
+        print('outp_compressed:\n', outp_compressed, file=f)
 
     # pack the thresholds
     thresh_lo = torch.where(thresh_lo < 0, 2**16+thresh_lo, thresh_lo)
