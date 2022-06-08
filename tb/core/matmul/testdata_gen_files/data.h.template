@@ -1,0 +1,31 @@
+#ifndef ${data_h_incguard}
+#define ${data_h_incguard}
+#define NUM_COL_IM2COL ${num_col_im2col}
+
+// this file is generated automatically by the python script `generate_testdata.py`
+
+uint8_t ${weight_varname} [] = {
+% for i, d in enumerate(weights):
+${f"0x{d:02x}"+("," if i != weights.numel()-1 else "")}
+% endfor
+};
+
+uint8_t ${inp_varname} [] = {
+% for i, d in enumerate(acts):
+${f"0x{d:02x}"+("," if i != acts.numel()-1 else "")}
+% endfor
+};
+
+uint32_t ${thr_varname} [] = {
+% for i, d in enumerate(thr):
+${f"0x{d:04x}"+("," if i != thr.size-1 else "")}
+% endfor
+};
+
+uint8_t ${exp_outp_varname} [] = {
+% for i, d in enumerate(exp_outp):
+${f"0x{d:02x}"+("," if i != exp_outp.numel()-1 else "")}
+% endfor
+};
+
+#endif
