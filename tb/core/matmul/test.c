@@ -42,12 +42,13 @@ inline uint32_t ThresholdCompress(uint32_t res, int32_t val, uint32_t thrs) {
   return res;
 };
 
-inline void check_store(uint32_t res, uint8_t *pOut) {
+static inline uint8_t * check_store(uint32_t res, uint8_t *pOut) {
   // if counter value equals 0 (i.e. 5 computations are finished), store the compressed output to the output pointer
-  if (res & 0xe0000000 == 0x0) {
+  if ((res & 0xe0000000) == 0x00000000) {
     *pOut = res & 0xff;
     pOut++;
   }
+  return pOut;
 }
 
 #define GetConfig(a_update, b_update, a_reg, b_reg) a_update << 4 | b_update << 3 | a_reg << 1 | b_reg
@@ -65,7 +66,8 @@ int main(int argc, char *argv[])
 
   uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col); // in how many bytes do the activations fit?
   uint16_t num_col_im2col_a = PACK_INT2_SIZE(num_col_im2col);
-  uint8_t *pOut;
+  uint8_t outputs[10] = {0};
+  uint8_t *pOut = outputs;
 
   uint8_t *pA = pWeight;
 
@@ -248,35 +250,35 @@ int main(int argc, char *argv[])
     //printf("sum8 = %d\n", sum8);
 
     res = ThresholdCompress(res, sum, pThr[0]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
 
     res = ThresholdCompress(res, sum2, pThr[1]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
 
     res = ThresholdCompress(res, sum3, pThr[2]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
 
     res = ThresholdCompress(res, sum4, pThr[3]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
 
     res = ThresholdCompress(res, sum5, pThr[0]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
 
     res = ThresholdCompress(res, sum6, pThr[1]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
 
     res = ThresholdCompress(res, sum7, pThr[2]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
 
     res = ThresholdCompress(res, sum8, pThr[3]);
-    check_store(res, pOut);
+    pOut = check_store(res, pOut);
   }
 
   int n_mismatches = 0;
   int n_outputs = ceil((ch_out >> 2)*1.6);
   for(int i=0; i < n_outputs; i++) {
-    if (pOut[i] != pOut_exp[i]){
-        printf("***Mismatch found at iteration %d: Expected: %x, got: %x\n", i, pOut_exp[i], pOut[i]);
+    if (outputs[i] != pOut_exp[i]){
+        printf("***Mismatch found at iteration %d: Expected: %x, got: %x\n", i, pOut_exp[i], outputs[i]);
         n_mismatches++;
     }
   }
