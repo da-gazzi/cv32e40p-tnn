@@ -67,13 +67,13 @@ if __name__=='__main__':
     k_x = 3
     k_y = 3
     ch_in = 10
-    #ch_out = 8 # needs to be a multiple of 5 as well? Atm, must be a multiple of 4
+    ch_out = 20 # needs to be a multiple of 5 as well? Atm, must be a multiple of 4
     assert ch_in % 5 == 0, 'Number of input channels must be a multiple of 5'
 
     num_col_im2col = k_x * k_y * ch_in
     num_col_im2col_compressed = int(num_col_im2col * 0.8)
 
-    weights = torch.randint(-1, 2, (MATMUL_A, num_col_im2col)).type(torch.float32)
+    weights = torch.randint(-1, 2, (ch_out//MATMUL_A, MATMUL_A, num_col_im2col)).type(torch.float32)
     acts = torch.randint(-1, 2, (MATMUL_B, num_col_im2col)).type(torch.float32)
 
     thr_max = k_x * k_y
@@ -95,9 +95,8 @@ if __name__=='__main__':
 
     tmp1 = -1*(out_preact < thresh_lo)
     tmp2 = out_preact >= thresh_hi
-    outp = (tmp1 + tmp2).to(torch.float32)
-
-    outp_compressed = tc.compress_tensor(outp)
+    outp = (tmp1 + tmp2).to(torch.float32).reshape(-1, MATMUL_B)
+    outp_compressed = tc.compress_tensor(outp.permute(1, 0))
 
     with open('./inputs.txt', 'w') as f:
         print('pWeight:\n', weights, file=f)
@@ -130,4 +129,3 @@ if __name__=='__main__':
     s = tmpl.render(**tk)
     with open('./data.h', "w") as f:
         f.write(s)
-
