@@ -5,54 +5,68 @@
 #include "data.h"
 
 #define PACK_INT2_SIZE(x)                                    ((x) >> 2)
+#define MacLoadUpdate(ptr)                                      __builtin_pulp_mlupdatespr_v3(ptr)
 
 // does not work somehow
-//#define CompressedMAC(sum, ptr, config) asm volatile(             \
-//    "pv.smlsdotp.t %[sum], %[ptr], %[config];"                    \
-//    : [sum] "+r" (sum) : [ptr] "r" (ptr), [config] "I" (config))
+#define CompressedMAC(sum, ptr, config) asm volatile(                \
+    "pv.smlsdotp.t %[shum], %[phtr], %[chonfig];"                    \
+    : [shum] "+r" (sum), [phtr] "+r" (ptr): [chonfig] "I" (config))
 
-struct MyStruct {
-  int32_t sum;
-  uint32_t ptr;
-};
+//struct MyStruct {
+//  int32_t sum;
+//  uint32_t ptr;
+//};
 
-inline struct MyStruct CompressedMAC(int32_t sum, uint32_t ptr, char config) {
-  struct MyStruct x;
-  asm volatile(
-    "pv.smlsdotp.t %[sum], %[ptr], %[config];"
-    : [sum] "+r" (sum), [ptr] "+r" (ptr) : [config] "I" (config)
-  );
-  x.sum = sum;
-  x.ptr = ptr;
-  return x;
-};
+//inline struct MyStruct CompressedMAC(int32_t sum, uint32_t ptr, char config) {
+//  struct MyStruct x;
+//  asm volatile(
+//    "pv.smlsdotp.t %[sum], %[ptr], %[config];"
+//    : [sum] "+r" (sum), [ptr] "+r" (ptr) : [config] "I" (config)
+//  );
+//  x.sum = sum;
+//  x.ptr = ptr;
+//  return x;
+//};
 
-inline uint32_t InitNNRF(uint32_t ptr, char config) {
-  asm volatile(
-    "pv.smlsdotp.t x0, %[ptr], %[config];"
-    : [ptr] "+r" (ptr) : [config] "I" (config)
-  );
-  return ptr;
-};
+#define InitNNRF(ptr, config) asm volatile(        \
+    "pv.smlsdotp.t x0, %[phtr], %[chonfig];"       \
+    : [phtr] "+r" (ptr) : [chonfig] "I" (config))
 
-static inline uint32_t ThresholdCompress(uint32_t res, int32_t val, uint32_t thrs) {
-  asm volatile(
-    "pv.thrc %[res], %[val], %[thrs];" : [res] "+r" (res) : [val] "r" (val), [thrs] "r" (thrs)
-  );
-  return res;
-};
+//inline uint32_t InitNNRF(uint32_t ptr, char config) {
+//  asm volatile(
+//    "pv.smlsdotp.t x0, %[ptr], %[config];"
+//    : [ptr] "+r" (ptr) : [config] "I" (config)
+//  );
+//  return ptr;
+//};
 
-static inline uint8_t * check_store(uint32_t res, uint8_t *pOut) {
-  //printf("in check_store: res=%x\n", res);
-  // if counter value equals 0 (i.e. 5 computations are finished), store the compressed output to the output pointer
-  if ((res & 0xe0000000) == 0x00000000) {
-    *pOut = res & 0xff;
-    pOut++;
-  }
-  return pOut;
-}
+#define ThresholdCompress(res, val, thrs) asm volatile(                                                \
+    "pv.thrc %[rhes], %[vhal], %[thhrs];" : [rhes] "+r" (res) : [vhal] "r" (val), [thhrs] "r" (thrs))
 
 #define GetConfig(a_update, b_update, a_reg, b_reg) a_update << 4 | b_update << 3 | a_reg << 1 | b_reg
+
+//static inline uint32_t ThresholdCompress(uint32_t res, int32_t val, uint32_t thrs) {
+//  asm volatile(
+//    "pv.thrc %[res], %[val], %[thrs];" : [res] "+r" (res) : [val] "r" (val), [thrs] "r" (thrs)
+//  );
+//  return res;
+//};
+
+//static inline uint8_t * check_store(uint32_t res, uint8_t *pOut) {
+//  //printf("in check_store: res=%x\n", res);
+//  // if counter value equals 0 (i.e. 5 computations are finished), store the compressed output to the output pointer
+//  if ((res & 0xe0000000) == 0x00000000) {
+//    *pOut = res & 0xff;
+//    pOut++;
+//  }
+//  return pOut;
+//};
+
+#define check_store(res, pOut)            \
+  if ((res & 0xe0000000) == 0x00000000) { \
+    *pOut = res & 0xff;                   \
+    pOut++; }
+
 
 int main(int argc, char *argv[])
 {
@@ -60,14 +74,12 @@ int main(int argc, char *argv[])
   ch_out = 20;
   int8_t *pBias = NULL;
   uint32_t num_col_im2col = NUM_COL_IM2COL; // the weights and acts are compressed
-  /* ---------------------- */
 
-  struct MyStruct x;
   uint16_t ch_out_r = PACK_INT2_SIZE(ch_out);
 
   uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col); // in how many bytes do the activations fit?
   uint16_t num_col_im2col_a = PACK_INT2_SIZE(num_col_im2col);
-  uint8_t outputs[8] = {0};
+  uint8_t outputs[20] = {0};
 
   int n_outputs = ceil((ch_out >> 2)*1.6); // should be floor instead?
 
@@ -93,12 +105,12 @@ int main(int argc, char *argv[])
     uint32_t *ptrA3 = (uint32_t *) pA3;
     uint32_t *ptrA4 = (uint32_t *) pA4;
 
-    ptrA  = InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
-    ptrA2 = InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
-    ptrA3 = InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
-    ptrA4 = InitNNRF(ptrA4, GetConfig(1, 0, 3, 0));
+    InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
+    InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
+    InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
+    InitNNRF(ptrA4, GetConfig(1, 0, 3, 0));
 
-    ptrB  = InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+    InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
 
     int sum = 0;
     int sum2 = 0;
@@ -125,36 +137,17 @@ int main(int argc, char *argv[])
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      ptrB2 = InitNNRF(ptrB2, GetConfig(0, 1, 0, 1));
+      InitNNRF(ptrB2, GetConfig(0, 1, 0, 1));
 
-      x = CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
-      sum = x.sum;
+      CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
+      CompressedMAC(sum3, ptrA3, GetConfig(0, 0, 2, 0));
+      CompressedMAC(sum4, ptrB,  GetConfig(0, 1, 3, 0));
 
-      x = CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
-      sum2 = x.sum;
-
-      x = CompressedMAC(sum3, ptrA3, GetConfig(0, 0, 2, 0));
-      sum3 = x.sum;
-
-      x = CompressedMAC(sum4, ptrB,  GetConfig(0, 1, 3, 0));
-      sum4 = x.sum;
-      ptrB = x.ptr;
-
-      x = CompressedMAC(sum5, ptrA,  GetConfig(1, 0, 0, 1));
-      sum5 = x.sum;
-      ptrA = x.ptr;
-
-      x = CompressedMAC(sum6, ptrA2, GetConfig(1, 0, 1, 1));
-      sum6 = x.sum;
-      ptrA2 = x.ptr;
-
-      x = CompressedMAC(sum7, ptrA3, GetConfig(1, 0, 2, 1));
-      sum7 = x.sum;
-      ptrA3 = x.ptr;
-
-      x = CompressedMAC(sum8, ptrA4, GetConfig(1, 0, 3, 1));
-      sum8 = x.sum;
-      ptrA4 = x.ptr;
+      CompressedMAC(sum5, ptrA,  GetConfig(1, 0, 0, 1));
+      CompressedMAC(sum6, ptrA2, GetConfig(1, 0, 1, 1));
+      CompressedMAC(sum7, ptrA3, GetConfig(1, 0, 2, 1));
+      CompressedMAC(sum8, ptrA4, GetConfig(1, 0, 3, 1));
     }
 
     int col_cnt_im2col = num_col_im2col & 0xf;
@@ -212,37 +205,23 @@ int main(int argc, char *argv[])
       uint32_t *pB_p = &valB;
       uint32_t *pB2_p = &valB2;
 
-      pA_p  = InitNNRF(pA_p,  GetConfig(1, 0, 0, 0));
-      pA2_p = InitNNRF(pA2_p, GetConfig(1, 0, 1, 0));
-      pA3_p = InitNNRF(pA3_p, GetConfig(1, 0, 2, 0));
-      pA4_p = InitNNRF(pA4_p, GetConfig(1, 0, 3, 0));
+      InitNNRF(pA_p,  GetConfig(1, 0, 0, 0));
+      InitNNRF(pA2_p, GetConfig(1, 0, 1, 0));
+      InitNNRF(pA3_p, GetConfig(1, 0, 2, 0));
+      InitNNRF(pA4_p, GetConfig(1, 0, 3, 0));
 
-      pB_p  = InitNNRF(pB_p,  GetConfig(0, 1, 0, 0));
-      pB2_p = InitNNRF(pB2_p, GetConfig(0, 1, 0, 1));
+      InitNNRF(pB_p,  GetConfig(0, 1, 0, 0));
+      InitNNRF(pB2_p, GetConfig(0, 1, 0, 1));
 
-      x = CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
-      sum = x.sum;
+      CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
+      CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
+      CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
+      CompressedMAC(sum4, ptrB,  GetConfig(0, 0, 3, 0));
 
-      x = CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
-      sum2 = x.sum;
-
-      x = CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
-      sum3 = x.sum;
-
-      x = CompressedMAC(sum4, ptrB,  GetConfig(0, 0, 3, 0));
-      sum4 = x.sum;
-
-      x = CompressedMAC(sum5, ptrA,  GetConfig(0, 0, 0, 1));
-      sum5 = x.sum;
-
-      x = CompressedMAC(sum6, ptrA2, GetConfig(0, 0, 1, 1));
-      sum6 = x.sum;
-
-      x = CompressedMAC(sum7, ptrA3, GetConfig(0, 0, 2, 1));
-      sum7 = x.sum;
-
-      x = CompressedMAC(sum8, ptrA4, GetConfig(0, 0, 3, 1));
-      sum8 = x.sum;
+      CompressedMAC(sum5, ptrA,  GetConfig(0, 0, 0, 1));
+      CompressedMAC(sum6, ptrA2, GetConfig(0, 0, 1, 1));
+      CompressedMAC(sum7, ptrA3, GetConfig(0, 0, 2, 1));
+      CompressedMAC(sum8, ptrA4, GetConfig(0, 0, 3, 1));
     }
 
     //printf("sum = %d\n", sum);
@@ -254,29 +233,29 @@ int main(int argc, char *argv[])
     //printf("sum7 = %d\n", sum7);
     //printf("sum8 = %d\n", sum8);
 
-    res1 = ThresholdCompress(res1, sum, pThr[0]);
-    pOut1 = check_store(res1, pOut1);
+    ThresholdCompress(res1, sum, pThr[0]);
+    check_store(res1, pOut1);
 
-    res1 = ThresholdCompress(res1, sum2, pThr[1]);
-    pOut1 = check_store(res1, pOut1);
+    ThresholdCompress(res1, sum2, pThr[1]);
+    check_store(res1, pOut1);
 
-    res1 = ThresholdCompress(res1, sum3, pThr[2]);
-    pOut1 = check_store(res1, pOut1);
+    ThresholdCompress(res1, sum3, pThr[2]);
+    check_store(res1, pOut1);
 
-    res1 = ThresholdCompress(res1, sum4, pThr[3]);
-    pOut1 = check_store(res1, pOut1);
+    ThresholdCompress(res1, sum4, pThr[3]);
+    check_store(res1, pOut1);
 
-    res2 = ThresholdCompress(res2, sum5, pThr[0]);
-    pOut2 = check_store(res2, pOut2);
+    ThresholdCompress(res2, sum5, pThr[0]);
+    check_store(res2, pOut2);
 
-    res2 = ThresholdCompress(res2, sum6, pThr[1]);
-    pOut2 = check_store(res2, pOut2);
+    ThresholdCompress(res2, sum6, pThr[1]);
+    check_store(res2, pOut2);
 
-    res2 = ThresholdCompress(res2, sum7, pThr[2]);
-    pOut2 = check_store(res2, pOut2);
+    ThresholdCompress(res2, sum7, pThr[2]);
+    check_store(res2, pOut2);
 
-    res2 = ThresholdCompress(res2, sum8, pThr[3]);
-    pOut2 = check_store(res2, pOut2);
+    ThresholdCompress(res2, sum8, pThr[3]);
+    check_store(res2, pOut2);
   }
 
   int n_mismatches = 0;
