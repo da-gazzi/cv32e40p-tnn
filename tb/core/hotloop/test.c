@@ -4,51 +4,23 @@
 
 #define PACK_INT2_SIZE(x)                                    ((x) >> 2)
 
-// does not work somehow
-//#define CompressedMAC(sum, ptr, config) asm volatile(             \
-//    "pv.smlsdotp.t %[sum], %[ptr], %[config];"                    \
-//    : [sum] "+r" (sum) : [ptr] "r" (ptr), [config] "I" (config))
+#define CompressedMAC(sum, ptr, config) asm volatile(                \
+    "pv.smlsdotp.t %[shum], %[phtr], %[chonfig];"                    \
+    : [shum] "+r" (sum), [phtr] "+r" (ptr): [chonfig] "I" (config))
 
-struct MyStruct {
-  int32_t sum;
-  uint32_t ptr;
-};
+#define InitNNRF(ptr, config) asm volatile(        \
+    "pv.smlsdotp.t x0, %[phtr], %[chonfig];"       \
+    : [phtr] "+r" (ptr) : [chonfig] "I" (config))
 
-inline struct MyStruct CompressedMAC(int32_t sum, uint32_t ptr, char config) {
-  struct MyStruct x;
-  asm volatile(
-    "pv.smlsdotp.t %[sum], %[ptr], %[config];"
-    : [sum] "+r" (sum), [ptr] "+r" (ptr) : [config] "I" (config)
-  );
-  x.sum = sum;
-  x.ptr = ptr;
-  return x;
-};
-
-inline uint32_t InitNNRF(uint32_t ptr, char config) {
-  asm volatile(
-    "pv.smlsdotp.t x0, %[ptr], %[config];"
-    : [ptr] "+r" (ptr) : [config] "I" (config)
-  );
-  return ptr;
-};
-
-inline uint32_t ThresholdCompress(uint32_t res, int32_t val, uint32_t thrs) {
-  asm volatile(
-    "pv.thrc %[res], %[val], %[thrs];" : [res] "+r" (res) : [val] "r" (val), [thrs] "r" (thrs)
-  );
-  return res;
-};
-
-inline void check_store(uint32_t res, uint8_t *pOut) {
-  // if counter value equals 0 (i.e. 5 computations are finished), store the compressed output to the output pointer
-  if (res & 0xe0000000 == 0x0) {
-    *pOut = res & 0xff;
-    pOut++;
-  }
-}
+#define ThresholdCompress(res, val, thrs) asm volatile(                                                \
+    "pv.thrc %[rhes], %[vhal], %[thhrs];" : [rhes] "+r" (res) : [vhal] "r" (val), [thhrs] "r" (thrs))
 
 #define GetConfig(a_update, b_update, a_reg, b_reg) a_update << 4 | b_update << 3 | a_reg << 1 | b_reg
+
+#define check_store(res, pOut)            \
+  if ((res & 0xe0000000) == 0x00000000) { \
+    *pOut = res & 0xff;                   \
+    pOut++; }
 
 #define N_INPUTS 20
 
@@ -122,7 +94,6 @@ uint32_t thrs_packed [] = {
 
 int main(int argc, char *argv[])
 {
-  struct MyStruct x;
   int ch_in, dim_kernel_x, dim_kernel_y, ch_out, dim_in_x, dim_in_y; // uncompressed!
   dim_in_x = 2;
   dim_in_y = 2;
@@ -176,44 +147,24 @@ int main(int argc, char *argv[])
     sum7 = sum3;
     sum8 = sum4;
   }
-  ptrA = InitNNRF(ptrA, GetConfig(1, 0, 0, 0));
-  ptrA2 = InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
-  ptrA3 = InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
-  ptrA4 = InitNNRF(ptrA4, GetConfig(1, 0, 3, 0));
-  ptrB = InitNNRF(ptrB, GetConfig(0, 1, 0, 0));
+  InitNNRF(ptrA, GetConfig(1, 0, 0, 0));
+  InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
+  InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
+  InitNNRF(ptrA4, GetConfig(1, 0, 3, 0));
+  InitNNRF(ptrB, GetConfig(0, 1, 0, 0));
 
   for (int j=0; j<(num_col_im2col >> 4); j++)
   {
-    ptrB2 = InitNNRF(ptrB2, GetConfig(0, 1, 0, 1));
+    InitNNRF(ptrB2, GetConfig(0, 1, 0, 1));
+    CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
+    CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
+    CompressedMAC(sum3, ptrA3, GetConfig(0, 0, 2, 0));
+    CompressedMAC(sum4, ptrB,  GetConfig(0, 1, 3, 0));
 
-    x = CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
-    sum = x.sum;
-
-    x = CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
-    sum2 = x.sum;
-
-    x = CompressedMAC(sum3, ptrA3, GetConfig(0, 0, 2, 0));
-    sum3 = x.sum;
-
-    x = CompressedMAC(sum4, ptrB,  GetConfig(0, 1, 3, 0));
-    sum4 = x.sum;
-    ptrB = x.ptr;
-
-    x = CompressedMAC(sum5, ptrA,  GetConfig(1, 0, 0, 1));
-    sum5 = x.sum;
-    ptrA = x.ptr;
-
-    x = CompressedMAC(sum6, ptrA2, GetConfig(1, 0, 1, 1));
-    sum6 = x.sum;
-    ptrA2 = x.ptr;
-
-    x = CompressedMAC(sum7, ptrA3, GetConfig(1, 0, 2, 1));
-    sum7 = x.sum;
-    ptrA3 = x.ptr;
-
-    x = CompressedMAC(sum8, ptrA4, GetConfig(1, 0, 3, 1));
-    sum8 = x.sum;
-    ptrA4 = x.ptr;
+    CompressedMAC(sum5, ptrA,  GetConfig(1, 0, 0, 1));
+    CompressedMAC(sum6, ptrA2, GetConfig(1, 0, 1, 1));
+    CompressedMAC(sum7, ptrA3, GetConfig(1, 0, 2, 1));
+    CompressedMAC(sum8, ptrA4, GetConfig(1, 0, 3, 1));
   }
 
   printf("sum = %d\n", sum);
@@ -225,28 +176,28 @@ int main(int argc, char *argv[])
   printf("sum7 = %d\n", sum7);
   printf("sum8 = %d\n", sum8);
 
-  res = ThresholdCompress(res, sum, thrs_packed[0]);
+  ThresholdCompress(res, sum, thrs_packed[0]);
   check_store(res, pOut);
 
-  res = ThresholdCompress(res, sum2, thrs_packed[1]);
+  ThresholdCompress(res, sum2, thrs_packed[1]);
   check_store(res, pOut);
 
-  res = ThresholdCompress(res, sum3, thrs_packed[2]);
+  ThresholdCompress(res, sum3, thrs_packed[2]);
   check_store(res, pOut);
 
-  res = ThresholdCompress(res, sum4, thrs_packed[3]);
+  ThresholdCompress(res, sum4, thrs_packed[3]);
   check_store(res, pOut);
 
-  res = ThresholdCompress(res, sum5, thrs_packed[0]);
+  ThresholdCompress(res, sum5, thrs_packed[0]);
   check_store(res, pOut);
 
-  res = ThresholdCompress(res, sum6, thrs_packed[1]);
+  ThresholdCompress(res, sum6, thrs_packed[1]);
   check_store(res, pOut);
 
-  res = ThresholdCompress(res, sum7, thrs_packed[2]);
+  ThresholdCompress(res, sum7, thrs_packed[2]);
   check_store(res, pOut);
 
-  res = ThresholdCompress(res, sum8, thrs_packed[3]);
+  ThresholdCompress(res, sum8, thrs_packed[3]);
   check_store(res, pOut);
 
   return EXIT_SUCCESS;
