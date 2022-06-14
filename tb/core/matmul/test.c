@@ -5,7 +5,6 @@
 #include "data.h"
 
 #define PACK_INT2_SIZE(x)                                    ((x) >> 2)
-#define MacLoadUpdate(ptr)                                      __builtin_pulp_mlupdatespr_v3(ptr)
 
 // does not work somehow
 #define CompressedMAC(sum, ptr, config) asm volatile(                \
@@ -71,7 +70,7 @@
 int main(int argc, char *argv[])
 {
   int ch_out;
-  ch_out = 20;
+  ch_out = 4;
   int8_t *pBias = NULL;
   uint32_t num_col_im2col = NUM_COL_IM2COL; // the weights and acts are compressed
 
@@ -104,6 +103,8 @@ int main(int argc, char *argv[])
     uint32_t *ptrA2 = (uint32_t *) pA2;
     uint32_t *ptrA3 = (uint32_t *) pA3;
     uint32_t *ptrA4 = (uint32_t *) pA4;
+
+    uint32_t valA, valA2, valA3, valA4, valB, valB2;
 
     InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
     InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
@@ -164,7 +165,6 @@ int main(int argc, char *argv[])
       pB+=loop_cnt_im2col_a;
       pB2+=loop_cnt_im2col_a;
 
-      uint32_t valA, valA2, valA3, valA4, valB, valB2;
       // pack the remaining weights and activations into 32-bit vectors
       // padding with 0xd9 because ternary_decoder(0xd9) = 0000000000
       if (col_cnt_im2col == 4)
