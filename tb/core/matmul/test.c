@@ -197,6 +197,7 @@ int main(int argc, char *argv[])
         valB = 0xd9 << 24 | *(pA + 2) << 16 | *(pB + 1) << 8 | *pB;
         valB2 = 0xd9 << 24 | *(pA + 2) << 16 | *(pB2 + 1) << 8 | *pB2;
       }
+      pA += PACK_INT2_SIZE(col_cnt_im2col);
 
       uint32_t *pA_p = &valA;
       uint32_t *pA2_p = &valA2;
