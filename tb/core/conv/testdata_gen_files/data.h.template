@@ -1,0 +1,49 @@
+#ifndef ${data_h_incguard}
+#define ${data_h_incguard}
+
+// this file is generated automatically by the python script `generate_testdata.py`
+
+#define DIM_IN_X ${params['dim_in_x']}
+#define DIM_IN_Y ${params['dim_in_y']}
+#define CH_IN ${params['ch_in_compressed']}
+#define DIM_OUT_X ${params['dim_out_x']}
+#define DIM_OUT_Y ${params['dim_out_y']}
+#define CH_OUT ${params['ch_out_compressed']}
+#define DIM_KERNEL_X ${params['dim_kernel_x']}
+#define DIM_KERNEL_Y ${params['dim_kernel_y']}
+#define PADDING_X ${params['padding_x']}
+#define PADDING_Y ${params['padding_y']}
+#define STRIDE_X ${params['stride_x']}
+#define STRIDE_Y ${params['stride_y']}
+
+#define N_COMPRESSED_OUTPUTS ${exp_outp.numel()}
+
+// TODO: How to determine IM2COL_DIM? In DORY it is:
+// tk['im2col_dim'] = (8 * (fs1 * (tile_h_in + padding_bottom + padding_top) + fs1)) * int( 8 / min(ds_x, ds_y, ds_W))
+#define IM2COL_DIM 100
+
+uint8_t ${weight_varname} [] = {
+% for i, d in enumerate(weights):
+${f"0x{d:02x}"+("," if i != weights.numel()-1 else "")}
+% endfor
+};
+
+uint8_t ${inp_varname} [] = {
+% for i, d in enumerate(acts):
+${f"0x{d:02x}"+("," if i != acts.numel()-1 else "")}
+% endfor
+};
+
+uint32_t ${thr_varname} [] = {
+% for i, d in enumerate(thr):
+${f"0x{d:04x}"+("," if i != thr.size-1 else "")}
+% endfor
+};
+
+uint8_t ${exp_outp_varname} [] = {
+% for i, d in enumerate(exp_outp):
+${f"0x{d:02x}"+("," if i != exp_outp.numel()-1 else "")}
+% endfor
+};
+
+#endif

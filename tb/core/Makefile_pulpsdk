@@ -1,0 +1,10 @@
+APP = main
+APP_SRCS+= conv/test.c
+
+PULP_ARCH_CFLAGS=-march=rv32imfcxpulptnn -mPE=8 -mFC=1
+PULP_ARCH_LDFLAGS=-march=rv32imfcxpulptnn -mPE=8 -mFC=1
+PULP_ARCH_OBJDFLAGS=-Mmarch=rv32imfcxpulptnn
+
+include $(RULES_DIR)/pmsis_rules.mk
+
+

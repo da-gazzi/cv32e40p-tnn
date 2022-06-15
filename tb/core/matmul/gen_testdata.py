@@ -67,7 +67,7 @@ if __name__=='__main__':
     k_x = 3
     k_y = 3
     ch_in = 10
-    ch_out = 20 # needs to be a multiple of 5 as well? Atm, must be a multiple of 4
+    ch_out = 4 # needs to be a multiple of 5 as well? Atm, must be a multiple of 4
     assert ch_in % 5 == 0, 'Number of input channels must be a multiple of 5'
 
     num_col_im2col = k_x * k_y * ch_in

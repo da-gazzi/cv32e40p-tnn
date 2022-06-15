@@ -4,47 +4,72 @@
 #include <math.h>
 #include "data.h"
 #include "matmul_ternary.h"
+#include "conv_ternary.h"
 
 
 int main(int argc, char *argv[])
 {
-  int ch_out;
-  ch_out = 4;
+  //uint8_t *pIn; -> in data.h
+  uint8_t *pIm2ColBuffer;
   int8_t *pBias = NULL;
-  uint32_t num_col_im2col = NUM_COL_IM2COL; // the weights and acts are compressed
-  uint32_t thrc_res1, thrc_res2;
+  uint8_t *pOut;
+  //int8_t *pWeight; -> in data.h
+  //uint32_t *pThr; -> in data.h
+  uint16_t dim_in_x = DIM_IN_X;
+  uint16_t dim_in_y = DIM_IN_Y;
+  uint16_t ch_in = CH_IN;
+  uint16_t dim_out_x = DIM_OUT_X;
+  uint16_t dim_out_y = DIM_OUT_Y;
+  uint16_t ch_out = CH_OUT;
+  uint16_t dim_kernel_x = DIM_KERNEL_X;
+  uint16_t dim_kernel_y = DIM_KERNEL_Y;
+  uint16_t padding_y_top = PADDING_Y;
+  uint16_t padding_y_bottom = PADDING_Y;
+  uint16_t padding_x_left = PADDING_X;
+  uint16_t padding_x_right = PADDING_X;
+  uint16_t stride_x = STRIDE_X;
+  uint16_t stride_y = STRIDE_Y;
 
-  uint8_t outputs[20] = {0};
+  uint8_t outputs[N_COMPRESSED_OUTPUTS] = {0};
+  uint8_t im2col[IM2COL_DIM] = {0};
 
-  int n_outputs = ceil((ch_out >> 2)*1.6); // should be floor instead?
+  pOut = outputs;
+  pIm2ColBuffer = im2col;
 
-  uint8_t *pOut1 = &outputs[0];
-  uint8_t *pOut2 = &outputs[n_outputs/2];
-
-  pOut1 = xpulp_nn_matmul_ternary(
+  xpulp_nn_conv_ternary(
     pIn,
+    pIm2ColBuffer,
     pBias,
-    pThr,
-    pOut1,
-    pOut2,
+    pOut,
     pWeight,
-    num_col_im2col,
+    pThr,
+    dim_in_x,
+    dim_in_y,
+    ch_in,
+    dim_out_x,
+    dim_out_y,
     ch_out,
-    &thrc_res1,
-    &thrc_res2
+    dim_kernel_x,
+    dim_kernel_y,
+    padding_y_top,
+    padding_y_bottom,
+    padding_x_left,
+    padding_x_right,
+    stride_x,
+    stride_y
   );
 
   int n_mismatches = 0;
-  for(int i=0; i < n_outputs; i++) {
+  for(int i=0; i < N_COMPRESSED_OUTPUTS; i++) {
     if (outputs[i] != pOut_exp[i]){
         printf("***Mismatch found at iteration %d: Expected: %x, got: %x\n", i, pOut_exp[i], outputs[i]);
         n_mismatches++;
     }
   }
   if (n_mismatches == 0)
-    printf("All %d tests passed successfully! :)\n", n_outputs);
+    printf("All %d tests passed successfully! :)\n", N_COMPRESSED_OUTPUTS);
   else
-    printf("******Test FAILED with %d mismatches out of %d******\n", n_mismatches, n_outputs);
+    printf("******Test FAILED with %d mismatches out of %d******\n", n_mismatches, N_COMPRESSED_OUTPUTS);
 
   return EXIT_SUCCESS;
 }
