@@ -538,7 +538,8 @@ conv/test.elf: conv/test.c
 		$^ conv/syscalls.c conv/vectors.S \
 		-I $(RISCV)/riscv32-unknown-elf/include -I conv\
 		-L $(RISCV)/riscv32-unknown-elf/lib \
-		-lc -lm -lgcc
+		-lc -lm -lgcc \
+		-DNUM_CORES=1
 conv-clean:
 	rm -rf conv/test.elf conv/test.hex
 

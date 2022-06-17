@@ -27,7 +27,8 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
 {
   uint16_t ch_in_r = PACK_INT2_SIZE(ch_in);
   uint16_t ch_out_r = PACK_INT2_SIZE(ch_out);
-  int core_id = pi_core_id();
+  int core_id = 0;
+  //int core_id = pi_core_id();
   int8_t * pIm2ColBase = pIm2ColBuffer + (2 * core_id * PACK_INT2_SIZE(ch_in) * dim_kernel_x * dim_kernel_y);
   int i_out_y, i_out_x, i_ker_y, i_ker_x;
   int Log2Core;
@@ -176,5 +177,5 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
 
   // TODO: Rewrite the whole next part that takes care of the remaining SDOTPs
   }
-  pi_cl_team_barrier(0);
+  //pi_cl_team_barrier(0);
 }
