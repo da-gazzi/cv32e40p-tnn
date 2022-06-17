@@ -20,13 +20,14 @@
     *pOut = res & 0xff;                   \
     pOut++; }
 
+// TODO: review argument order
 uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
-                        int8_t   *pIn,
+                        uint8_t  *pIn,
                         int8_t   *pBias,
                         uint32_t *pThr,
-                        int8_t   *pOut,
-                        int8_t   *pOut2,
-                        int8_t   *pWeight,
+                        uint8_t  *pOut,
+                        uint8_t  *pOut2,
+                        uint8_t  *pWeight,
                         uint16_t num_col_im2col,
                         uint16_t ch_out,
                         uint32_t *thrc_res1,
