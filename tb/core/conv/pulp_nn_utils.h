@@ -89,4 +89,21 @@ static void __attribute__((noinline)) xpulp_nn_zero_mem_u2(uint8_t * pBuffer, un
   }
 }
 
+
+static void __attribute__((noinline)) xpulp_nn_zero_mem_ternary(uint8_t * pBuffer, unsigned int size)
+{
+  int lfover = size &0xf;
+  for (int i=0; i<(size>>4); i++)
+  {
+    *((v4u *)pBuffer) = (v4u){0xd9,0xd9,0xd9,0xd9};
+    MemoryFence();
+    pBuffer+=4;
+  }
+  while(lfover)
+  {
+    *pBuffer++=0xd9;
+    lfover-=4;
+  }
+}
+
 #endif

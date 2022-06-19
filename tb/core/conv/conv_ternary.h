@@ -81,7 +81,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
           {
             if((i_ker_y < 0) || (i_ker_y >= dim_in_y) || (i_ker_x < 0) || (i_ker_x >= dim_in_x))
             {
-              xpulp_nn_zero_mem_u2(pIm2Col, ch_in);
+              xpulp_nn_zero_mem_ternary(pIm2Col, ch_in);
             }
             else
             {
@@ -101,7 +101,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
             {
               if((i_ker_x < 0) || (i_ker_x >= dim_in_x))
               {
-                xpulp_nn_zero_mem_u2(pIm2Col, ch_in);
+                xpulp_nn_zero_mem_ternary(pIm2Col, ch_in);
               }
               else
               {
@@ -127,7 +127,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
             {
               if((i_ker_x < 0) || (i_ker_x >= dim_in_x))
               {
-                xpulp_nn_zero_mem_u2(pIm2Col, ch_in);
+                xpulp_nn_zero_mem_ternary(pIm2Col, ch_in);
               }
               else
               {
@@ -146,7 +146,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
           {
             if(i_ker_y < 0 || (i_ker_y >= dim_in_y) || i_ker_x < 0 || i_ker_x >= dim_in_x)
             {
-              xpulp_nn_zero_mem_u2(pIm2Col, ch_in);
+              xpulp_nn_zero_mem_ternary(pIm2Col, ch_in);
             }
             else
             {
