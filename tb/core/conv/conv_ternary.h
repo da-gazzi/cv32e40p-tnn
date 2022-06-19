@@ -29,7 +29,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
   uint16_t ch_out_r = PACK_INT2_SIZE(ch_out);
   int core_id = 0;
   //int core_id = pi_core_id();
-  int8_t * pIm2ColBase = pIm2ColBuffer + (2 * core_id * PACK_INT2_SIZE(ch_in) * dim_kernel_x * dim_kernel_y);
+  uint8_t * pIm2ColBase = pIm2ColBuffer + (2 * core_id * PACK_INT2_SIZE(ch_in) * dim_kernel_x * dim_kernel_y);
   int i_out_y, i_out_x, i_ker_y, i_ker_x;
   int Log2Core;
 
@@ -64,8 +64,8 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
   int start_pixel = min((chunk * core_id_r), dim_out_y);
   int stop_pixel = min(start_pixel + chunk, dim_out_y);
 
-  int8_t *pIm2Col = pIm2ColBase;
-  int8_t *pOutBuffer = pOut + (start_pixel * ch_out_r * dim_out_x) + (section * ch_out_r * dim_out_x_r);
+  uint8_t *pIm2Col = pIm2ColBase;
+  uint8_t *pOutBuffer = pOut + (start_pixel * ch_out_r * dim_out_x) + (section * ch_out_r * dim_out_x_r);
 
   int thrc_res1, thrc_res2;
 
@@ -85,7 +85,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
             }
             else
             {
-              xpulp_nn_im2col_i2_to_i2((int8_t*) (pIn + ((i_ker_y * dim_in_x + i_ker_x) * ch_in_r)), pIm2Col, ch_in);
+              xpulp_nn_im2col_u2_to_u2((uint8_t*) (pIn + ((i_ker_y * dim_in_x + i_ker_x) * ch_in_r)), pIm2Col, ch_in);
             }
             pIm2Col+=PACK_INT2_SIZE(ch_in);
           }
@@ -105,7 +105,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
               }
               else
               {
-                xpulp_nn_im2col_i2_to_i2((int8_t*) (pIn + ((i_ker_y * dim_in_x + i_ker_x) * ch_in_r)), pIm2Col, ch_in);
+                xpulp_nn_im2col_u2_to_u2((uint8_t*) (pIn + ((i_ker_y * dim_in_x + i_ker_x) * ch_in_r)), pIm2Col, ch_in);
               }
               pIm2Col+=PACK_INT2_SIZE(ch_in);
             }
@@ -115,7 +115,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
         {
           for(i_ker_y=((i_out_y * stride_y) - padding_y_top); i_ker_y<((i_out_y * stride_y) - padding_y_top + dim_kernel_y); i_ker_y++)
           {
-            xpulp_nn_im2col_i2_to_i2((int8_t*) pIn + (i_ker_y * dim_in_x + i_out_x * stride_x - padding_x_left)*ch_in_r,pIm2Col,ch_in * dim_kernel_x);
+            xpulp_nn_im2col_u2_to_u2((uint8_t*) pIn + (i_ker_y * dim_in_x + i_out_x * stride_x - padding_x_left)*ch_in_r,pIm2Col,ch_in * dim_kernel_x);
             pIm2Col+=PACK_INT2_SIZE(ch_in * dim_kernel_x);
           }
         }
@@ -131,7 +131,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
               }
               else
               {
-                xpulp_nn_im2col_i2_to_i2((int8_t *)pIn + (i_ker_y*dim_in_x+i_ker_x)* ch_in_r, pIm2Col, ch_in);
+                xpulp_nn_im2col_u2_to_u2((uint8_t *)pIn + (i_ker_y*dim_in_x+i_ker_x)* ch_in_r, pIm2Col, ch_in);
               }
               pIm2Col+=PACK_INT2_SIZE(ch_in);
             }
@@ -150,7 +150,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
             }
             else
             {
-              xpulp_nn_im2col_i2_to_i2((int8_t *) pIn + (i_ker_y * dim_in_x + i_ker_x) * ch_in_r, pIm2Col, ch_in);
+              xpulp_nn_im2col_u2_to_u2((uint8_t *) pIn + (i_ker_y * dim_in_x + i_ker_x) * ch_in_r, pIm2Col, ch_in);
             }
             pIm2Col+=PACK_INT2_SIZE(ch_in);
           }
