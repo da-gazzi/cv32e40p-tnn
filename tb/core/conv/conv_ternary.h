@@ -175,7 +175,10 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
       }
     }
 
-  // TODO: Rewrite the whole next part that takes care of the remaining SDOTPs
+    //if(pIm2Col != pIm2ColBase)
+    //{
+    // This part of the kernel is not needed because we have set the condition ch_in % 5==0 and the condition (pIm2Col != pIm2ColBase) is never fulfilled
+    //}
   }
   //pi_cl_team_barrier(0);
 }
