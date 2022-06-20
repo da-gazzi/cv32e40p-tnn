@@ -66,8 +66,7 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
 
   uint8_t *pIm2Col = pIm2ColBase;
   uint8_t *pOutBuffer = pOut + (start_pixel * ch_out_r * dim_out_x) + (section * ch_out_r * dim_out_x_r);
-
-  int thrc_res1, thrc_res2;
+  int thrc_res1 = 0, thrc_res2 = 0;
 
   for (i_out_y = start_pixel; i_out_y < stop_pixel; i_out_y++)
   {
@@ -170,7 +169,6 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
           &thrc_res1,
           &thrc_res2
         );
-
         pIm2Col = pIm2ColBase;
       }
     }

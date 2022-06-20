@@ -15,10 +15,11 @@
 
 #define GetConfig(a_update, b_update, a_reg, b_reg) a_update << 4 | b_update << 3 | a_reg << 1 | b_reg
 
-#define check_store(res, pOut)            \
+#define check_store(res, pOut)       \
   if ((res & 0xe0000000) == 0x00000000) { \
     *pOut = res & 0xff;                   \
-    pOut++; }
+    pOut++;                               \
+    incr_val=ch_out_r; }
 
 // TODO: review argument order
 uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
@@ -40,7 +41,10 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
 
   uint8_t *pA = pWeight;
 
-  int res1, res2;
+  int res1, res2, incr_val;
+  res1 = *thrc_res1;
+  res2 = *thrc_res2;
+  incr_val = 0;
 
   for(int i=0; i < (ch_out >> 2); i++)
   {
@@ -213,4 +217,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   }
   *thrc_res1 = res1;
   *thrc_res2 = res2;
+
+  pOut+=incr_val; // ch_out_r if a store was performed, else 0
+  return pOut;
 }
