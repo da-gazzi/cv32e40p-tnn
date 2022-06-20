@@ -28,6 +28,30 @@
 
 #define MemoryFence()                                        asm volatile("":::"memory")
 
+#define CompressedMAC(sum, ptr, config) asm volatile(                \
+    "pv.smlsdotp.t %[shum], %[phtr], %[chonfig];"                    \
+    : [shum] "+r" (sum), [phtr] "+r" (ptr): [chonfig] "I" (config))
+
+#define InitNNRF(ptr, config) asm volatile(        \
+    "pv.smlsdotp.t x0, %[phtr], %[chonfig];"       \
+    : [phtr] "+r" (ptr) : [chonfig] "I" (config))
+
+#define ThresholdCompress(res, val, thrs) asm volatile(                                                \
+    "pv.thrc %[rhes], %[vhal], %[thhrs];" : [rhes] "+r" (res) : [vhal] "r" (val), [thhrs] "r" (thrs))
+
+#define GetConfig(a_update, b_update, a_reg, b_reg) a_update << 4 | b_update << 3 | a_reg << 1 | b_reg
+
+#define check_store(res, pOut)            \
+  if ((res & 0xe0000000) == 0x00000000) { \
+    *pOut = res & 0xff;                   \
+    pOut++;                               \
+    incr_val=ch_out_r; }
+
+#define reset_currThr()                       \
+  if (currThr == pThr + (int)(ch_out/0.8)) {  \
+    currThr = pThr;                           \
+  }
+
 typedef unsigned char  v4u __attribute__((vector_size (4)));
 typedef   signed char  v4s __attribute__((vector_size (4)));
 
