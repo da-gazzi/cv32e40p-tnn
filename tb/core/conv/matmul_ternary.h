@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 #define PACK_INT2_SIZE(x)                                    ((x) >> 2)
 
@@ -15,11 +16,17 @@
 
 #define GetConfig(a_update, b_update, a_reg, b_reg) a_update << 4 | b_update << 3 | a_reg << 1 | b_reg
 
-#define check_store(res, pOut)       \
+#define check_store(res, pOut)            \
   if ((res & 0xe0000000) == 0x00000000) { \
     *pOut = res & 0xff;                   \
     pOut++;                               \
     incr_val=ch_out_r; }
+
+#define reset_currThr()                       \
+  if (currThr == pThr + (int)(ch_out/0.8)) {  \
+    currThr = pThr;                           \
+  }
+
 
 // TODO: review argument order
 uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
@@ -40,13 +47,14 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   uint16_t num_col_im2col_a = PACK_INT2_SIZE(num_col_im2col);
 
   uint8_t *pA = pWeight;
+  uint32_t *currThr = pThr;
 
   int res1, res2, incr_val;
   res1 = *thrc_res1;
   res2 = *thrc_res2;
   incr_val = 0;
 
-  for(int i=0; i < (ch_out >> 2); i++)
+  for(int i=0; i < (int)ceil(ch_out/3.2); i++) // (ch_out/0.8)/4
   {
     uint8_t *pB = pIn;
     uint8_t *pB2 = (pB + num_col_im2col_a);
@@ -191,29 +199,29 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     //printf("sum7 = %d\n", sum7);
     //printf("sum8 = %d\n", sum8);
 
-    ThresholdCompress(res1, sum, pThr[0]);
+    ThresholdCompress(res1, sum, *currThr);
     check_store(res1, pOut);
+    ThresholdCompress(res2, sum5, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
 
-    ThresholdCompress(res1, sum2, pThr[1]);
+    ThresholdCompress(res1, sum2, *currThr);
     check_store(res1, pOut);
+    ThresholdCompress(res2, sum6, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
 
-    ThresholdCompress(res1, sum3, pThr[2]);
+    ThresholdCompress(res1, sum3, *currThr);
     check_store(res1, pOut);
+    ThresholdCompress(res2, sum7, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
 
-    ThresholdCompress(res1, sum4, pThr[3]);
+    ThresholdCompress(res1, sum4, *currThr);
     check_store(res1, pOut);
-
-    ThresholdCompress(res2, sum5, pThr[0]);
+    ThresholdCompress(res2, sum8, *currThr++);
     check_store(res2, pOut2);
-
-    ThresholdCompress(res2, sum6, pThr[1]);
-    check_store(res2, pOut2);
-
-    ThresholdCompress(res2, sum7, pThr[2]);
-    check_store(res2, pOut2);
-
-    ThresholdCompress(res2, sum8, pThr[3]);
-    check_store(res2, pOut2);
+    reset_currThr();
   }
   *thrc_res1 = res1;
   *thrc_res2 = res2;
