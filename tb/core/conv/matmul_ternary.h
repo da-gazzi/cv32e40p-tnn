@@ -29,7 +29,17 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   res2 = *thrc_res2;
   incr_val = 0;
 
-  for(int i=0; i < ch_out >> 2; i++)
+  int loop_iter;
+  if ((int)(ch_out/0.8)%4==0)
+  {
+    loop_iter = (int)(ch_out/0.8) >> 2;
+  }
+  else
+  {
+    loop_iter = ch_out >> 2;
+  }
+
+  for(int i=0; i < loop_iter; i++)
   {
     uint8_t *pB = pIn;
     uint8_t *pB2 = (pB + num_col_im2col_a);
@@ -50,7 +60,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
     InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
     InitNNRF(ptrA4, GetConfig(1, 0, 3, 0));
-
     InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
 
     int sum = 0;
@@ -92,7 +101,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
 
     int col_cnt_im2col = num_col_im2col & 0xf;
 
-    if(col_cnt_im2col)
+    if (col_cnt_im2col)
     {
       uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
       pA+=loop_cnt_im2col_w;
@@ -104,7 +113,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       pB+=loop_cnt_im2col_a;
       pB2+=loop_cnt_im2col_a;
 
-      volatile uint32_t valA, valA2, valA3, valA4, valB, valB2; // volatile somehow solves the problem with XX
+      volatile uint32_t valA, valA2, valA3, valA4, valB, valB2;
       // pack the remaining weights and activations into 32-bit vectors
       // padding with 0xd9 because ternary_decoder(0xd9) = 0000000000
       if (col_cnt_im2col == 4)
@@ -143,6 +152,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       uint32_t *pA2_p = &valA2;
       uint32_t *pA3_p = &valA3;
       uint32_t *pA4_p = &valA4;
+
       uint32_t *pB_p = &valB;
       uint32_t *pB2_p = &valB2;
 
@@ -157,22 +167,13 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
       CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
-      CompressedMAC(sum4, ptrB,  GetConfig(0, 0, 3, 0));
+      CompressedMAC(sum4, pA4_p,  GetConfig(0, 0, 3, 0));
 
-      CompressedMAC(sum5, ptrA,  GetConfig(0, 0, 0, 1));
-      CompressedMAC(sum6, ptrA2, GetConfig(0, 0, 1, 1));
-      CompressedMAC(sum7, ptrA3, GetConfig(0, 0, 2, 1));
-      CompressedMAC(sum8, ptrA4, GetConfig(0, 0, 3, 1));
+      CompressedMAC(sum5, pA_p,  GetConfig(0, 0, 0, 1));
+      CompressedMAC(sum6, pA2_p, GetConfig(0, 0, 1, 1));
+      CompressedMAC(sum7, pA3_p, GetConfig(0, 0, 2, 1));
+      CompressedMAC(sum8, pA4_p, GetConfig(0, 0, 3, 1));
     }
-
-    //printf("sum = %d\n", sum);
-    //printf("sum2 = %d\n", sum2);
-    //printf("sum3 = %d\n", sum3);
-    //printf("sum4 = %d\n", sum4);
-    //printf("sum5 = %d\n", sum5);
-    //printf("sum6 = %d\n", sum6);
-    //printf("sum7 = %d\n", sum7);
-    //printf("sum8 = %d\n", sum8);
 
     ThresholdCompress(res1, sum, *currThr);
     check_store(res1, pOut);
@@ -200,7 +201,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   }
 
   // leftover part : the hotloop above produces 4N output channels. If out_ch not divisible
-  // by 4, the remaining output channels are computed
+  // by 4, the remaining output channels are computed below
   int out_ch_left = (int)(ch_out/0.8) & 0x3;
 
   if (out_ch_left == 1)
@@ -222,7 +223,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     if (pBias != NULL)
     {
       sum = ((int) (*pBias++));
-      sum2 = ((int) (*pBias++));
+      sum2 = sum;
     }
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
@@ -235,7 +236,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
 
     int col_cnt_im2col = num_col_im2col & 0xf;
 
-    if(col_cnt_im2col)
+    if (col_cnt_im2col)
     {
       uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
       pA+=loop_cnt_im2col_w;
@@ -244,44 +245,301 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       pB+=loop_cnt_im2col_a;
       pB2+=loop_cnt_im2col_a;
 
-      volatile uint32_t valA, valB, valB2; // volatile somehow solves the problem with XX
+      volatile uint32_t valA, valB, valB2;
       // pack the remaining weights and activations into 32-bit vectors
       // padding with 0xd9 because ternary_decoder(0xd9) = 0000000000
       if (col_cnt_im2col == 4)
       {
         valA = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pA;
+
         valB = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB;
         valB2 = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB2;
       }
       else if (col_cnt_im2col == 8)
       {
         valA = 0xd9 << 24 | 0xd9 << 16 | *(pA + 1) << 8 | *pA;
+
         valB = 0xd9 << 24 | 0xd9 << 16 | *(pB + 1) << 8 | *pB;
         valB2 = 0xd9 << 24 | 0xd9 << 16 | *(pB2 + 1) << 8 | *pB2;
       }
       else // col_cnt_im2col == 12
       {
         valA = 0xd9 << 24 | *(pA + 2) << 16 | *(pA + 1) << 8 | *pA;
+
         valB = 0xd9 << 24 | *(pA + 2) << 16 | *(pB + 1) << 8 | *pB;
         valB2 = 0xd9 << 24 | *(pA + 2) << 16 | *(pB2 + 1) << 8 | *pB2;
       }
       pA += PACK_INT2_SIZE(col_cnt_im2col);
 
       uint32_t *pA_p = &valA;
+
       uint32_t *pB_p = &valB;
       uint32_t *pB2_p = &valB2;
 
       InitNNRF(pA_p,  GetConfig(1, 0, 0, 0));
+
       InitNNRF(pB_p,  GetConfig(0, 1, 0, 0));
       InitNNRF(pB2_p, GetConfig(0, 1, 0, 1));
 
-      CompressedMAC(sum,  pB_p,  GetConfig(0, 0, 0, 0));
-      CompressedMAC(sum2, pB2_p, GetConfig(0, 0, 0, 1));
+      CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
+
+      CompressedMAC(sum2, pA_p,  GetConfig(0, 0, 0, 1));
     }
 
     ThresholdCompress(res1, sum, *currThr);
     check_store(res1, pOut);
     ThresholdCompress(res2, sum2, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
+  }
+  else if (out_ch_left == 2)
+  {
+    uint8_t *pB = pIn;
+    uint8_t *pB2 = (pB + num_col_im2col_a);
+
+    uint32_t *ptrB  = (uint32_t *) pB;
+    uint32_t *ptrB2 = (uint32_t *) pB2;
+
+    uint8_t *pA2 = (pA + num_col_im2col_w);
+
+    uint32_t *ptrA  = (uint32_t *) pA ;
+    uint32_t *ptrA2 = (uint32_t *) pA2;
+
+    InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
+    InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
+    InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+
+    int sum = 0;
+    int sum2 = 0;
+    int sum3 = 0;
+    int sum4 = 0;
+
+    if (pBias != NULL)
+    {
+      sum = ((int) (*pBias++));
+      sum2 = ((int) (*pBias++));
+
+      sum3 = sum;
+      sum4 = sum2;
+    }
+
+    for (int j=0; j<(num_col_im2col >> 4); j++)
+    {
+      InitNNRF(ptrB2, GetConfig(0, 1, 0, 1));
+
+      CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
+      CompressedMAC(sum2, ptrB,  GetConfig(0, 1, 1, 0));
+
+      CompressedMAC(sum4, ptrA,  GetConfig(1, 0, 0, 1));
+      CompressedMAC(sum4, ptrA2, GetConfig(1, 0, 1, 1));
+    }
+
+    int col_cnt_im2col = num_col_im2col & 0xf;
+
+    if (col_cnt_im2col)
+    {
+      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
+      pA+=loop_cnt_im2col_w;
+      pA2+=loop_cnt_im2col_w;
+
+      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2;
+      pB+=loop_cnt_im2col_a;
+      pB2+=loop_cnt_im2col_a;
+
+      volatile uint32_t valA, valA2, valB, valB2;
+      // pack the remaining weights and activations into 32-bit vectors
+      // padding with 0xd9 because ternary_decoder(0xd9) = 0000000000
+      if (col_cnt_im2col == 4)
+      {
+        valA = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pA;
+        valA2 = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pA2;
+
+        valB = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB;
+        valB2 = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB2;
+      }
+      else if (col_cnt_im2col == 8)
+      {
+        valA = 0xd9 << 24 | 0xd9 << 16 | *(pA + 1) << 8 | *pA;
+        valA2 = 0xd9 << 24 | 0xd9 << 16 | *(pA2 + 1) << 8 | *pA2;
+
+        valB = 0xd9 << 24 | 0xd9 << 16 | *(pB + 1) << 8 | *pB;
+        valB2 = 0xd9 << 24 | 0xd9 << 16 | *(pB2 + 1) << 8 | *pB2;
+      }
+      else // col_cnt_im2col == 12
+      {
+        valA = 0xd9 << 24 | *(pA + 2) << 16 | *(pA + 1) << 8 | *pA;
+        valA2 = 0xd9 << 24 | *(pA + 2) << 16 | *(pA2 + 1) << 8 | *pA2;
+
+        valB = 0xd9 << 24 | *(pA + 2) << 16 | *(pB + 1) << 8 | *pB;
+        valB2 = 0xd9 << 24 | *(pA + 2) << 16 | *(pB2 + 1) << 8 | *pB2;
+      }
+      pA += PACK_INT2_SIZE(col_cnt_im2col);
+
+      uint32_t *pA_p = &valA;
+      uint32_t *pA2_p = &valA2;
+
+      uint32_t *pB_p = &valB;
+      uint32_t *pB2_p = &valB2;
+
+      InitNNRF(pA_p,  GetConfig(1, 0, 0, 0));
+      InitNNRF(pA2_p, GetConfig(1, 0, 1, 0));
+
+      InitNNRF(pB_p,  GetConfig(0, 1, 0, 0));
+      InitNNRF(pB2_p, GetConfig(0, 1, 0, 1));
+
+      CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
+      CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
+
+      CompressedMAC(sum3, pA_p,  GetConfig(0, 0, 0, 1));
+      CompressedMAC(sum4, pA2_p, GetConfig(0, 0, 1, 1));
+    }
+
+    ThresholdCompress(res1, sum, *currThr);
+    check_store(res1, pOut);
+    ThresholdCompress(res2, sum3, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
+
+    ThresholdCompress(res1, sum2, *currThr);
+    check_store(res1, pOut);
+    ThresholdCompress(res2, sum4, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
+  }
+  else if (out_ch_left == 3)
+  {
+    uint8_t *pB = pIn;
+    uint8_t *pB2 = (pB + num_col_im2col_a);
+
+    uint32_t *ptrB  = (uint32_t *) pB;
+    uint32_t *ptrB2 = (uint32_t *) pB2;
+
+    uint8_t *pA2 = (pA + num_col_im2col_w);
+    uint8_t *pA3 = (pA2 + num_col_im2col_w);
+
+    uint32_t *ptrA  = (uint32_t *) pA ;
+    uint32_t *ptrA2 = (uint32_t *) pA2;
+    uint32_t *ptrA3 = (uint32_t *) pA3;
+
+    InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
+    InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
+    InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
+    InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+
+    int sum = 0;
+    int sum2 = 0;
+    int sum3 = 0;
+    int sum4 = 0;
+    int sum5 = 0;
+    int sum6 = 0;
+
+    if (pBias != NULL)
+    {
+      sum = ((int) (*pBias++));
+      sum2 = ((int) (*pBias++));
+      sum3 = ((int) (*pBias++));
+
+      sum4 = sum;
+      sum5 = sum2;
+      sum6 = sum3;
+    }
+
+    for (int j=0; j<(num_col_im2col >> 4); j++)
+    {
+      InitNNRF(ptrB2, GetConfig(0, 1, 0, 1));
+
+      CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
+      CompressedMAC(sum3, ptrB,  GetConfig(0, 1, 2, 0));
+
+      CompressedMAC(sum4, ptrA,  GetConfig(1, 0, 0, 1));
+      CompressedMAC(sum5, ptrA2, GetConfig(1, 0, 1, 1));
+      CompressedMAC(sum6, ptrA3, GetConfig(1, 0, 2, 1));
+    }
+
+    int col_cnt_im2col = num_col_im2col & 0xf;
+
+    if (col_cnt_im2col)
+    {
+      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
+      pA+=loop_cnt_im2col_w;
+      pA2+=loop_cnt_im2col_w;
+      pA3+=loop_cnt_im2col_w;
+
+      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2;
+      pB+=loop_cnt_im2col_a;
+      pB2+=loop_cnt_im2col_a;
+
+      volatile uint32_t valA, valA2, valA3, valB, valB2;
+      // pack the remaining weights and activations into 32-bit vectors
+      // padding with 0xd9 because ternary_decoder(0xd9) = 0000000000
+      if (col_cnt_im2col == 4)
+      {
+        valA = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pA;
+        valA2 = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pA2;
+        valA3 = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pA3;
+
+        valB = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB;
+        valB2 = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB2;
+      }
+      else if (col_cnt_im2col == 8)
+      {
+        valA = 0xd9 << 24 | 0xd9 << 16 | *(pA + 1) << 8 | *pA;
+        valA2 = 0xd9 << 24 | 0xd9 << 16 | *(pA2 + 1) << 8 | *pA2;
+        valA3 = 0xd9 << 24 | 0xd9 << 16 | *(pA3 + 1) << 8 | *pA3;
+
+        valB = 0xd9 << 24 | 0xd9 << 16 | *(pB + 1) << 8 | *pB;
+        valB2 = 0xd9 << 24 | 0xd9 << 16 | *(pB2 + 1) << 8 | *pB2;
+      }
+      else // col_cnt_im2col == 12
+      {
+        valA = 0xd9 << 24 | *(pA + 2) << 16 | *(pA + 1) << 8 | *pA;
+        valA2 = 0xd9 << 24 | *(pA + 2) << 16 | *(pA2 + 1) << 8 | *pA2;
+        valA3 = 0xd9 << 24 | *(pA + 2) << 16 | *(pA3 + 1) << 8 | *pA3;
+
+        valB = 0xd9 << 24 | *(pA + 2) << 16 | *(pB + 1) << 8 | *pB;
+        valB2 = 0xd9 << 24 | *(pA + 2) << 16 | *(pB2 + 1) << 8 | *pB2;
+      }
+      pA += PACK_INT2_SIZE(col_cnt_im2col);
+
+      uint32_t *pA_p = &valA;
+      uint32_t *pA2_p = &valA2;
+      uint32_t *pA3_p = &valA3;
+
+      uint32_t *pB_p = &valB;
+      uint32_t *pB2_p = &valB2;
+
+      InitNNRF(pA_p,  GetConfig(1, 0, 0, 0));
+      InitNNRF(pA2_p, GetConfig(1, 0, 1, 0));
+      InitNNRF(pA3_p, GetConfig(1, 0, 2, 0));
+
+      InitNNRF(pB_p,  GetConfig(0, 1, 0, 0));
+      InitNNRF(pB2_p, GetConfig(0, 1, 0, 1));
+
+      CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
+      CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
+      CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
+
+      CompressedMAC(sum4, pA_p,  GetConfig(0, 0, 0, 1));
+      CompressedMAC(sum5, pA2_p, GetConfig(0, 0, 1, 1));
+      CompressedMAC(sum6, pA3_p, GetConfig(0, 0, 2, 1));
+    }
+
+    ThresholdCompress(res1, sum, *currThr);
+    check_store(res1, pOut);
+    ThresholdCompress(res2, sum4, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
+
+    ThresholdCompress(res1, sum2, *currThr);
+    check_store(res1, pOut);
+    ThresholdCompress(res2, sum5, *currThr++);
+    check_store(res2, pOut2);
+    reset_currThr();
+
+    ThresholdCompress(res1, sum3, *currThr);
+    check_store(res1, pOut);
+    ThresholdCompress(res2, sum6, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
   }
@@ -292,3 +550,4 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   pOut+=incr_val; // ch_out_r if a store was performed, else 0
   return pOut;
 }
+

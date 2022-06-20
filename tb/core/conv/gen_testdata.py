@@ -109,18 +109,18 @@ class TernaryConv2dWithThreshold(nn.Conv2d):
 
 if __name__=='__main__':
     params = {}
-    params['dim_in_x'] = 10
-    params['dim_in_y'] = 10
+    params['dim_in_x'] = 4
+    params['dim_in_y'] = 4
     params['dim_kernel_x'] = 3
     params['dim_kernel_y'] = 3
-    params['ch_in'] = 10
-    params['ch_out'] = 15
+    params['ch_in'] = 5
+    params['ch_out'] = 5
     params['ch_in_compressed'] = int(params['ch_in'] * 0.8)
     params['ch_out_compressed'] = int(params['ch_out'] * 0.8)
     params['stride_x'] = 1
     params['stride_y'] = 1
-    params['padding_x'] = 0
-    params['padding_y'] = 0
+    params['padding_x'] = 1
+    params['padding_y'] = 1
 
     # are the following correct? Add dilatons later if needed
     params['dim_out_x'] = (params['dim_in_x'] + 2*params['padding_x'] - (params['dim_kernel_x']-1) - 1) // params['stride_x'] + 1
@@ -182,4 +182,9 @@ if __name__=='__main__':
     tmpl = Template(filename="./testdata_gen_files/data.h.template")
     s = tmpl.render(**tk)
     with open('./data.h', "w") as f:
+        f.write(s)
+
+    tmpl_matmul = Template(filename="./testdata_gen_files/matmul_ternary.h.template")
+    s = tmpl_matmul.render()
+    with open('./matmul_ternary.h', "w") as f:
         f.write(s)
