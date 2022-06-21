@@ -95,7 +95,7 @@ class TernaryConv2dWithThreshold(nn.Conv2d):
     # get the weights in their compressed form
     @property
     def weight_c(self):
-        return self.tc.compress_tensor(self.weight.data)
+        return self.tc.compress_tensor(self.weight.data.permute(0, 2, 3, 1))
 
     def forward(self, x, preacts=False):
         x = super().forward(x)
@@ -151,8 +151,8 @@ if __name__=='__main__':
     y = net(x)
     y_preact = net(x, preacts=True)
 
-    x_compressed = tc.compress_tensor(x)
-    y_compressed = tc.compress_tensor(y)
+    x_compressed = tc.compress_tensor(x.permute(0, 2, 3, 1))
+    y_compressed = tc.compress_tensor(y.permute(0, 2, 3, 1))
     w_compressed = net.weight_c.data
     thr_packed = net.thresholds_p
 
