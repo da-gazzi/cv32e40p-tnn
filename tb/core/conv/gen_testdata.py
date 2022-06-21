@@ -152,7 +152,7 @@ if __name__=='__main__':
     y_preact = net(x, preacts=True)
 
     x_compressed = tc.compress_tensor(x.permute(0, 2, 3, 1))
-    y_compressed = tc.compress_tensor(y.permute(0, 2, 3, 1))
+    y_compressed = tc.compress_tensor(y.permute(0, 2, 3, 1).flip(dims=(3,)))
     w_compressed = net.weight_c.data
     thr_packed = net.thresholds_p
 
