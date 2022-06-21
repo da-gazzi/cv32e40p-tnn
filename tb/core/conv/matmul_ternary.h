@@ -198,6 +198,8 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     ThresholdCompress(res2, sum8, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+
+  pA+=(4*num_col_im2col_w);
   }
 
   // leftover part : the hotloop above produces 4N output channels. If out_ch not divisible
@@ -291,6 +293,8 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     ThresholdCompress(res2, sum2, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+
+  pA+=num_col_im2col_w;
   }
   else if (out_ch_left == 2)
   {
@@ -405,6 +409,8 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     ThresholdCompress(res2, sum4, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+
+  pA+=(2*num_col_im2col_w);
   }
   else if (out_ch_left == 3)
   {
@@ -542,6 +548,8 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     ThresholdCompress(res2, sum6, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+
+  pA+=(3*num_col_im2col_w);
   }
 
   *thrc_res1 = res1;
