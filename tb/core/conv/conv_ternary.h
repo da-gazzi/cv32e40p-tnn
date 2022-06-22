@@ -173,10 +173,20 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
       }
     }
 
-    //if(pIm2Col != pIm2ColBase)
-    //{
-    // This part of the kernel is not needed because we have set the condition ch_in % 5==0 and the condition (pIm2Col != pIm2ColBase) is never fulfilled
-    //}
+    thrc_res1 = 0;
+    if(pIm2Col != pIm2ColBase)
+    {
+        pOutBuffer = xpulp_nn_matmul_ternary_4x1(
+          pIm2ColBase,
+          pBias,
+          pThr,
+          pOutBuffer,
+          pWeight,
+          (ch_in * dim_kernel_x * dim_kernel_y),
+          ch_out,
+          &thrc_res1
+        );
+    }
   }
   //pi_cl_team_barrier(0);
 }

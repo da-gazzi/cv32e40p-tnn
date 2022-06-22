@@ -4,6 +4,7 @@
 #include <math.h>
 #include "data.h"
 #include "matmul_ternary.h"
+#include "matmul_ternary_4x1.h"
 #include "conv_ternary.h"
 
 
