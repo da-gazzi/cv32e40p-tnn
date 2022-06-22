@@ -188,3 +188,8 @@ if __name__=='__main__':
     s = tmpl_matmul.render()
     with open('./matmul_ternary.h', "w") as f:
         f.write(s)
+
+    tmpl_matmul = Template(filename="./testdata_gen_files/matmul_ternary_4x1.h.template")
+    s = tmpl_matmul.render()
+    with open('./matmul_ternary_4x1.h', "w") as f:
+        f.write(s)
