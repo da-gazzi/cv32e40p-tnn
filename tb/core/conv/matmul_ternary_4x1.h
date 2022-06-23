@@ -26,17 +26,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
   res = *thrc_res;
   incr_val = 0;
 
-  int loop_iter;
-  if ((int)(ch_out/0.8)%4==0)
-  {
-    loop_iter = (int)(ch_out/0.8) >> 2;
-  }
-  else
-  {
-    loop_iter = ch_out >> 2;
-  }
-
-  for(int i=0; i < loop_iter; i++)
+  for(int i=0; i < (int)(ch_out/0.8) >> 2; i++)
   {
     uint8_t *pB = pIn;
 
