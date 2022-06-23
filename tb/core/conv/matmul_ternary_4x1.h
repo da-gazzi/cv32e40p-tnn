@@ -55,7 +55,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
     InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
     InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
     InitNNRF(ptrA4, GetConfig(1, 0, 3, 0));
-    InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
 
     int sum = 0;
     int sum2 = 0;
@@ -72,10 +71,12 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
-      CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
-      CompressedMAC(sum3, ptrA3, GetConfig(0, 0, 2, 0));
-      CompressedMAC(sum4, ptrB,  GetConfig(0, 1, 3, 0));
+      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
+      CompressedMAC(sum3, ptrA3, GetConfig(1, 0, 2, 0));
+      CompressedMAC(sum4, ptrA4, GetConfig(1, 0, 3, 0));
     }
 
     int col_cnt_im2col = num_col_im2col & 0xf;
@@ -140,7 +141,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
       CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
       CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
-      CompressedMAC(sum4, pA4_p,  GetConfig(0, 0, 3, 0));
+      CompressedMAC(sum4, pA4_p, GetConfig(0, 0, 3, 0));
     }
 
     ThresholdCompress(res, sum, *currThr++);
@@ -175,7 +176,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
     uint32_t *ptrA  = (uint32_t *) pA ;
 
     InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
-    InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
 
     int sum = 0;
 
@@ -186,7 +186,9 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      CompressedMAC(sum,  ptrB,  GetConfig(0, 1, 0, 0));
+      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
     }
 
     int col_cnt_im2col = num_col_im2col & 0xf;
@@ -252,7 +254,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
     InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
-    InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
 
     int sum = 0;
     int sum2 = 0;
@@ -265,8 +266,10 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
-      CompressedMAC(sum2, ptrB,  GetConfig(0, 1, 1, 0));
+      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
     }
 
     int col_cnt_im2col = num_col_im2col & 0xf;
@@ -346,7 +349,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
     InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
     InitNNRF(ptrA2, GetConfig(1, 0, 1, 0));
     InitNNRF(ptrA3, GetConfig(1, 0, 2, 0));
-    InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
 
     int sum = 0;
     int sum2 = 0;
@@ -361,9 +363,11 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
-      CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
-      CompressedMAC(sum3, ptrB,  GetConfig(0, 1, 2, 0));
+      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
+      CompressedMAC(sum3, ptrA3, GetConfig(1, 0, 2, 0));
     }
 
     int col_cnt_im2col = num_col_im2col & 0xf;
