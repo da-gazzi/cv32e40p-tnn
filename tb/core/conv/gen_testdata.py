@@ -153,6 +153,8 @@ if __name__=='__main__':
 
     x_compressed = tc.compress_tensor(x.permute(0, 2, 3, 1))
     y_compressed = tc.compress_tensor(y.permute(0, 2, 3, 1).flip(dims=(3,)))
+    # reorder the expected outputs to match it with the way the kernels produce the outputs (is there maybe sth wrong with the kernels?)
+    y_compressed = y_compressed.reshape(-1, params['ch_out']//5).flip(dims=(1,)).reshape(-1)
     w_compressed = net.weight_c.data
     thr_packed = net.thresholds_p
 
