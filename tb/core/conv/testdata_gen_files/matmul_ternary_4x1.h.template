@@ -338,9 +338,22 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
     reset_currThr();
   % endif
 
-  % if n_acts == 1:
-  pA+=num_col_im2col_w;
-  % else:
-  pA+=(${n_acts}*num_col_im2col_w);
+    if (!col_cnt_im2col)
+    {
+    % if n_acts == 1:
+      pA+=num_col_im2col_w;
+    % else:
+      pA+=(${n_acts}*num_col_im2col_w);
+    % endif
+    }
+    % if n_acts > 1:
+    else
+    {
+    % if n_acts == 2:
+      pA+=num_col_im2col_w;
+    % elif n_acts > 2:
+      pA+=(${n_acts-1}*num_col_im2col_w);
+    % endif
+    }
   % endif
 </%def>
