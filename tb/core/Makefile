@@ -531,7 +531,7 @@ matmul-veri-run: verilate matmul/test.hex
 
 # Convolution kernel test
 conv/test.elf: conv/test.c
-	$(RISCV_EXE_PREFIX)gcc -march=rv32imfcxpulptnn -o $@ -w -Os -g -nostdlib \
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfc_xpulphwloop_xpulpnn_xpulptnn -o $@ -w -O3 -g -nostdlib \
 		-T conv/link.ld  \
 		-static \
 		conv/crt0.S \
