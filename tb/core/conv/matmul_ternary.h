@@ -29,7 +29,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   res2 = *thrc_res2;
   incr_val = 0;
 
-  for(int i=0; i < (int)(ch_out/0.8) >> 2; i++)
+  for(int i=0; i < CHANS_DECOMPR(ch_out) >> 2; i++)
   {
     uint8_t *pB = pIn;
     uint8_t *pB2 = (pB + num_col_im2col_a);
@@ -202,7 +202,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
 
   // leftover part : the hotloop above produces 4N output channels. If out_ch not divisible
   // by 4, the remaining output channels are computed below
-  int out_ch_left = (int)(ch_out/0.8) & 0x3;
+  int out_ch_left = CHANS_DECOMPR(ch_out) & 0x3;
 
   if (out_ch_left == 1)
   {

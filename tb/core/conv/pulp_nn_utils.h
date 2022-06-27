@@ -28,6 +28,8 @@
 
 #define MemoryFence()                                        asm volatile("":::"memory")
 
+#define CHANS_DECOMPR(x)                                     (5*x >> 2) // equivalent to division by 0.8
+
 #define CompressedMAC(sum, ptr, config) asm volatile(                \
     "pv.smlsdotp.t %[shum], %[phtr], %[chonfig];"                    \
     : [shum] "+r" (sum), [phtr] "+r" (ptr): [chonfig] "I" (config))
