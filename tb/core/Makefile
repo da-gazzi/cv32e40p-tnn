@@ -559,9 +559,38 @@ conv-veri-run: verilate conv/test.hex
 		"+firmware=conv/test.hex"
 
 
+# Convolution stats test
+convstats/test.elf: convstats/test_stats_ternary.c
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imfc_xpulphwloop_xpulpnn_xpulptnn -o $@ -w -O3 -g -nostdlib \
+		-T convstats/link.ld  \
+		-static \
+		convstats/crt0.S \
+		$^ convstats/syscalls.c convstats/vectors.S \
+		-I $(RISCV)/riscv32-unknown-elf/include -I convstats\
+		-L $(RISCV)/riscv32-unknown-elf/lib \
+		-lc -lm -lgcc \
+		-DNUM_CORES=1
+convstats-clean:
+	rm -rf convstats/test.elf convstats/test.hex
+
+.PHONY: convstats-vsim-run
+convstats-vsim-run: vsim-all convstats/test.hex
+convstats-vsim-run: ALL_VSIM_FLAGS += "+firmware=convstats/test.hex"
+convstats-vsim-run: vsim-run
+
+.PHONY: convstats-vsim-run-gui
+convstats-vsim-run-gui: vsim-all convstats/test.hex
+convstats-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=convstats/test.hex"
+convstats-vsim-run-gui: vsim-run-gui
+
+.PHONY: convstats-veri-run
+convstats-veri-run: verilate convstats/test.hex
+	./testbench_verilator $(VERI_FLAGS) \
+		"+firmware=convstats/test.hex"
+
 # general targets
 .PHONY: clean
-clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean thrc-clean hotloop-clean matmul-clean conv-clean
+clean: tb-clean verilate-clean vcs-clean firmware-clean csmith-clean custom-clean compmac-clean thrc-clean hotloop-clean matmul-clean conv-clean convstats-clean
 
 .PHONY: distclean
 distclean: clean

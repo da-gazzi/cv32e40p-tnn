@@ -1,0 +1,54 @@
+#ifndef ${data_h_incguard}
+#define ${data_h_incguard}
+
+// this file is generated automatically by the python script `generate_statstest.py`
+
+#define N_OUTPUTS ${max(params['ch_out'])*max(params['dim_out_x'])*max(params['dim_out_y'])*max(params['ch_in'])}
+
+// TODO: How to determine IM2COL_DIM? In DORY it is:
+// tk['im2col_dim'] = (8 * (fs1 * (tile_h_in + padding_bottom + padding_top) + fs1)) * int( 8 / min(ds_x, ds_y, ds_W))
+#define IM2COL_DIM 100
+
+uint8_t ${weight_varname} [] = {
+% for i, d in enumerate(weights):
+${f"0x{d:02x}"+("," if i != weights.numel()-1 else "")}
+% endfor
+};
+
+uint8_t ${weight_c_varname} [] = {
+% for i, d in enumerate(weights_c):
+${f"0x{d:02x}"+("," if i != weights_c.numel()-1 else "")}
+% endfor
+};
+
+uint8_t ${inp_varname} [] = {
+% for i, d in enumerate(acts):
+${f"0x{d:02x}"+("," if i != acts.numel()-1 else "")}
+% endfor
+};
+
+uint8_t ${inp_c_varname} [] = {
+% for i, d in enumerate(acts_c):
+${f"0x{d:02x}"+("," if i != acts_c.numel()-1 else "")}
+% endfor
+};
+
+int32_t ${kappa_varname} [] = {
+% for i, d in enumerate(kappa):
+${f"{int(d.data)}"+("," if i != kappa.numel()-1 else "")}
+% endfor
+};
+
+int32_t ${lambda_varname} [] = {
+% for i, d in enumerate(lambdax):
+${f"{int(d.data)}"+("," if i != lambdax.numel()-1 else "")}
+% endfor
+};
+
+uint32_t ${thr_varname} [] = {
+% for i, d in enumerate(thr):
+${f"0x{d}"+("," if i != thr.size-1 else "")}
+% endfor
+};
+
+#endif
