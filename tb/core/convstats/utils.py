@@ -16,7 +16,7 @@ def getbinary(x, n):
 def pack_crumbs(t):
     # append zeros at the end of the tensor to make its number of elements divisible by 4
     if t.numel()%4 != 0:
-        t = torch.cat((t, torch.zeros(4-t.numel()%4)))
+        t = torch.cat((t.reshape(-1,), torch.zeros(4-t.numel()%4)))
     tmp = t.reshape(-1, 4)
     tmp = torch.where(tmp < 0, tmp+4, tmp).data
     packed = []

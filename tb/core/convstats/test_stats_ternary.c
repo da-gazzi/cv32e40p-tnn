@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
   pOut = outputs;
   pIm2ColBuffer = im2col;
 
-
+    
   /****** TEST 0 ******/
   pBias = NULL;
   dim_in_x = 8;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 
 
 
-
+    
   /****** TEST 1 ******/
   pBias = NULL;
   dim_in_x = 16;
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 
 
 
-
+    
   /****** TEST 2 ******/
   pBias = NULL;
   dim_in_x = 32;
