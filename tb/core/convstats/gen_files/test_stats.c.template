@@ -53,10 +53,7 @@ int main(int argc, char *argv[])
   uint8_t flag_batch_norm = 1;
 % endif
 
-  uint8_t outputs[N_OUTPUTS] = {0};
   uint8_t im2col[IM2COL_DIM] = {0};
-
-  pOut = outputs;
   pIm2ColBuffer = im2col;
 
   % for idx in range(n_tests):
@@ -99,6 +96,9 @@ int main(int argc, char *argv[])
   padding_x_right = ${params['padding_x'][idx]};
   stride_x = ${params['stride_x'][idx]};
   stride_y = ${params['stride_y'][idx]};
+
+  uint8_t outputs_${idx}[${params['ch_out_compressed'][idx]*params['dim_out_x'][idx]*params['dim_out_y'][idx]//4}] = {0};
+  pOut = outputs_${idx};
 
 % if ternary_test:
   printf("===> TEST ${idx}: Running xpulp_nn_conv_ternary...\n");

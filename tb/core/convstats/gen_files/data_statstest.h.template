@@ -3,8 +3,6 @@
 
 // this file is generated automatically by the python script `generate_statstest.py`
 
-#define N_OUTPUTS ${max(params['ch_out'])*max(params['dim_out_x'])*max(params['dim_out_y'])*max(params['ch_in'])}
-
 // TODO: How to determine IM2COL_DIM? In DORY it is:
 // tk['im2col_dim'] = (8 * (fs1 * (tile_h_in + padding_bottom + padding_top) + fs1)) * int( 8 / min(ds_x, ds_y, ds_W))
 #define IM2COL_DIM 100

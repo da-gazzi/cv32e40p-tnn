@@ -29,10 +29,7 @@ int main(int argc, char *argv[])
   uint16_t stride_x;
   uint16_t stride_y;
 
-  uint8_t outputs[N_OUTPUTS] = {0};
   uint8_t im2col[IM2COL_DIM] = {0};
-
-  pOut = outputs;
   pIm2ColBuffer = im2col;
 
     
@@ -53,19 +50,19 @@ int main(int argc, char *argv[])
   stride_x = 1;
   stride_y = 1;
 
+  uint8_t outputs_0[256] = {0};
+  pOut = outputs_0;
+
   printf("===> TEST 0: Running xpulp_nn_conv_ternary...\n");
-  printf("  dim_in_x     = [%d]\n", dim_in_x);
-  printf("  dim_in_y     = [%d]\n", dim_in_y);
-  printf("  ch_in        = [%d]\n", ch_in);
-  printf("  ch_out       = [%d]\n", ch_out);
-  printf("  dim_kernel_x = [%d]\n", dim_kernel_x);
-  printf("  dim_kernel_y = [%d]\n", dim_kernel_y);
-  printf("  padding_y_top    = [%d]\n", padding_y_top);
-  printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
-  printf("  padding_x_left   = [%d]\n", padding_x_left);
-  printf("  padding_x_right  = [%d]\n", padding_x_right);
-  printf("  stride_x         = [%d]\n", stride_x);
-  printf("  stride_y         = [%d]\n", stride_y);
+  printf("  dims_in     = [%d, %d]\n", dim_in_x, dim_in_y);
+  printf("  ch_in/out   = [%d, %d]\n", ch_in, ch_out);
+  printf("  dims_kernel = [%d, %d]\n", dim_kernel_x, dim_kernel_y);
+  //printf("  padding_y_top    = [%d]\n", padding_y_top);
+  //printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
+  //printf("  padding_x_left   = [%d]\n", padding_x_left);
+  //printf("  padding_x_right  = [%d]\n", padding_x_right);
+  //printf("  stride_x         = [%d]\n", stride_x);
+  //printf("  stride_y         = [%d]\n", stride_y);
 
   xpulp_nn_conv_ternary(
     pIn_c,
@@ -111,19 +108,19 @@ int main(int argc, char *argv[])
   stride_x = 1;
   stride_y = 1;
 
+  uint8_t outputs_1[1024] = {0};
+  pOut = outputs_1;
+
   printf("===> TEST 1: Running xpulp_nn_conv_ternary...\n");
-  printf("  dim_in_x     = [%d]\n", dim_in_x);
-  printf("  dim_in_y     = [%d]\n", dim_in_y);
-  printf("  ch_in        = [%d]\n", ch_in);
-  printf("  ch_out       = [%d]\n", ch_out);
-  printf("  dim_kernel_x = [%d]\n", dim_kernel_x);
-  printf("  dim_kernel_y = [%d]\n", dim_kernel_y);
-  printf("  padding_y_top    = [%d]\n", padding_y_top);
-  printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
-  printf("  padding_x_left   = [%d]\n", padding_x_left);
-  printf("  padding_x_right  = [%d]\n", padding_x_right);
-  printf("  stride_x         = [%d]\n", stride_x);
-  printf("  stride_y         = [%d]\n", stride_y);
+  printf("  dims_in     = [%d, %d]\n", dim_in_x, dim_in_y);
+  printf("  ch_in/out   = [%d, %d]\n", ch_in, ch_out);
+  printf("  dims_kernel = [%d, %d]\n", dim_kernel_x, dim_kernel_y);
+  //printf("  padding_y_top    = [%d]\n", padding_y_top);
+  //printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
+  //printf("  padding_x_left   = [%d]\n", padding_x_left);
+  //printf("  padding_x_right  = [%d]\n", padding_x_right);
+  //printf("  stride_x         = [%d]\n", stride_x);
+  //printf("  stride_y         = [%d]\n", stride_y);
 
   xpulp_nn_conv_ternary(
     pIn_c,
@@ -169,19 +166,19 @@ int main(int argc, char *argv[])
   stride_x = 1;
   stride_y = 1;
 
+  uint8_t outputs_2[4096] = {0};
+  pOut = outputs_2;
+
   printf("===> TEST 2: Running xpulp_nn_conv_ternary...\n");
-  printf("  dim_in_x     = [%d]\n", dim_in_x);
-  printf("  dim_in_y     = [%d]\n", dim_in_y);
-  printf("  ch_in        = [%d]\n", ch_in);
-  printf("  ch_out       = [%d]\n", ch_out);
-  printf("  dim_kernel_x = [%d]\n", dim_kernel_x);
-  printf("  dim_kernel_y = [%d]\n", dim_kernel_y);
-  printf("  padding_y_top    = [%d]\n", padding_y_top);
-  printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
-  printf("  padding_x_left   = [%d]\n", padding_x_left);
-  printf("  padding_x_right  = [%d]\n", padding_x_right);
-  printf("  stride_x         = [%d]\n", stride_x);
-  printf("  stride_y         = [%d]\n", stride_y);
+  printf("  dims_in     = [%d, %d]\n", dim_in_x, dim_in_y);
+  printf("  ch_in/out   = [%d, %d]\n", ch_in, ch_out);
+  printf("  dims_kernel = [%d, %d]\n", dim_kernel_x, dim_kernel_y);
+  //printf("  padding_y_top    = [%d]\n", padding_y_top);
+  //printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
+  //printf("  padding_x_left   = [%d]\n", padding_x_left);
+  //printf("  padding_x_right  = [%d]\n", padding_x_right);
+  //printf("  stride_x         = [%d]\n", stride_x);
+  //printf("  stride_y         = [%d]\n", stride_y);
 
   xpulp_nn_conv_ternary(
     pIn_c,
@@ -211,3 +208,4 @@ int main(int argc, char *argv[])
 
   return EXIT_SUCCESS;
 }
+
