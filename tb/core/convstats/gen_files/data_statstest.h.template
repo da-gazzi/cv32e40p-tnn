@@ -7,7 +7,7 @@
 // tk['im2col_dim'] = (8 * (fs1 * (tile_h_in + padding_bottom + padding_top) + fs1)) * int( 8 / min(ds_x, ds_y, ds_W))
 #define IM2COL_DIM 100
 
-uint8_t ${weight_varname} [] = {
+int8_t ${weight_varname} [] = {
 % for i, d in enumerate(weights):
 ${f"0x{d:02x}"+("," if i != weights.numel()-1 else "")}
 % endfor

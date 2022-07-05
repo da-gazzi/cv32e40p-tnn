@@ -560,6 +560,7 @@ conv-veri-run: verilate conv/test.hex
 
 
 # Convolution stats test
+# $(RISCV_EXE_PREFIX)gcc -march=rv32imfcXpulpnn -o $@ -w -O3 -g -nostdlib
 convstats/test.elf: convstats/test_stats_ternary.c
 	$(RISCV_EXE_PREFIX)gcc -march=rv32imfc_xpulphwloop_xpulpnn_xpulptnn -o $@ -w -O3 -g -nostdlib \
 		-T convstats/link.ld  \

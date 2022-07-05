@@ -132,4 +132,35 @@ static void __attribute__((noinline)) xpulp_nn_zero_mem_ternary(uint8_t * pBuffe
   }
 }
 
+#define MacLoadInit(a_update, b_update, a_reg, b_reg, ptr)      __builtin_pulp_mlinitspr_v3(a_update, b_update, a_reg, b_reg, ptr)
+#define MacLoadUpdate(ptr)                                      __builtin_pulp_mlupdatespr_v3(ptr)
+
+#define clip2(x)                                                __builtin_pulp_clipu_r(x, 3)
+#define MacLoad16(a_update, b_update, a_reg, b_reg, ptr, sum)   __builtin_pulp_mlsdotsup16_v3(a_update, b_update, a_reg, b_reg, ptr, sum)
+#define bitins(dst,not_mask_imm,src,mask_imm,off)               __builtin_pulp_binsert(dst,not_mask_imm,src,mask_imm,off)
+
+static uint8_t __attribute__((noinline)) pulp_nn_quant_u2 (
+  int32_t phi,
+  int16_t m,
+  int8_t d
+  ) {
+  int32_t x = (m * phi) >> d;
+  uint8_t res = clip2(x);
+  return res;
+}
+static uint8_t __attribute__((noinline)) pulp_nn_bn_quant_u2 (
+  int32_t phi,
+  int32_t k,
+  int32_t lambda,
+  int8_t d
+  ) {
+  int32_t integer_image_phi = (k * phi) + lambda;
+  int32_t x = (integer_image_phi) >> d;
+  uint8_t res = clip2(x);
+  return res;
+}
+
+#define bitext(x,size,off)                                      __builtin_pulp_bextract(x,size,off)
+#define bitextu(x,size,off)                                     __builtin_pulp_bextractu(x,size,off)
+
 #endif

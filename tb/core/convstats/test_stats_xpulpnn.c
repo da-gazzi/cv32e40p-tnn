@@ -2,14 +2,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "data_statstest.h"
-% if ternary_test:
-#include "matmul_ternary.h"
-#include "matmul_ternary_4x1.h"
-#include "conv_ternary.h"
-% else:
 #include "xpulp_nn_matmul_u2_u2_i2.h"
 #include "xpulp_nn_conv_u2_u2_i2.h"
-% endif
 
 int main(int argc, char *argv[])
 {
@@ -18,29 +12,16 @@ int main(int argc, char *argv[])
   int8_t *pBias;
   uint8_t *pOut;
   //int8_t *pWeight; -> in data_statstest.h
-% if not ternary_test:
   //int32_t *pKappa; -> in data_statstest.h
   //int32_t *pLambda; -> in data_statstest.h
   uint16_t out_mult;
   uint16_t out_shift;
-% endif
-% if ternary_test:
-  //uint32_t *pThr; -> in data_statstest.h
-% endif
   uint16_t dim_in_x;
   uint16_t dim_in_y;
-% if ternary_test:
   uint16_t ch_in;
-% else:
-  uint16_t ch_in;
-% endif
   uint16_t dim_out_x;
   uint16_t dim_out_y;
-% if ternary_test:
   uint16_t ch_out;
-% else:
-  uint16_t ch_out;
-% endif
   uint16_t dim_kernel_x;
   uint16_t dim_kernel_y;
   uint16_t padding_y_top;
@@ -49,95 +30,36 @@ int main(int argc, char *argv[])
   uint16_t padding_x_right;
   uint16_t stride_x;
   uint16_t stride_y;
-% if not ternary_test:
   uint8_t flag_relu = 1;
   uint8_t flag_batch_norm = 1;
-% endif
 
   uint8_t im2col[IM2COL_DIM] = {0};
   pIm2ColBuffer = im2col;
 
-  % for idx in range(n_tests):
-    ${conv_instance(idx, ternary_test)}
-
-
-  % endfor
-  % if ternary_test:
-  return EXIT_SUCCESS;
-  % else:
-  return 0;
-  % endif
-}
-<%def name="conv_instance(idx, ternary_test)">
-  /****** TEST ${idx} ******/
+    
+  /****** TEST 0 ******/
   pBias = NULL;
-% if not ternary_test:
   out_mult = 1;
   out_shift = 1;
-% endif
-  dim_in_x = ${params['dim_in_x'][idx]};
-  dim_in_y = ${params['dim_in_y'][idx]};
-% if ternary_test:
-  ch_in = ${params['ch_in_compressed'][idx]};
-% else:
-  ch_in = ${params['ch_in'][idx]};
-% endif
-  dim_out_x = ${params['dim_out_x'][idx]};
-  dim_out_y = ${params['dim_out_y'][idx]};
-% if ternary_test:
-  ch_out = ${params['ch_out_compressed'][idx]};
-% else:
-  ch_out = ${params['ch_out'][idx]};
-% endif
-  dim_kernel_x = ${params['dim_kernel_x'][idx]};
-  dim_kernel_y = ${params['dim_kernel_y'][idx]};
-  padding_y_top = ${params['padding_y'][idx]};
-  padding_y_bottom = ${params['padding_y'][idx]};
-  padding_x_left = ${params['padding_x'][idx]};
-  padding_x_right = ${params['padding_x'][idx]};
-  stride_x = ${params['stride_x'][idx]};
-  stride_y = ${params['stride_y'][idx]};
+  dim_in_x = 8;
+  dim_in_y = 8;
+  ch_in = 20;
+  dim_out_x = 8;
+  dim_out_y = 8;
+  ch_out = 20;
+  dim_kernel_x = 3;
+  dim_kernel_y = 3;
+  padding_y_top = 1;
+  padding_y_bottom = 1;
+  padding_x_left = 1;
+  padding_x_right = 1;
+  stride_x = 1;
+  stride_y = 1;
 
-  uint8_t outputs_${idx}[${params['ch_out_compressed'][idx]*params['dim_out_x'][idx]*params['dim_out_y'][idx]//4}] = {0};
-  pOut = outputs_${idx};
+  uint8_t outputs_0[256] = {0};
+  pOut = outputs_0;
 
-% if ternary_test:
-  printf("===> TEST ${idx}: Running xpulp_nn_conv_ternary...\n");
-  printf("  dims_in     = [%d, %d]\n", dim_in_x, dim_in_y);
-  printf("  ch_in/out   = [%d, %d]\n", ch_in, ch_out);
-  printf("  dims_kernel = [%d, %d]\n", dim_kernel_x, dim_kernel_y);
-  //printf("  padding_y_top    = [%d]\n", padding_y_top);
-  //printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
-  //printf("  padding_x_left   = [%d]\n", padding_x_left);
-  //printf("  padding_x_right  = [%d]\n", padding_x_right);
-  //printf("  stride_x         = [%d]\n", stride_x);
-  //printf("  stride_y         = [%d]\n", stride_y);
-
-  xpulp_nn_conv_ternary(
-    pIn_c,
-    pIm2ColBuffer,
-    pBias,
-    pOut,
-    pWeight_c,
-    pThr,
-    dim_in_x,
-    dim_in_y,
-    ch_in,
-    dim_out_x,
-    dim_out_y,
-    ch_out,
-    dim_kernel_x,
-    dim_kernel_y,
-    padding_y_top,
-    padding_y_bottom,
-    padding_x_left,
-    padding_x_right,
-    stride_x,
-    stride_y
-  );
-  printf("===> TEST ${idx}: Finished running xpulp_nn_conv_ternary\n");
-% else:
-  printf("===> TEST ${idx}: Running xpulp_nn_conv_ternary...\n");
+  printf("===> TEST 0: Running xpulp_nn_conv_ternary...\n");
   printf("  dims_in     = [%d, %d]\n", dim_in_x, dim_in_y);
   printf("  ch_in/out   = [%d, %d]\n", ch_in, ch_out);
   printf("  dims_kernel = [%d, %d]\n", dim_kernel_x, dim_kernel_y);
@@ -175,6 +97,140 @@ int main(int argc, char *argv[])
     flag_relu,
     flag_batch_norm
   );
-  printf("===> TEST ${idx}: Finished running xpulp_nn_conv_u2_u2_i2\n");
-% endif
-</%def>
+  printf("===> TEST 0: Finished running xpulp_nn_conv_u2_u2_i2\n");
+
+
+
+    
+  /****** TEST 1 ******/
+  pBias = NULL;
+  out_mult = 1;
+  out_shift = 1;
+  dim_in_x = 16;
+  dim_in_y = 16;
+  ch_in = 20;
+  dim_out_x = 16;
+  dim_out_y = 16;
+  ch_out = 20;
+  dim_kernel_x = 3;
+  dim_kernel_y = 3;
+  padding_y_top = 1;
+  padding_y_bottom = 1;
+  padding_x_left = 1;
+  padding_x_right = 1;
+  stride_x = 1;
+  stride_y = 1;
+
+  uint8_t outputs_1[1024] = {0};
+  pOut = outputs_1;
+
+  printf("===> TEST 1: Running xpulp_nn_conv_ternary...\n");
+  printf("  dims_in     = [%d, %d]\n", dim_in_x, dim_in_y);
+  printf("  ch_in/out   = [%d, %d]\n", ch_in, ch_out);
+  printf("  dims_kernel = [%d, %d]\n", dim_kernel_x, dim_kernel_y);
+  //printf("  padding_y_top    = [%d]\n", padding_y_top);
+  //printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
+  //printf("  padding_x_left   = [%d]\n", padding_x_left);
+  //printf("  padding_x_right  = [%d]\n", padding_x_right);
+  //printf("  stride_x         = [%d]\n", stride_x);
+  //printf("  stride_y         = [%d]\n", stride_y);
+
+  xpulp_nn_conv_u2_u2_i2(
+    pIn,
+    pIm2ColBuffer,
+    pBias,
+    pOut,
+    pWeight,
+    pKappa,
+    pLambda,
+    out_mult,
+    out_shift,
+    dim_in_x,
+    dim_in_y,
+    ch_in,
+    dim_out_x,
+    dim_out_y,
+    ch_out,
+    dim_kernel_x,
+    dim_kernel_y,
+    padding_y_top,
+    padding_y_bottom,
+    padding_x_left,
+    padding_x_right,
+    stride_x,
+    stride_y,
+    flag_relu,
+    flag_batch_norm
+  );
+  printf("===> TEST 1: Finished running xpulp_nn_conv_u2_u2_i2\n");
+
+
+
+    
+  /****** TEST 2 ******/
+  pBias = NULL;
+  out_mult = 1;
+  out_shift = 1;
+  dim_in_x = 32;
+  dim_in_y = 32;
+  ch_in = 20;
+  dim_out_x = 32;
+  dim_out_y = 32;
+  ch_out = 20;
+  dim_kernel_x = 3;
+  dim_kernel_y = 3;
+  padding_y_top = 1;
+  padding_y_bottom = 1;
+  padding_x_left = 1;
+  padding_x_right = 1;
+  stride_x = 1;
+  stride_y = 1;
+
+  uint8_t outputs_2[4096] = {0};
+  pOut = outputs_2;
+
+  printf("===> TEST 2: Running xpulp_nn_conv_ternary...\n");
+  printf("  dims_in     = [%d, %d]\n", dim_in_x, dim_in_y);
+  printf("  ch_in/out   = [%d, %d]\n", ch_in, ch_out);
+  printf("  dims_kernel = [%d, %d]\n", dim_kernel_x, dim_kernel_y);
+  //printf("  padding_y_top    = [%d]\n", padding_y_top);
+  //printf("  padding_y_bottom = [%d]\n", padding_y_bottom);
+  //printf("  padding_x_left   = [%d]\n", padding_x_left);
+  //printf("  padding_x_right  = [%d]\n", padding_x_right);
+  //printf("  stride_x         = [%d]\n", stride_x);
+  //printf("  stride_y         = [%d]\n", stride_y);
+
+  xpulp_nn_conv_u2_u2_i2(
+    pIn,
+    pIm2ColBuffer,
+    pBias,
+    pOut,
+    pWeight,
+    pKappa,
+    pLambda,
+    out_mult,
+    out_shift,
+    dim_in_x,
+    dim_in_y,
+    ch_in,
+    dim_out_x,
+    dim_out_y,
+    ch_out,
+    dim_kernel_x,
+    dim_kernel_y,
+    padding_y_top,
+    padding_y_bottom,
+    padding_x_left,
+    padding_x_right,
+    stride_x,
+    stride_y,
+    flag_relu,
+    flag_batch_norm
+  );
+  printf("===> TEST 2: Finished running xpulp_nn_conv_u2_u2_i2\n");
+
+
+
+  return 0;
+}
+
