@@ -1,5 +1,5 @@
 package:
-  name: riscv
+  name: riscv_nn
 
 dependencies:
   fpnew: { git: "https://github.com/pulp-platform/fpnew.git", version: 0.6.1 }
