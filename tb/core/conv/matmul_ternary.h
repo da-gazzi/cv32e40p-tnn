@@ -18,7 +18,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
 {
   uint16_t ch_out_r = PACK_INT2_SIZE(ch_out);
 
-  uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col); // in how many bytes do the activations fit?
+  uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col);
   uint16_t num_col_im2col_a = PACK_INT2_SIZE(num_col_im2col);
 
   uint8_t *pA = pWeight;
@@ -157,7 +157,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
       CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
-      CompressedMAC(sum4, pA4_p,  GetConfig(0, 0, 3, 0));
+      CompressedMAC(sum4, pA4_p, GetConfig(0, 0, 3, 0));
 
       CompressedMAC(sum5, pA_p,  GetConfig(0, 0, 0, 1));
       CompressedMAC(sum6, pA2_p, GetConfig(0, 0, 1, 1));
@@ -197,7 +197,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     {
       pA+=(3*num_col_im2col_w);
     }
-
   }
 
   // leftover part : the hotloop above produces 4N output channels. If out_ch not divisible
@@ -296,7 +295,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     {
       pA+=num_col_im2col_w;
     }
-
   }
   else if (out_ch_left == 2)
   {
@@ -420,7 +418,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     {
       pA+=num_col_im2col_w;
     }
-
   }
   else if (out_ch_left == 3)
   {
@@ -567,7 +564,6 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     {
       pA+=(2*num_col_im2col_w);
     }
-
   }
 
   *thrc_res1 = res1;
@@ -576,4 +572,5 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   pOut+=incr_val; // ch_out_r if a store was performed, else 0
   return pOut;
 }
+
 

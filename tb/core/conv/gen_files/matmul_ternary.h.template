@@ -4,29 +4,46 @@
 
 
 // TODO: review argument order
+% if kernel_type=='4x1':
+uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
+% elif kernel_type=='4x2':
 uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
+% endif
                         uint8_t  *pIn,
                         int8_t   *pBias,
                         uint32_t *pThr,
+% if kernel_type=='4x1':
+                        uint8_t  *pOut,
+% elif kernel_type=='4x2':
                         uint8_t  *pOut,
                         uint8_t  *pOut2,
+% endif
                         uint8_t  *pWeight,
                         uint16_t num_col_im2col,
                         uint16_t ch_out,
+% if kernel_type=='4x1':
+                        uint32_t *thrc_res)
+% elif kernel_type=='4x2':
                         uint32_t *thrc_res1,
                         uint32_t *thrc_res2)
+% endif
 {
   uint16_t ch_out_r = PACK_INT2_SIZE(ch_out);
 
-  uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col); // in how many bytes do the activations fit?
+  uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col);
   uint16_t num_col_im2col_a = PACK_INT2_SIZE(num_col_im2col);
 
   uint8_t *pA = pWeight;
   uint32_t *currThr = pThr;
 
+% if kernel_type=='4x1':
+  int res, incr_val;
+  res = *thrc_res;
+% elif kernel_type=='4x2':
   int res1, res2, incr_val;
   res1 = *thrc_res1;
   res2 = *thrc_res2;
+% endif
   incr_val = 0;
 
   for(int i=0; i < CHANS_DECOMPR(ch_out) >> 2; i++)
@@ -43,19 +60,29 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   else if (out_ch_left == 3)
   {${bigblock(3)}  }
 
+% if kernel_type=='4x1':
+  *thrc_res = res;
+% elif kernel_type=='4x2':
   *thrc_res1 = res1;
   *thrc_res2 = res2;
+% endif
 
   pOut+=incr_val; // ch_out_r if a store was performed, else 0
   return pOut;
 }
 
 <%def name="bigblock(n_acts)">
+  % if kernel_type=='4x1':
+    uint8_t *pB = pIn;
+
+    uint32_t *ptrB  = (uint32_t *) pB;
+  % elif kernel_type=='4x2':
     uint8_t *pB = pIn;
     uint8_t *pB2 = (pB + num_col_im2col_a);
 
     uint32_t *ptrB  = (uint32_t *) pB;
     uint32_t *ptrB2 = (uint32_t *) pB2;
+  % endif
 
   % if n_acts==4:
     uint8_t *pA2 = (pA + num_col_im2col_w);
@@ -95,9 +122,17 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
 
     InitNNRF(ptrA,  GetConfig(1, 0, 0, 0));
   % endif
+  % if kernel_type=='4x2':
     InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+  % endif
 
   % if n_acts==4:
+    % if kernel_type=='4x1':
+    int sum = 0;
+    int sum2 = 0;
+    int sum3 = 0;
+    int sum4 = 0;
+    % elif kernel_type=='4x2':
     int sum = 0;
     int sum2 = 0;
     int sum3 = 0;
@@ -106,21 +141,37 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     int sum6 = 0;
     int sum7 = 0;
     int sum8 = 0;
+    % endif
   % elif n_acts==3:
+    % if kernel_type=='4x1':
+    int sum = 0;
+    int sum2 = 0;
+    int sum3 = 0;
+    % elif kernel_type=='4x2':
     int sum = 0;
     int sum2 = 0;
     int sum3 = 0;
     int sum4 = 0;
     int sum5 = 0;
     int sum6 = 0;
+    % endif
   % elif n_acts==2:
+    % if kernel_type=='4x1':
+    int sum = 0;
+    int sum2 = 0;
+    % elif kernel_type=='4x2':
     int sum = 0;
     int sum2 = 0;
     int sum3 = 0;
     int sum4 = 0;
+    % endif
   % elif n_acts==1:
+    % if kernel_type=='4x1':
+    int sum = 0;
+    % elif kernel_type=='4x2':
     int sum = 0;
     int sum2 = 0;
+    % endif
   % endif
 
     if (pBias != NULL)
@@ -130,36 +181,54 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       sum2 = ((int) (*pBias++));
       sum3 = ((int) (*pBias++));
       sum4 = ((int) (*pBias++));
+    % if kernel_type=='4x2':
 
       sum5 = sum;
       sum6 = sum2;
       sum7 = sum3;
       sum8 = sum4;
+    % endif
   % elif n_acts==3:
       sum = ((int) (*pBias++));
       sum2 = ((int) (*pBias++));
       sum3 = ((int) (*pBias++));
+    % if kernel_type=='4x2':
 
       sum4 = sum;
       sum5 = sum2;
       sum6 = sum3;
+    % endif
   % elif n_acts==2:
       sum = ((int) (*pBias++));
       sum2 = ((int) (*pBias++));
+    % if kernel_type=='4x2':
 
       sum3 = sum;
       sum4 = sum2;
+    % endif
   % elif n_acts==1:
       sum = ((int) (*pBias++));
+    % if kernel_type=='4x2':
       sum2 = sum;
+    % endif
   % endif
     }
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
+  % if kernel_type=='4x1':
+      InitNNRF(ptrB, GetConfig(0, 1, 0, 0));
+  % elif kernel_type=='4x2':
       InitNNRF(ptrB2, GetConfig(0, 1, 0, 1));
+  % endif
 
   % if n_acts==4:
+    % if kernel_type=='4x1':
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
+      CompressedMAC(sum3, ptrA3, GetConfig(1, 0, 2, 0));
+      CompressedMAC(sum4, ptrA4, GetConfig(1, 0, 3, 0));
+    % elif kernel_type=='4x2':
       CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
       CompressedMAC(sum3, ptrA3, GetConfig(0, 0, 2, 0));
@@ -169,7 +238,13 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       CompressedMAC(sum6, ptrA2, GetConfig(1, 0, 1, 1));
       CompressedMAC(sum7, ptrA3, GetConfig(1, 0, 2, 1));
       CompressedMAC(sum8, ptrA4, GetConfig(1, 0, 3, 1));
+    % endif
   % elif n_acts==3:
+    % if kernel_type=='4x1':
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
+      CompressedMAC(sum3, ptrA3, GetConfig(1, 0, 2, 0));
+    % elif kernel_type=='4x2':
       CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, ptrA2, GetConfig(0, 0, 1, 0));
       CompressedMAC(sum3, ptrB,  GetConfig(0, 1, 2, 0));
@@ -177,15 +252,25 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
       CompressedMAC(sum4, ptrA,  GetConfig(1, 0, 0, 1));
       CompressedMAC(sum5, ptrA2, GetConfig(1, 0, 1, 1));
       CompressedMAC(sum6, ptrA3, GetConfig(1, 0, 2, 1));
+    % endif
   % elif n_acts==2:
+    % if kernel_type=='4x1':
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
+      CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
+    % elif kernel_type=='4x2':
       CompressedMAC(sum,  ptrA,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, ptrB,  GetConfig(0, 1, 1, 0));
 
       CompressedMAC(sum4, ptrA,  GetConfig(1, 0, 0, 1));
       CompressedMAC(sum4, ptrA2, GetConfig(1, 0, 1, 1));
+    % endif
   % elif n_acts==1:
+    % if kernel_type=='4x1':
+      CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
+    % elif kernel_type=='4x2':
       CompressedMAC(sum,  ptrB,  GetConfig(0, 1, 0, 0));
       CompressedMAC(sum2, ptrA,  GetConfig(1, 0, 0, 1));
+    % endif
   % endif
     }
 
@@ -212,16 +297,34 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
 
       uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2;
       pB+=loop_cnt_im2col_a;
+  % if kernel_type=='4x2':
       pB2+=loop_cnt_im2col_a;
+  % endif
 
   % if n_acts==4:
+    % if kernel_type=='4x1':
+      volatile uint32_t valA, valA2, valA3, valA4, valB;
+    % elif kernel_type=='4x2':
       volatile uint32_t valA, valA2, valA3, valA4, valB, valB2;
+    % endif
   % elif n_acts==3:
+    % if kernel_type=='4x1':
+      volatile uint32_t valA, valA2, valA3, valB;
+    % elif kernel_type=='4x2':
       volatile uint32_t valA, valA2, valA3, valB, valB2;
+    % endif
   % elif n_acts==2:
+    % if kernel_type=='4x1':
+      volatile uint32_t valA, valA2, valB;
+    % elif kernel_type=='4x2':
       volatile uint32_t valA, valA2, valB, valB2;
+    % endif
   % elif n_acts==1:
+    % if kernel_type=='4x1':
+      volatile uint32_t valA, valB;
+    % elif kernel_type=='4x2':
       volatile uint32_t valA, valB, valB2;
+    % endif
   % endif
       // pack the remaining weights and activations into 32-bit vectors
       // padding with 0xd9 because ternary_decoder(0xd9) = 0000000000
@@ -244,7 +347,9 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   % endif
 
         valB = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB;
+  % if kernel_type=='4x2':
         valB2 = 0xd9 << 24 | 0xd9 << 16 | 0xd9 << 8 | *pB2;
+  % endif
       }
       else if (col_cnt_im2col == 8)
       {
@@ -265,7 +370,9 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   % endif
 
         valB = 0xd9 << 24 | 0xd9 << 16 | *(pB + 1) << 8 | *pB;
+  % if kernel_type=='4x2':
         valB2 = 0xd9 << 24 | 0xd9 << 16 | *(pB2 + 1) << 8 | *pB2;
+  % endif
       }
       else // col_cnt_im2col == 12
       {
@@ -286,7 +393,9 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   % endif
 
         valB = 0xd9 << 24 | *(pA + 2) << 16 | *(pB + 1) << 8 | *pB;
+  % if kernel_type=='4x2':
         valB2 = 0xd9 << 24 | *(pA + 2) << 16 | *(pB2 + 1) << 8 | *pB2;
+  % endif
       }
       pA += PACK_INT2_SIZE(col_cnt_im2col);
 
@@ -307,7 +416,9 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   % endif
 
       uint32_t *pB_p = &valB;
+  % if kernel_type=='4x2':
       uint32_t *pB2_p = &valB2;
+  % endif
 
   % if n_acts==4:
       InitNNRF(pA_p,  GetConfig(1, 0, 0, 0));
@@ -326,40 +437,67 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
   % endif
 
       InitNNRF(pB_p,  GetConfig(0, 1, 0, 0));
+  % if kernel_type=='4x2':
       InitNNRF(pB2_p, GetConfig(0, 1, 0, 1));
+  % endif
 
   % if n_acts==4:
       CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
       CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
-      CompressedMAC(sum4, pA4_p,  GetConfig(0, 0, 3, 0));
+      CompressedMAC(sum4, pA4_p, GetConfig(0, 0, 3, 0));
+    % if kernel_type=='4x2':
 
       CompressedMAC(sum5, pA_p,  GetConfig(0, 0, 0, 1));
       CompressedMAC(sum6, pA2_p, GetConfig(0, 0, 1, 1));
       CompressedMAC(sum7, pA3_p, GetConfig(0, 0, 2, 1));
       CompressedMAC(sum8, pA4_p, GetConfig(0, 0, 3, 1));
+    % endif
   % elif n_acts==3:
       CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
       CompressedMAC(sum3, pA3_p, GetConfig(0, 0, 2, 0));
+    % if kernel_type=='4x2':
 
       CompressedMAC(sum4, pA_p,  GetConfig(0, 0, 0, 1));
       CompressedMAC(sum5, pA2_p, GetConfig(0, 0, 1, 1));
       CompressedMAC(sum6, pA3_p, GetConfig(0, 0, 2, 1));
+    % endif
   % elif n_acts==2:
       CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
       CompressedMAC(sum2, pA2_p, GetConfig(0, 0, 1, 0));
+    % if kernel_type=='4x2':
 
       CompressedMAC(sum3, pA_p,  GetConfig(0, 0, 0, 1));
       CompressedMAC(sum4, pA2_p, GetConfig(0, 0, 1, 1));
+    % endif
   % elif n_acts==1:
       CompressedMAC(sum,  pA_p,  GetConfig(0, 0, 0, 0));
+    % if kernel_type=='4x2':
 
       CompressedMAC(sum2, pA_p,  GetConfig(0, 0, 0, 1));
+    % endif
   % endif
     }
 
   % if n_acts==4:
+    % if kernel_type=='4x1':
+    ThresholdCompress(res, sum, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+
+    ThresholdCompress(res, sum2, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+
+    ThresholdCompress(res, sum3, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+
+    ThresholdCompress(res, sum4, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+    % elif kernel_type=='4x2':
     ThresholdCompress(res1, sum, *currThr);
     check_store(res1, pOut);
     ThresholdCompress(res2, sum5, *currThr++);
@@ -383,7 +521,21 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     ThresholdCompress(res2, sum8, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+    % endif
   % elif n_acts==3:
+    % if kernel_type=='4x1':
+    ThresholdCompress(res, sum, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+
+    ThresholdCompress(res, sum2, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+
+    ThresholdCompress(res, sum3, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+    % elif kernel_type=='4x2':
     ThresholdCompress(res1, sum, *currThr);
     check_store(res1, pOut);
     ThresholdCompress(res2, sum4, *currThr++);
@@ -401,7 +553,17 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     ThresholdCompress(res2, sum6, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+    % endif
   % elif n_acts==2:
+    % if kernel_type=='4x1':
+    ThresholdCompress(res, sum, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+
+    ThresholdCompress(res, sum2, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+    % elif kernel_type=='4x2':
     ThresholdCompress(res1, sum, *currThr);
     check_store(res1, pOut);
     ThresholdCompress(res2, sum3, *currThr++);
@@ -413,12 +575,19 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     ThresholdCompress(res2, sum4, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+    % endif
   % elif n_acts==1:
+    % if kernel_type=='4x1':
+    ThresholdCompress(res, sum, *currThr++);
+    check_store(res, pOut);
+    reset_currThr();
+    % elif kernel_type=='4x2':
     ThresholdCompress(res1, sum, *currThr);
     check_store(res1, pOut);
     ThresholdCompress(res2, sum2, *currThr++);
     check_store(res2, pOut2);
     reset_currThr();
+    % endif
   % endif
 
     if (!col_cnt_im2col)
@@ -439,5 +608,4 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary(
     % endif
     }
     % endif
-
 </%def>

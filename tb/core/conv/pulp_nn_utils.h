@@ -49,9 +49,9 @@
     pOut++;                               \
     incr_val=ch_out_r; }
 
-#define reset_currThr()                       \
-  if (currThr == pThr + (int)(ch_out/0.8)) {  \
-    currThr = pThr;                           \
+#define reset_currThr()                           \
+  if (currThr == pThr + CHANS_DECOMPR(ch_out)) {  \
+    currThr = pThr;                               \
   }
 
 typedef unsigned char  v4u __attribute__((vector_size (4)));
@@ -131,5 +131,10 @@ static void __attribute__((noinline)) xpulp_nn_zero_mem_ternary(uint8_t * pBuffe
     lfover-=4;
   }
 }
+
+#define start_cycle_counter()                                   asm volatile("csrw 0xCC0, 0x01;")
+#define stop_cycle_counter()                                    asm volatile("csrw 0xCC0, 0x00;")
+#define read_cycle_counter(x)                                   asm volatile("csrr %0, 0x780;" : "=r" (x))
+#define reset_cycle_counter()                                   asm volatile("csrw 0x780, 0x0;")
 
 #endif

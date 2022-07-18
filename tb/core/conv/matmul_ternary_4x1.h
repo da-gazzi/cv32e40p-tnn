@@ -16,7 +16,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 {
   uint16_t ch_out_r = PACK_INT2_SIZE(ch_out);
 
-  uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col); // in how many bytes do the activations fit?
+  uint16_t num_col_im2col_w = PACK_INT2_SIZE(num_col_im2col);
   uint16_t num_col_im2col_a = PACK_INT2_SIZE(num_col_im2col);
 
   uint8_t *pA = pWeight;
@@ -61,7 +61,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+      InitNNRF(ptrB, GetConfig(0, 1, 0, 0));
 
       CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
       CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
@@ -73,13 +73,13 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     if (col_cnt_im2col)
     {
-      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2; // is this correct?
+      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
       pA+=loop_cnt_im2col_w;
       pA2+=loop_cnt_im2col_w;
       pA3+=loop_cnt_im2col_w;
       pA4+=loop_cnt_im2col_w;
 
-      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2; // and this?
+      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2;
       pB+=loop_cnt_im2col_a;
 
       volatile uint32_t valA, valA2, valA3, valA4, valB;
@@ -183,7 +183,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+      InitNNRF(ptrB, GetConfig(0, 1, 0, 0));
 
       CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
     }
@@ -192,10 +192,10 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     if (col_cnt_im2col)
     {
-      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2; // is this correct?
+      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
       pA+=loop_cnt_im2col_w;
 
-      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2; // and this?
+      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2;
       pB+=loop_cnt_im2col_a;
 
       volatile uint32_t valA, valB;
@@ -266,7 +266,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+      InitNNRF(ptrB, GetConfig(0, 1, 0, 0));
 
       CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
       CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
@@ -276,11 +276,11 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     if (col_cnt_im2col)
     {
-      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2; // is this correct?
+      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
       pA+=loop_cnt_im2col_w;
       pA2+=loop_cnt_im2col_w;
 
-      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2; // and this?
+      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2;
       pB+=loop_cnt_im2col_a;
 
       volatile uint32_t valA, valA2, valB;
@@ -370,7 +370,7 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     for (int j=0; j<(num_col_im2col >> 4); j++)
     {
-      InitNNRF(ptrB,  GetConfig(0, 1, 0, 0));
+      InitNNRF(ptrB, GetConfig(0, 1, 0, 0));
 
       CompressedMAC(sum,  ptrA,  GetConfig(1, 0, 0, 0));
       CompressedMAC(sum2, ptrA2, GetConfig(1, 0, 1, 0));
@@ -381,12 +381,12 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
 
     if (col_cnt_im2col)
     {
-      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2; // is this correct?
+      uint16_t loop_cnt_im2col_w = (num_col_im2col >> 4) << 2;
       pA+=loop_cnt_im2col_w;
       pA2+=loop_cnt_im2col_w;
       pA3+=loop_cnt_im2col_w;
 
-      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2; // and this?
+      uint16_t loop_cnt_im2col_a = (num_col_im2col >> 4) << 2;
       pB+=loop_cnt_im2col_a;
 
       volatile uint32_t valA, valA2, valA3, valB;
@@ -462,4 +462,5 @@ uint8_t * __attribute__((noinline)) xpulp_nn_matmul_ternary_4x1(
   pOut+=incr_val; // ch_out_r if a store was performed, else 0
   return pOut;
 }
+
 

@@ -89,11 +89,11 @@ if __name__=='__main__':
 
     if args.kernel:
         tmpl_matmul = Template(filename="./gen_files/matmul_ternary.h.template")
-        s = tmpl_matmul.render()
+        s = tmpl_matmul.render(kernel_type='4x2')
         with open('./matmul_ternary.h', "w") as f:
             f.write(s)
 
-        tmpl_matmul = Template(filename="./gen_files/matmul_ternary_4x1.h.template")
-        s = tmpl_matmul.render()
+        tmpl_matmul = Template(filename="./gen_files/matmul_ternary.h.template")
+        s = tmpl_matmul.render(kernel_type='4x1')
         with open('./matmul_ternary_4x1.h', "w") as f:
             f.write(s)

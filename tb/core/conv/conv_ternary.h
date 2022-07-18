@@ -186,6 +186,9 @@ void __attribute__((noinline)) xpulp_nn_conv_ternary(
       ch_out,
       &thrc_res1
     );
+      // TODO: Do I need these?
+    //pOutBuffer+=(extra_chunk * ((dim_out_x_r + ((1 - section) * flag_dim_out_x_odd)) * ch_out_r));
+    //pIm2Col = pIm2ColBase;
   }
   //pi_cl_team_barrier(0);
 }
