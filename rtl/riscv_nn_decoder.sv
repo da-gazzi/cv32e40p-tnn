@@ -1351,6 +1351,7 @@ module riscv_nn_decoder
               if (TNN_EXTENSION == 1) begin
                 alu_operator_o = ALU_THRC;
                 regc_mux_o     = REGC_RD;
+                regc_used_o    = 1'b1;
               end else begin
                 illegal_insn_o = 1'b1;
               end
