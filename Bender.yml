@@ -41,6 +41,7 @@ sources:
     - rtl/ternary_decoder.sv
     - rtl/ternary_encoder.sv
     - rtl/threshold_compress.sv
+    - rtl/ternary_signed_to_unsigned.sv
     - target: synthesis
       files:
         - rtl/riscv_nn_register_file_latch.sv

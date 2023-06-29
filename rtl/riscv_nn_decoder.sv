@@ -2205,11 +2205,19 @@ module riscv_nn_decoder
         unique case( instr_rdata_i[14:12])
           3'b000: begin alu_vec_mode_o = VEC_MODE16; mult_operator_o = MUL_DOT16; regb_used_o = 1'b1; end
           3'b100: begin
-                    alu_vec_mode_o = VEC_MODE16;
-                    mult_operator_o = MUL_DOT16;
-                    scalar_replication_o = 1'b1;
-                    regb_used_o = 1'b1;
-                  end
+              mult_operator_o      = MUL_DOT16;
+              regb_used_o          = 1'b1;
+            if (instr_rdata_i[25]) begin
+              if (TNN_EXTENSION) begin
+                alu_vec_mode_o = VEC_MODE_TERN;
+              end else begin
+                illegal_insn_o = 1'b1;
+              end
+            end else begin
+              alu_vec_mode_o       = VEC_MODE16;
+              scalar_replication_o = 1'b1;
+            end
+          end // case: 3'b100
           3'b110: begin
                     alu_vec_mode_o = VEC_MODE16;
                     mult_operator_o = MUL_DOT16;

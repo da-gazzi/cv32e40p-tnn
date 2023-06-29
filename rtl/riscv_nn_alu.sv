@@ -513,14 +513,62 @@ module riscv_nn_alu
 
   logic [15:0] is_equal;
   logic [15:0] is_greater;     // handles both signed and unsigned forms
+
+  // only used for ternary extension - no equal needed as only max and min are implemented
+  logic [3:0]  is_greater_tern;
   logic [15:0] f_is_greater;   // for floats, only signed and *no vectors*,
                               // inverted for two negative numbers
+
+  // only used for ternary extension - inputs and outputs of decompressors
+  logic [31:0] operand_a_cmpr_tern, operand_b_cmpr_tern;
+  logic [3:0][4:0][1:0] operand_a_decomp_tern_arr, operand_b_decomp_tern_arr;
+  logic [39:0] operand_a_decomp_tern, operand_b_decomp_tern;
+  // 4 more 2-bit operands for TNN extension: MIN/MAX
+  logic [7:0]  operand_a_tern_ext, operand_b_tern_ext;
+  // operands for comparison operations are muxed between ternary decoder
+  // outputs and regular operand inputs
+  logic [31:0] operand_a_comp, operand_b_comp;
 
   // 2-bit vector comparisons, basic building blocks
   // extended from previous version for support to nibble and crumble operands
   logic [15:0] cmp_signed;
   logic [15:0] is_equal_vec;
   logic [15:0] is_greater_vec;
+
+  if (TNN_EXTENSION) begin
+    assign operand_a_decomp_tern = {>>{operand_a_decomp_tern_arr}};
+    assign operand_b_decomp_tern = {>>{operand_b_decomp_tern_arr}};
+    assign operand_a_comp = (vector_mode_i == VEC_MODE_TERN) ? operand_a_decomp_tern[31:0] : operand_a_i;
+    assign operand_b_comp = (vector_mode_i == VEC_MODE_TERN) ? operand_b_decomp_tern[31:0] : operand_b_i;
+    assign operand_a_cmpr_tern = (vector_mode_i == VEC_MODE_TERN) ? operand_a_i : 'd0;
+    assign operand_b_cmpr_tern = (vector_mode_i == VEC_MODE_TERN) ? operand_b_i : 'd0;
+    assign operand_a_tern_ext = operand_a_decomp_tern[39:32];
+    assign operand_b_tern_ext = operand_b_decomp_tern[39:32];
+    for (genvar l=0; l<4; l++) begin
+      ternary_decoder alu_tern_decoder_a_i
+                  (
+                   .decoder_i(operand_a_cmpr_tern[l*8+7:l*8]),
+                   .decoder_o(operand_a_decomp_tern_arr[l])
+                    );
+      ternary_decoder alu_tern_decoder_b_i
+        (
+         .decoder_i(operand_b_cmpr_tern[l*8+7:l*8]),
+         .decoder_o(operand_b_decomp_tern_arr[l])
+         );
+    end // for (genvar l=0; l<4; l++)
+  end else begin
+    assign operand_a_comp = operand_a_i;
+    assign operand_b_comp = operand_b_i;
+    assign operand_a_cmpr_tern = 'd0;
+    assign operand_b_cmpr_tern = 'd0;
+    assign operand_a_decomp_tern_arr = 'd0;
+    assign operand_b_decomp_tern_arr = 'd0;
+    assign operand_a_decomp_tern = 'd0;
+    assign operand_b_decomp_tern = 'd0;
+    assign operand_a_tern_ext = 'd0;
+    assign operand_b_tern_ext = 'd0;
+  end // else: !if(TNN_EXTENSION)
+
 
   always_comb
   begin
@@ -543,7 +591,7 @@ module riscv_nn_alu
       ALU_FMAX,
       ALU_FMIN: begin
         case (vector_mode_i)
-          VEC_MODE2:  cmp_signed[15:0] = 16'hFFFF;
+          VEC_MODE2, VEC_MODE_TERN:  cmp_signed[15:0] = 16'hFFFF;
           VEC_MODE4:  cmp_signed[15:0] = 16'hAAAA;
           VEC_MODE8:  cmp_signed[15:0] = 16'h8888;
           VEC_MODE16: cmp_signed[15:0] = 16'h8080;
@@ -561,12 +609,21 @@ module riscv_nn_alu
   generate
     for(i = 0; i < 16; i++)
     begin
-      assign is_equal_vec[i]   = (operand_a_i[2*i+1:2*i] == operand_b_i[2*i+1:i*2]);
-      assign is_greater_vec[i] = $signed({operand_a_i[2*i+1] & cmp_signed[i], operand_a_i[2*i+1:2*i]})
+      assign is_equal_vec[i]   = (operand_a_comp[2*i+1:2*i] == operand_b_comp[2*i+1:i*2]);
+      assign is_greater_vec[i] = $signed({operand_a_comp[2*i+1] & cmp_signed[i], operand_a_comp[2*i+1:2*i]})
                                   >
-                                 $signed({operand_b_i[2*i+1] & cmp_signed[i], operand_b_i[2*i+1:i*2]});
+                                 $signed({operand_b_comp[2*i+1] & cmp_signed[i], operand_b_comp[2*i+1:i*2]});
     end
   endgenerate
+  if (TNN_EXTENSION) begin
+    for (i = 0; i < 4; i++) begin
+      // ternary comparisons are always signed, so only 2-bit signed
+      assign is_greater_tern[i] = $signed(operand_a_tern_ext[2*i+1:2*i]) > $signed(operand_b_tern_ext[2*i+1:2*i]);
+      end
+    
+  end else begin
+    assign is_greater_tern = 4'b0000;
+  end
 
   // generate the real equal and greater than signals that take the vector
   // mode into account
@@ -591,7 +648,6 @@ module riscv_nn_alu
     //is_greater[3:0] = {4{is_greater_vec[3] | (is_equal_vec[3] & (is_greater_vec[2]
                                             //| (is_equal_vec[2] & (is_greater_vec[1]
                                             // | (is_equal_vec[1] & (is_greater_vec[0]))))))}};
-
     case(vector_mode_i)
       VEC_MODE16:
       begin
@@ -673,10 +729,12 @@ module riscv_nn_alu
         end
       end
 
-      VEC_MODE2: begin
+      VEC_MODE2, VEC_MODE_TERN: begin
+        // vec_mode_tern does not need its own case
         is_equal  [15: 0] = is_equal_vec[15: 0];
         is_greater[15: 0] = is_greater_vec[15: 0];
       end
+
       default:; // see default assignment
     endcase
   end
@@ -719,14 +777,20 @@ module riscv_nn_alu
 
 
   // min/max/abs handling
-  logic [31:0] result_minmax;
+  logic [31:0] result_minmax, result_minmax_intm;
+  // only used with TNN extension for 
   logic [31:0] fp_canonical_nan;
   logic [15:0] sel_minmax;
   logic        do_min;
   logic        minmax_is_fp_special;
   logic [31:0] minmax_b;
+  // only used with TNN extension
+  logic [7:0]  result_minmax_tern_ext;
+  logic [39:0] result_minmax_tern_decompr;
+  logic [31:0] result_minmax_tern_compr;
+  
 
-  assign minmax_b = (operator_i == ALU_ABS) ? adder_result : operand_b_i;
+  assign minmax_b = (operator_i == ALU_ABS) ? adder_result : operand_b_comp;
 
   assign do_min   = (operator_i == ALU_MIN)  || (operator_i == ALU_MINU) ||
                     (operator_i == ALU_CLIP) || (operator_i == ALU_CLIPU) ||
@@ -738,9 +802,31 @@ module riscv_nn_alu
 
   generate
     for(i=0; i< 16; i++) begin
-      assign result_minmax[2*i +: 2] = (sel_minmax[i] == 1'b1) ? operand_a_i[ 2*i+ 1: 2*i] : minmax_b[ 2*i+1 : 2*i];
+      assign result_minmax_intm[2*i +: 2] = (sel_minmax[i] == 1'b1) ? operand_a_comp[ 2*i+ 1: 2*i] : minmax_b[ 2*i+1 : 2*i];
       end
   endgenerate
+  if (TNN_EXTENSION) begin : tern_minmax
+    for (i=0; i<4; i++) begin
+        assign result_minmax_tern_ext[2*i+1 : 2*i] = (is_greater_tern[i] ^ do_min) ? operand_a_tern_ext[2*i+1 : 2*i] : operand_b_tern_ext[2*i+1 : 2*i];
+    end
+    assign result_minmax_tern_decompr = {result_minmax_tern_ext, result_minmax_intm};
+
+    for (i=0; i<4; i++) begin
+      ternary_encoder alu_tern_encoder_i
+                  (
+                   .encoder_i(result_minmax_tern_decompr[i*10+9:i*10]),
+                   .encoder_o(result_minmax_tern_compr[i*8+7:i*8])
+                   );
+    end
+    assign result_minmax = (vector_mode_i == VEC_MODE_TERN) ? result_minmax_tern_compr : result_minmax_intm;
+
+  end else begin : notern_minmax // if (TNN_EXTENSION)
+    assign result_minmax_tern_ext = 8'b00000000;
+    assign result_minmax_tern_decompr = 'd0;
+    assign result_minmax_tern_compr = 'd0;
+    assign result_minmax = result_minmax_intm;
+  end
+
   //assign result_minmax[31:24] = (sel_minmax[3] == 1'b1) ? operand_a_i[31:24] : minmax_b[31:24];
   //assign result_minmax[23:16] = (sel_minmax[2] == 1'b1) ? operand_a_i[23:16] : minmax_b[23:16];
   //assign result_minmax[15: 8] = (sel_minmax[1] == 1'b1) ? operand_a_i[15: 8] : minmax_b[15: 8];

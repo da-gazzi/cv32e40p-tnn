@@ -200,6 +200,8 @@ parameter VEC_MODE16 = 3'b010;
 parameter VEC_MODE8  = 3'b011;
 parameter VEC_MODE4  = 3'b100;
 parameter VEC_MODE2  = 3'b110;
+// TNN extension
+parameter VEC_MODE_TERN = 3'b111;
 
 /////////////////////////////////////////////////////////
 //    ____ ____    ____            _     _             //
