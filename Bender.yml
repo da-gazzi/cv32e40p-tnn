@@ -42,10 +42,10 @@ sources:
     - rtl/ternary_encoder.sv
     - rtl/threshold_compress.sv
     - rtl/ternary_signed_to_unsigned.sv
-    - target: synthesis
+    - target: all(synthesis, not(fpga))
       files:
         - rtl/riscv_nn_register_file_latch.sv
-    - target: not(synthesis)
+    - target: any(not(synthesis), fpga)
       files:
         - rtl/riscv_nn_register_file.sv
     - target: test
