@@ -50,7 +50,8 @@ module riscv_nn_ex_stage
   parameter APU_WOP_CPU      =  6,
   parameter APU_NDSFLAGS_CPU = 15,
   parameter APU_NUSFLAGS_CPU =  5,
-  parameter TNN_EXTENSION    =  0
+  parameter TNN_EXTENSION    =  0,
+  parameter TNN_UNSIGNED     =  0
 )
 (
   input logic                            clk,
@@ -413,7 +414,8 @@ module riscv_nn_ex_stage
   riscv_nn_mult
   #(
     .SHARED_DSP_MULT(SHARED_DSP_MULT),
-    .TNN_EXTENSION  (TNN_EXTENSION  )
+    .TNN_EXTENSION  (TNN_EXTENSION  ),
+    .TNN_UNSIGNED   (TNN_UNSIGNED   )
    )
    mult_i
   (

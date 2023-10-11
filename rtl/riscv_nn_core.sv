@@ -57,7 +57,8 @@ module riscv_nn_core
   parameter APU_NDSFLAGS_CPU    = 15,
   parameter APU_NUSFLAGS_CPU    =  5,
   parameter DM_HaltAddress      = 32'h1A110800,
-  parameter TNN_EXTENSION       = 1
+  parameter TNN_EXTENSION       = 1,
+  parameter TNN_UNSIGNED        = 0
 )
 (
   // Clock and Reset
@@ -819,7 +820,8 @@ module riscv_nn_core
    .APU_WOP_CPU      ( APU_WOP_CPU        ),
    .APU_NDSFLAGS_CPU ( APU_NDSFLAGS_CPU   ),
    .APU_NUSFLAGS_CPU ( APU_NUSFLAGS_CPU   ),
-   .TNN_EXTENSION    ( TNN_EXTENSION      )
+   .TNN_EXTENSION    ( TNN_EXTENSION      ),
+   .TNN_UNSIGNED     ( TNN_UNSIGNED      )
   )
   ex_stage_i
   (

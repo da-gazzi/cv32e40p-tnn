@@ -30,7 +30,8 @@ import riscv_nn_defines::*;
 module riscv_nn_mult
 #(
   parameter SHARED_DSP_MULT = 1,
-  parameter TNN_EXTENSION   = 0
+  parameter TNN_EXTENSION   = 0,
+  parameter TNN_UNSIGNED = 0
   )
 (
   input  logic        clk,
@@ -394,7 +395,8 @@ module riscv_nn_mult
                                     $signed(dot_crumble_mul[14]) + $signed(dot_crumble_mul[15]) +
                                     $signed(dot_op_c_i);
 
-        if (TNN_EXTENSION == 1) begin : compressedMAC
+       if (TNN_EXTENSION == 1) begin : compressedMAC
+         if (TNN_UNSIGNED == 1) begin : unsigned_TMAC
           logic [39:0]      dot_op_t_decoded_a;
           logic [39:0]      dot_op_t_decoded_b;
           logic [19:0][2:0] dot_ternary_op_a;
@@ -432,19 +434,61 @@ module riscv_nn_mult
 
           end // for (genvar g=0; g<20; g++)
 
-          assign dot_ternary_result = $signed(dot_ternary_mul[0]) + $signed(dot_ternary_mul[1]) +
-                                      $signed(dot_ternary_mul[2]) + $signed(dot_ternary_mul[3]) +
-                                      $signed(dot_ternary_mul[4]) + $signed(dot_ternary_mul[5]) +
-                                      $signed(dot_ternary_mul[6]) + $signed(dot_ternary_mul[7]) +
-                                      $signed(dot_ternary_mul[8]) + $signed(dot_ternary_mul[9]) +
-                                      $signed(dot_ternary_mul[10]) + $signed(dot_ternary_mul[11]) +
-                                      $signed(dot_ternary_mul[12]) + $signed(dot_ternary_mul[13]) +
-                                      $signed(dot_ternary_mul[14]) + $signed(dot_ternary_mul[15]) +
-                                      $signed(dot_ternary_mul[16]) + $signed(dot_ternary_mul[17]) +
-                                      $signed(dot_ternary_mul[18]) + $signed(dot_ternary_mul[19]) +
-                                      $signed(dot_op_c_i);
-        end
+         assign dot_ternary_result = $signed(dot_ternary_mul[0]) + $signed(dot_ternary_mul[1]) +
+                                     $signed(dot_ternary_mul[2]) + $signed(dot_ternary_mul[3]) +
+                                     $signed(dot_ternary_mul[4]) + $signed(dot_ternary_mul[5]) +
+                                     $signed(dot_ternary_mul[6]) + $signed(dot_ternary_mul[7]) +
+                                     $signed(dot_ternary_mul[8]) + $signed(dot_ternary_mul[9]) +
+                                     $signed(dot_ternary_mul[10]) + $signed(dot_ternary_mul[11]) +
+                                     $signed(dot_ternary_mul[12]) + $signed(dot_ternary_mul[13]) +
+                                     $signed(dot_ternary_mul[14]) + $signed(dot_ternary_mul[15]) +
+                                     $signed(dot_ternary_mul[16]) + $signed(dot_ternary_mul[17]) +
+                                     $signed(dot_ternary_mul[18]) + $signed(dot_ternary_mul[19]) +
+                                     $signed(dot_op_c_i);
+         end else begin : signed_TMAC // block: unsigned_TMAC
 
+           logic [39:0]      dot_op_t_decoded_a;
+           logic [39:0]      dot_op_t_decoded_b;
+           logic [19:0][1:0] dot_ternary_op_a;
+           logic [19:0][1:0] dot_ternary_op_b;
+           logic [19:0][1:0] dot_ternary_mul;
+
+           /*ternary*/
+           for (genvar g=0; g<4; g++) begin: gen_decomp_logic
+             ternary_decoder i_ternary_decoder_a
+                         (
+                          .decoder_i(dot_op_t_a_i       [8*g  +: 8] ),
+                          .decoder_o(dot_op_t_decoded_a [10*g +: 10])
+                          );
+
+             ternary_decoder i_ternary_decoder_b
+               (
+                .decoder_i(dot_op_t_b_i       [8*g  +: 8] ),
+                .decoder_o(dot_op_t_decoded_b [10*g +: 10])
+                );
+           end // block: gen_decomp_logic
+           assign dot_ternary_op_a = {>>{dot_op_t_decoded_a}};
+           assign dot_ternary_op_b = {>>{dot_op_t_decoded_b}};
+
+           for (genvar g=0; g<20; g++) begin : ternary_mult
+             assign dot_ternary_mul[g]  = $signed(dot_ternary_op_a[g]) * $signed(dot_ternary_op_b[g]);
+           end
+           
+         assign dot_ternary_result = $signed(dot_ternary_mul[0]) + $signed(dot_ternary_mul[1]) +
+                                     $signed(dot_ternary_mul[2]) + $signed(dot_ternary_mul[3]) +
+                                     $signed(dot_ternary_mul[4]) + $signed(dot_ternary_mul[5]) +
+                                     $signed(dot_ternary_mul[6]) + $signed(dot_ternary_mul[7]) +
+                                     $signed(dot_ternary_mul[8]) + $signed(dot_ternary_mul[9]) +
+                                     $signed(dot_ternary_mul[10]) + $signed(dot_ternary_mul[11]) +
+                                     $signed(dot_ternary_mul[12]) + $signed(dot_ternary_mul[13]) +
+                                     $signed(dot_ternary_mul[14]) + $signed(dot_ternary_mul[15]) +
+                                     $signed(dot_ternary_mul[16]) + $signed(dot_ternary_mul[17]) +
+                                     $signed(dot_ternary_mul[18]) + $signed(dot_ternary_mul[19]) +
+                                     $signed(dot_op_c_i);
+         end // else: !if(TNN_UNSIGNED == 1)
+       end else begin : no_TMAC // block: compressedMAC
+         assign dot_ternary_result = '0;
+       end
         assign dot_short_op_a[0]    = {dot_signed_i[1] & dot_op_h_a_i[15], dot_op_h_a_i[15: 0]};
         assign dot_short_op_a[1]    = {dot_signed_i[1] & dot_op_h_a_i[31], dot_op_h_a_i[31:16]};
         assign dot_short_op_a_1_neg = dot_short_op_a[1] ^ {17{(is_clpx_i & ~clpx_img_i)}}; //negates whether clpx_img_i is 0 or 1, only REAL PART needs to be negated
